@@ -44,5 +44,5 @@ test('the 6-bit LUT has 262144 entries and is deterministic', () => {
   const a = buildNearestLut(palette, { space: 'oklab', bits: 6 });
   const b = buildNearestLut(palette, { space: 'oklab', bits: 6 });
   assert.equal(a.size, 262144);
-  assert.deepEqual(a.lut, b.lut);
+  assert.deepEqual(a.nearest, b.nearest);
 });

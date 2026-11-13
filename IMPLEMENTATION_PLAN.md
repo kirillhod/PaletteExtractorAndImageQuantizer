@@ -35,11 +35,11 @@ agents; it defers to this plan for *what* to build.
 | Research report | Complete |
 | Plan | This document, v1.0.0 |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
-| Core | Color, histogram, popularity, median cut, LUT mapper, PNG encode/decode, pipeline |
-| UI | Stage + rail, empty state, themes, drop/paste, before/after, palette strip + sort, export |
-| Tests | 47 passing (`node --test`), including golden hashes |
-| Version | `js/core/version.js`; `v0.2.2` tagged; M1 complete |
-| Next | M2: fixed palette, Wu/octree/K-means, dithering, indexed PNG |
+| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
+| UI | Stage + rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, strip, reduced PNG |
+| Tests | 82 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG |
+| Version | `js/core/version.js`; `v0.2.2` tagged; M2 version bump to `0.3.0` pending |
+| Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, theory guide |
 
 ---
 
@@ -104,12 +104,12 @@ to v1.0.x without changing the contracts.
 |---|---|---|---|---|
 | F-01 | Load PNG/JPEG/WebP/GIF/BMP/AVIF; drag-drop, picker, paste | MUST | M1 | Image appears with dimensions and color count; unsupported input shows a clear error |
 | F-02 | Preview with before/after slider, zoom, pan | MUST | M1 | Divider draggable; fit/100% work; no main-thread freeze |
-| F-03 | Extraction: popularity, median cut, Wu, octree, K-means++ | MUST | M1–M3 | Each method returns a valid palette; deterministic with same seed |
+| F-03 | Extraction: popularity, median cut, Wu, octree, K-means++ | MUST | M1–M2 | Each method returns a valid palette; deterministic with same seed |
 | F-04 | Working space Oklab (default) and sRGB | MUST | M1 | Space recorded in manifest; conversions match §5 |
 | F-05 | Fixed-palette import (.hex/.gpl/.pal/.json/PNG strip) | MUST | M2 | 1–256 entries; invalid files rejected with a specific error |
-| F-06 | Built-in palettes (PICO-8, Game Boy, C64, ZX Spectrum, EGA) | MUST | M3 | Counts and values match Appendix C; selectable in one click |
+| F-06 | Built-in palettes (PICO-8, Game Boy, C64, ZX Spectrum, EGA) | MUST | M2 | Counts and values match Appendix C; selectable in one click |
 | F-07 | Map image → palette, documented tie-break | MUST | M2 | 100% of opaque pixels use a palette entry; lowest index wins ties |
-| F-08 | Dithering: none, FS, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2/4/8, blue noise | MUST | M2–M4 | Palette compliance preserved; strength/serpentine/edge-stop behave per §6.5 |
+| F-08 | Dithering: none, FS, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2/4/8, blue noise | MUST | M2 | Palette compliance preserved; strength/serpentine/edge-stop behave per §6.5 |
 | F-09 | Palette editor: add, remove, lock, reorder, rename, role | MUST | M3 | Locked entries survive sort/removal; IDs stable |
 | F-10 | Palette ordering: source, hue ↑/↓, lightness ↑/↓ | MUST | M1/M3 | Strip and swatches follow the order; custom order and locks land in M3 |
 | F-11 | Indexed PNG export with reserved transparent index | MUST | M2 | Bit depth rule, `PLTE`/`tRNS`, round-trip equality |
@@ -838,29 +838,31 @@ The loaded UI has two control surfaces: the stage toolbar and the right rail.
 **Palette rail section**
 
 - Mode tabs `Extract` and `Map` (inside the section, not the header).
-- Extract: algorithm, colors (range + number), space, refine, seed/iterations under
-  "Advanced".
-- Map: import palette, built-in palette, transparent index, alpha threshold.
-- Palette order: source / hue / lightness / custom.
-- Palette rows: index badge, swatch, hex (click copies), name, lock, remove, drag handle.
-- Add color (`<input type="color">`), import, built-in dropdown.
-- Counter: `N / 256`; duplicate warning; transparent index selector.
-- Locked entries survive sorting and removal.
+- Extract: five algorithms (popularity, median cut, Wu, octree, K-means++), colors
+  2–256, working space, with refinement defaulting on for median cut and Wu.
+- Map: built-in target palette (PICO-8, Game Boy, C64, ZX Spectrum, EGA), "Load palette
+  file…" for `.hex`, `.gpl`, `.pal`, `.json`, and 1×N/N×1 PNG strips, transparent index,
+  alpha threshold.
+- Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
+  lightness light→dark; swatches, HEX list, and strip export follow it.
+- Palette rows, per-entry locks, add/remove/rename, and custom order land in M3.
 
 **Dither rail section**
 
-- Method select with plain-language hints.
-- Strength slider (disabled for none).
-- Serpentine and edge-stop (error diffusion only).
+- Methods: none, Floyd–Steinberg, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer
+  2×2/4×4/8×8, blue noise.
+- Strength 0–100%; serpentine and edge-stop for error diffusion only.
+- The controls disable themselves when the selected method does not use them.
 
 **Export rail section**
 
-- Primary: "Download indexed PNG", "Download palette strip".
-- Secondary: `.json`, `.hex`, `.gpl`, `.pal`, `.ase`, `.css`, `.tokens.json`, manifest,
-  QA JSON.
+- Primary: "Download indexed PNG".
+- Secondary: "Download palette strip", "Download reduced PNG", "Copy HEX list".
+- Indexed export uses the sorted palette and declared transparent index; it is decoded
+  and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
 - Contract summary before download: `K`, bit depth, transparent index, dimensions.
-- Export validation runs automatically; failures block the download.
+- Additional palette-format exports land in M3.
 - After validation, show a `Save <file>` link. The actual file write is a real user
   gesture; browsers may block an async automatic download after a worker response. No
   silent auto-download.
@@ -1240,15 +1242,15 @@ No error may be swallowed. Every warning is visible in the status bar and in the
 
 Zlib:
 
-- **M1 default: stored blocks** (`0x78 0x01`, 65535-byte blocks, Adler-32). This is valid,
+- **Encoder (M2): stored blocks** (`0x78 0x01`, 65535-byte blocks, Adler-32). Valid,
   portable, and larger than compressed output. It was chosen after `CompressionStream`
   stalled in headless Chrome during verification.
+- **Decoder (M2): full DEFLATE** — stored, fixed-Huffman, and dynamic-Huffman blocks.
+  This enables importing ordinary compressed palette-strip PNGs.
 - Intended optimization: `CompressionStream('deflate')` once it is verified in real
   browsers; keep stored blocks as the fallback.
 - Compression output is implementation-defined; byte equality is guaranteed only within
   the same browser/version.
-- The M1 decoder reads stored-block streams only and rejects compressed PNGs with a clear
-  error. A full inflater lands in M2 before palette-strip import.
 
 ### 12.4 Other formats
 
@@ -1432,25 +1434,26 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/rng.js` | `createRng(seed)`, `splitmix64`, `nextFloat` | `rng.test.js` |
 | `js/core/hash.js` | `sha256Hex`, `fnv1a64Hex`, `stableStringify` | `hash.test.js` |
 | `js/core/histogram.js` | `buildHistogram(pixels, opts)` | `histogram.test.js` |
-| `js/core/quantize/index.js` | `extract(hist, params)`, dedupe, refine | `pipeline.test.js` |
-| `js/core/quantize/popularity.js` | `extractPopularity` | method tests |
-| `js/core/quantize/median-cut.js` | `extractMedianCut` | `median-cut.test.js` |
-| `js/core/quantize/wu.js` | `extractWu` | `wu.test.js` |
-| `js/core/quantize/octree.js` | `extractOctree` | `octree.test.js` |
-| `js/core/quantize/kmeans.js` | `extractKMeans` | `kmeans.test.js` |
-| `js/core/palette.js` | `createPalette`, `reorderPalette`, `dedupePalette`, `paletteHash` | `palette.test.js` |
-| `js/core/map.js` | `buildMapper`, `mapPixels` | `map.test.js` |
-| `js/core/dither/index.js` | `ditherPixels(pixels, palette, map, dither, mapper)` | dither tests |
-| `js/core/dither/kernels.js` | Kernel tables from §6.6.2 | kernel-sum test |
-| `js/core/dither/error-diffusion.js` | ED implementation | ED tests |
-| `js/core/dither/bayer.js` | Recursive Bayer generation | Bayer test |
-| `js/core/dither/ordered.js` | Two-candidate ordered dither | ordered tests |
-| `js/core/dither/blue-noise.js` | Mask loading/tiling | blue-noise tests |
-| `js/core/index-image.js` | Bit depth, packing, transparent index | `index-image.test.js` |
-| `js/core/png/crc.js` | CRC32 table/function | `png-crc.test.js` |
-| `js/core/png/chunks.js` | Chunk writer/parser helpers | covered |
-| `js/core/png/encode.js` | `encodeIndexedPng`, `encodeRgbaPng`, `encodeStrip` | `png-encode.test.js` |
-| `js/core/png/decode.js` | `decodePng(bytes)` (8-bit, non-interlaced) | `png-decode.test.js` |
+| `js/core/quantize/index.js` | `extractPalette(hist, params)`, dispatch, refinement | `quantize.test.js`, `quantize-advanced.test.js` |
+| `js/core/quantize/popularity.js` | `extractPopularity` | `quantize.test.js` |
+| `js/core/quantize/median-cut.js` | `extractMedianCut` | `quantize.test.js` |
+| `js/core/quantize/wu.js` | `extractWu` | `quantize-advanced.test.js` |
+| `js/core/quantize/octree.js` | `extractOctree` | `quantize-advanced.test.js` |
+| `js/core/quantize/kmeans.js` | `extractKMeans` | `quantize-advanced.test.js` |
+| `js/core/quantize/refine.js` | `refinePalette` (Lloyd refinement) | `quantize-advanced.test.js` |
+| `js/core/palette.js` | `createPalette`, `sortPalette`, `paletteHexList`, `paletteHash` | `palette.test.js` |
+| `js/core/map.js` | `buildMapper`, `buildExactMap`, `mapPixels`, `mapIndices`, `indicesToRgba` | `map.test.js` |
+| `js/core/dither/index.js` | `ditherPixels(image, palette, dither)` | `dither.test.js` |
+| `js/core/dither/kernels.js` | Error-diffusion tables + Bayer generation | `dither.test.js` |
+| `js/core/dither/error-diffusion.js` | ED implementation | `dither.test.js` |
+| `js/core/dither/ordered.js` | Two-candidate ordered dither | `dither.test.js` |
+| `js/core/dither/blue-noise.js` | Mask loading/tiling | `dither.test.js` |
+| `js/core/dither/blue-noise-mask.js` | Generated 64×64 mask (base64) | `dither.test.js` |
+| `js/core/png/crc.js` | CRC32/Adler-32 | `png.test.js` |
+| `js/core/png/chunks.js` | Chunk writer/parser, stored zlib | `png.test.js` |
+| `js/core/png/inflate.js` | Full DEFLATE decoder (stored/fixed/dynamic) | `png.test.js` |
+| `js/core/png/encode.js` | `encodeIndexedPng`, `encodeRgbaPng`, `encodeStripPng` | `png.test.js` |
+| `js/core/png/decode.js` | `decodePng(bytes)` (non-interlaced, 8-bit + indexed) | `png.test.js` |
 | `js/core/formats/hex.js` | Read/write `.hex` | `formats.test.js` |
 | `js/core/formats/gpl.js` | Read/write `.gpl` | `formats.test.js` |
 | `js/core/formats/pal.js` | Read/write JASC `.pal` | `formats.test.js` |
@@ -1512,16 +1515,17 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Golden palette/preview hashes
 - **Exit:** drop → palette → validated strip; golden test; `0.2.0`.
 
-### M2 — Fixed palette and dithering (current)
+### M2 — Fixed palette and dithering
 
-- [ ] Wu, octree, K-means++, refinement
-- [ ] Palette import (.hex/.gpl/.pal/.json/PNG strip)
-- [ ] Mapping (exact + LUT), tie-break, alpha
-- [ ] Error diffusion + Bayer + blue noise
-- [ ] Indexed PNG + transparent index + validation
+- [x] Wu, octree, K-means++, refinement
+- [x] Palette import (.hex/.gpl/.pal/.json/PNG strip)
+- [x] Built-in palettes (PICO-8, Game Boy, C64, ZX Spectrum, EGA)
+- [x] Mapping (exact + LUT), tie-break, alpha
+- [x] Error diffusion + Bayer + blue noise
+- [x] Indexed PNG + transparent index + validation
 - **Exit:** sprite mapped to PICO-8; compliance and round-trip green; `0.3.0`.
 
-### M3 — Production handoff
+### M3 — Production handoff (current)
 
 - [ ] QA metrics, error map, worst pixels
 - [ ] Palette editor, locks, ordering
@@ -1618,6 +1622,9 @@ A change is done only when:
 | 2026-11-13 | M1 UI uses the stage + right rail; median cut/popularity only | Working vertical slice; fixed palette, dithering, and indexed PNG are M2 |
 | 2026-11-13 | Export shows a validated `Save <file>` link instead of auto-downloading | Browsers may block async downloads after a worker response; the save click is a real gesture |
 | 2026-11-13 | M1 UX patch: 256-color range, palette sort (source/hue/lightness), footer cleanup | Owner request; keeps the strip order meaningful |
+| 2026-11-13 | M2: five extractors + refinement, fixed palettes/import, exact/LUT mapping, ED/Bayer/blue noise, indexed PNG | M2 exit: PICO-8 mapping and round-trip validation green |
+| 2026-11-13 | Full DEFLATE decoder; encoder still stored blocks | Palette-strip PNG import works; compression optimization remains |
+| 2026-11-13 | Blue-noise mask generated offline and embedded as base64 | No runtime fetch, deterministic asset, checksum recorded |
 
 ---
 

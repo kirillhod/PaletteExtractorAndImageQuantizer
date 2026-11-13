@@ -16,5 +16,8 @@
 ## Blue noise
 
 `blue-noise-64.bin` is a 64×64 byte mask generated deterministically by
-`tools/gen-blue-noise.mjs` in M1. Its checksum will be recorded here when the generator
-lands. Do not hand-edit the mask.
+`tools/gen-blue-noise.mjs` (void-and-cluster, seed `0x5eed`). It is also embedded as
+base64 in `js/core/dither/blue-noise-mask.js` so the browser never fetches it.
+
+- SHA-256: `0dc8e180b19234febe7cd007dd1aa4bd5acdbfcaeee423a86fead748c2b0c1c4`
+- Regenerate with `node tools/gen-blue-noise.mjs`; do not hand-edit the mask.

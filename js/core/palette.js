@@ -15,7 +15,7 @@ export function createPalette(colors, options = {}) {
   return colors.map((color, index) => ({
     id: index + 1,
     index,
-    color: { r: color.r, g: color.g, b: color.b, a: 255 },
+    color: { r: color.r, g: color.g, b: color.b, a: color.a ?? 255 },
     hex: formatHex(color),
     name: null,
     role: null,

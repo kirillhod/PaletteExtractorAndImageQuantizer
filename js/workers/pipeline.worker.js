@@ -1,7 +1,7 @@
 // @ts-check
 /// <reference lib="webworker" />
 
-import { runPreview, exportStrip, exportReduced } from '../core/pipeline.js';
+import { runPreview, exportStrip, exportReduced, exportIndexed } from '../core/pipeline.js';
 
 /** @type {Set<number>} */
 const cancelled = new Set();
@@ -56,6 +56,32 @@ self.onmessage = async (event) => {
         palette: message.palette,
         name: message.name,
         orientation: message.orientation,
+        transparentIndex: message.transparentIndex,
+      });
+      if (cancelled.has(requestId)) return;
+      self.postMessage(
+        {
+          type: 'exported',
+          requestId,
+          files: result.files,
+        },
+        result.files.map((file) => file.data),
+      );
+      return;
+    }
+
+    if (message.type === 'export-indexed') {
+      self.postMessage({ type: 'progress', requestId, stage: 'index', value: 0.25 });
+      const image = {
+        data: new Uint8ClampedArray(message.image.data),
+        width: message.image.width,
+        height: message.image.height,
+      };
+      const result = await exportIndexed({
+        image,
+        palette: message.palette,
+        params: message.params,
+        name: message.name,
       });
       if (cancelled.has(requestId)) return;
       self.postMessage(

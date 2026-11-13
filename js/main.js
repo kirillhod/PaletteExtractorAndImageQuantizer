@@ -1,6 +1,9 @@
 // @ts-check
-import { paletteHexList, sortPalette } from './core/palette.js';
-import { copyText } from './ui/dom.js';
+import { parseHex } from './core/color.js';
+import { createPalette, paletteHexList, sortPalette } from './core/palette.js';
+import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
+import { parsePaletteFile } from './core/palettes/import.js';
+import { copyText, debounce } from './ui/dom.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
@@ -27,6 +30,23 @@ const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
 const paletteStrip = document.getElementById('palette-strip');
 const paletteCount = document.getElementById('palette-count');
 const sortSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-sort'));
+const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
+const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
+const extractControls = document.getElementById('extract-controls');
+const mapControls = document.getElementById('map-controls');
+const paletteSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-select'));
+const paletteInput = /** @type {HTMLInputElement|null} */ (document.getElementById('palette-input'));
+const importPalette = document.getElementById('import-palette');
+const paletteStatus = document.getElementById('palette-status');
+const transparentIndex = /** @type {HTMLSelectElement|null} */ (document.getElementById('transparent-index'));
+const alphaThreshold = /** @type {HTMLInputElement|null} */ (document.getElementById('alpha-threshold'));
+const alphaThresholdValue = document.getElementById('alpha-threshold-value');
+const ditherMethod = /** @type {HTMLSelectElement|null} */ (document.getElementById('dither-method'));
+const ditherStrength = /** @type {HTMLInputElement|null} */ (document.getElementById('dither-strength'));
+const ditherStrengthValue = document.getElementById('dither-strength-value');
+const ditherSerpentine = /** @type {HTMLInputElement|null} */ (document.getElementById('dither-serpentine'));
+const edgeStop = /** @type {HTMLInputElement|null} */ (document.getElementById('edge-stop'));
+const edgeStopValue = document.getElementById('edge-stop-value');
 const canvasEmpty = document.getElementById('canvas-empty');
 const toggleOriginal = /** @type {HTMLButtonElement} */ (document.getElementById('toggle-original'));
 const header = document.getElementById('header');
@@ -55,6 +75,15 @@ const app = {
 let nextRequestId = 1;
 let worker = createWorker();
 let sortOrder = 'source';
+/** @type {'extract'|'map'} */
+let mode = 'extract';
+/** @type {{ r:number,g:number,b:number,a:number }[]} */
+let fixedColors = [];
+let fixedName = '';
+/** @type {{ r:number,g:number,b:number,a:number }[]} */
+let importedColors = [];
+let importedName = '';
+let importedOption = false;
 
 function createWorker() {
   const instance = new Worker(new URL('./workers/pipeline.worker.js', import.meta.url), {
@@ -144,10 +173,129 @@ function renderCurrentPalette() {
   renderPalette(app.palette, paletteStrip);
   if (paletteCount) paletteCount.textContent = `${app.palette.length} colors`;
   if (sortSelect) sortSelect.disabled = app.palette.length === 0;
+
+  const current = Number(transparentIndex?.value ?? -1);
+  const preferred = mode === 'map' && current < 0 ? 0 : current;
+  populateTransparentIndex(app.palette, preferred);
+}
+
+/**
+ * @param {{ hex:string }[]} palette
+ * @param {number} preferred
+ */
+function populateTransparentIndex(palette, preferred) {
+  if (!transparentIndex) return;
+  transparentIndex.replaceChildren();
+  const none = document.createElement('option');
+  none.value = '-1';
+  none.textContent = 'None';
+  transparentIndex.append(none);
+  palette.forEach((entry, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = `${index} · ${entry.hex}`;
+    transparentIndex.append(option);
+  });
+  transparentIndex.disabled = palette.length === 0;
+  const valid = preferred >= 0 && preferred < palette.length;
+  transparentIndex.value = valid ? String(preferred) : '-1';
+}
+
+function getParams() {
+  const base = controls.getParams();
+  return {
+    mode,
+    ...base,
+    palette: mode === 'map' ? fixedColors : undefined,
+    dither: {
+      method: ditherMethod?.value || 'none',
+      strength: Number(ditherStrength?.value ?? 80) / 100,
+      serpentine: ditherSerpentine?.checked ?? true,
+      edgeStop: Number(edgeStop?.value ?? 50) / 100,
+    },
+    alphaThreshold: Number(alphaThreshold?.value ?? 128),
+    transparentIndex: Number(transparentIndex?.value ?? -1),
+  };
+}
+
+/**
+ * @param {'extract'|'map'} next
+ */
+function setMode(next) {
+  if (next !== 'extract' && next !== 'map') return;
+  mode = next;
+  modeExtract?.setAttribute('aria-selected', String(next === 'extract'));
+  modeMap?.setAttribute('aria-selected', String(next === 'map'));
+  if (extractControls) extractControls.hidden = next !== 'extract';
+  if (mapControls) mapControls.hidden = next !== 'map';
+
+  if (next === 'map') {
+    if (fixedColors.length === 0) {
+      loadTargetPalette(paletteSelect?.value || 'pico-8');
+    } else {
+      app.palette = sortPalette(createPalette(fixedColors), sortOrder);
+    }
+  } else {
+    app.palette = [];
+  }
+  renderCurrentPalette();
+  if (app.preview) processPreview();
+}
+
+/**
+ * @param {string} value
+ * @returns {boolean}
+ */
+function loadTargetPalette(value) {
+  /** @type {{ r:number,g:number,b:number,a:number }[]} */
+  let colors = [];
+  let name = '';
+
+  if (value === 'imported') {
+    colors = importedColors;
+    name = importedName;
+  } else {
+    const builtin =
+      BUILTIN_PALETTES.find((palette) => palette.id === value) ?? BUILTIN_PALETTES[0];
+    if (builtin) {
+      colors = builtin.colors.map(parseHex);
+      name = builtin.name;
+    }
+  }
+
+  if (colors.length === 0) return false;
+  fixedColors = colors;
+  fixedName = name;
+  if (paletteStatus) paletteStatus.textContent = `${name} · ${colors.length} colors`;
+  if (paletteSelect) paletteSelect.value = value;
+  app.palette = sortPalette(createPalette(colors), sortOrder);
+  renderCurrentPalette();
+  return true;
+}
+
+function populateBuiltinPalettes() {
+  if (!paletteSelect) return;
+  paletteSelect.replaceChildren();
+  for (const palette of BUILTIN_PALETTES) {
+    const option = document.createElement('option');
+    option.value = palette.id;
+    option.textContent = `${palette.name} · ${palette.colors.length}`;
+    paletteSelect.append(option);
+  }
+  const first = BUILTIN_PALETTES[0];
+  if (first) {
+    fixedColors = first.colors.map(parseHex);
+    fixedName = first.name;
+    paletteSelect.value = first.id;
+    if (paletteStatus) paletteStatus.textContent = `${first.name} · ${first.colors.length} colors`;
+  }
 }
 
 function processPreview() {
   if (!app.preview) return;
+  if (mode === 'map' && fixedColors.length === 0) {
+    if (!loadTargetPalette(paletteSelect?.value || 'pico-8')) return;
+  }
   clearDownloadLinks();
   if (app.previewRequestId) {
     worker.postMessage({ type: 'cancel', requestId: app.previewRequestId });
@@ -165,7 +313,7 @@ function processPreview() {
         width: app.preview.width,
         height: app.preview.height,
       },
-      params: controls.getParams(),
+      params: getParams(),
     },
     [copy.buffer],
   );
@@ -279,6 +427,7 @@ function exportStrip() {
     palette: app.palette,
     name: app.name,
     orientation: getStripOrientation(),
+    transparentIndex: Number(transparentIndex?.value ?? -1),
   });
 }
 
@@ -295,7 +444,28 @@ function exportReduced() {
       type: 'export-reduced',
       requestId: id,
       image: { data: copy.buffer, width: app.width, height: app.height },
-      params: controls.getParams(),
+      params: getParams(),
+      name: app.name,
+    },
+    [copy.buffer],
+  );
+}
+
+function exportIndexed() {
+  if (!app.hasResult || !app.full || app.palette.length === 0) return;
+  const id = nextRequestId++;
+  app.exportRequestId = id;
+  setExportEnabled(false);
+  setStatusMessage('Encoding and validating the indexed PNG…');
+  clearDownloadLinks();
+  const copy = new Uint8ClampedArray(app.full.data);
+  worker.postMessage(
+    {
+      type: 'export-indexed',
+      requestId: id,
+      image: { data: copy.buffer, width: app.width, height: app.height },
+      palette: app.palette,
+      params: getParams(),
       name: app.name,
     },
     [copy.buffer],
@@ -338,9 +508,107 @@ sortSelect?.addEventListener('change', () => {
   renderCurrentPalette();
   clearDownloadLinks();
 });
+
+const scheduleProcess = debounce(processPreview, 150);
+
+populateBuiltinPalettes();
+updateDitherLabels();
+updateDitherControls();
+
+modeExtract?.addEventListener('click', () => setMode('extract'));
+modeMap?.addEventListener('click', () => setMode('map'));
+
+paletteSelect?.addEventListener('change', () => {
+  if (!loadTargetPalette(paletteSelect.value)) return;
+  if (mode === 'map' && app.preview) processPreview();
+});
+
+importPalette?.addEventListener('click', () => paletteInput?.click());
+paletteInput?.addEventListener('change', async () => {
+  const file = paletteInput.files?.[0] ?? null;
+  paletteInput.value = '';
+  if (!file) return;
+
+  try {
+    const isPng = file.name.toLowerCase().endsWith('.png');
+    const bytes = isPng ? new Uint8Array(await file.arrayBuffer()) : undefined;
+    const text = isPng ? undefined : await file.text();
+    const parsed = await parsePaletteFile({ name: file.name, text, bytes });
+    importedColors = parsed.colors;
+    importedName = parsed.name || file.name;
+
+    if (paletteSelect) {
+      let option = /** @type {HTMLOptionElement|null} */ (
+        paletteSelect.querySelector('option[value="imported"]')
+      );
+      if (!option) {
+        option = document.createElement('option');
+        option.value = 'imported';
+        paletteSelect.append(option);
+      }
+      option.textContent = `Imported: ${importedName} · ${importedColors.length}`;
+      paletteSelect.value = 'imported';
+    }
+
+    loadTargetPalette('imported');
+    setMode('map');
+    toast(`Loaded ${importedName} · ${importedColors.length} colors`, 'success');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    toast(message, 'error');
+  }
+});
+
+ditherMethod?.addEventListener('change', () => {
+  updateDitherControls();
+  scheduleProcess();
+});
+ditherStrength?.addEventListener('input', () => {
+  updateDitherLabels();
+  scheduleProcess();
+});
+ditherSerpentine?.addEventListener('change', scheduleProcess);
+edgeStop?.addEventListener('input', () => {
+  updateDitherLabels();
+  scheduleProcess();
+});
+alphaThreshold?.addEventListener('input', () => {
+  updateDitherLabels();
+  scheduleProcess();
+});
+transparentIndex?.addEventListener('change', scheduleProcess);
+
+function updateDitherLabels() {
+  if (ditherStrengthValue && ditherStrength) {
+    ditherStrengthValue.textContent = `${ditherStrength.value}%`;
+  }
+  if (edgeStopValue && edgeStop) {
+    edgeStopValue.textContent = `${edgeStop.value}%`;
+  }
+  if (alphaThresholdValue && alphaThreshold) {
+    alphaThresholdValue.textContent = alphaThreshold.value;
+  }
+}
+
+function updateDitherControls() {
+  const method = ditherMethod?.value || 'none';
+  const isErrorDiffusion =
+    method === 'floyd-steinberg' ||
+    method === 'atkinson' ||
+    method === 'stucki' ||
+    method === 'jarvis' ||
+    method === 'burkes' ||
+    method === 'sierra';
+  const isNone = method === 'none';
+  if (ditherStrength) ditherStrength.disabled = isNone;
+  if (ditherSerpentine) ditherSerpentine.disabled = !isErrorDiffusion;
+  if (edgeStop) edgeStop.disabled = !isErrorDiffusion;
+}
+
 toggleOriginal.addEventListener('click', toggleOriginalState);
 document.getElementById('export-strip')?.addEventListener('click', exportStrip);
 document.getElementById('export-reduced')?.addEventListener('click', exportReduced);
+document.getElementById('export-indexed')?.addEventListener('click', exportIndexed);
 document.getElementById('copy-hex')?.addEventListener('click', copyHex);
 
 window.addEventListener(

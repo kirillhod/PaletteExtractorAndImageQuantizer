@@ -249,6 +249,65 @@
   gap: var(--peiq-space-2);
 }
 
+.peiq-check-field {
+  gap: 0;
+}
+
+.peiq-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+  color: var(--peiq-text);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.peiq-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--peiq-accent);
+}
+
+.peiq-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-bg-tertiary);
+}
+
+.peiq-tab {
+  min-height: 32px;
+  padding: 0 var(--peiq-space-3);
+  border: 0;
+  border-radius: var(--peiq-radius);
+  background: transparent;
+  color: var(--peiq-text-secondary);
+  font: 500 0.875rem/1 var(--peiq-font-ui);
+  cursor: pointer;
+  transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.peiq-tab:hover {
+  color: var(--peiq-text-strong);
+  background: var(--peiq-accent-bg);
+}
+
+.peiq-tab[aria-selected="true"] {
+  color: var(--peiq-text-on-accent);
+  background: var(--peiq-accent);
+}
+
+.peiq-tab:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
+.peiq-tab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .peiq-label {
   color: var(--peiq-text-tertiary);
   font-size: 0.75rem;

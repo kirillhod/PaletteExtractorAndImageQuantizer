@@ -2,7 +2,7 @@
 import { debounce } from './dom.js';
 
 /**
- * @param {{ onChange:(params:{ method:'popularity'|'median-cut', colors:number, space:'oklab'|'srgb' }) => void }} handlers
+ * @param {{ onChange:(params:{ method:'popularity'|'median-cut'|'wu'|'octree'|'kmeans', colors:number, space:'oklab'|'srgb' }) => void }} handlers
  */
 export function initControls(handlers) {
   const method = /** @type {HTMLSelectElement|null} */ (document.getElementById('method'));
@@ -14,7 +14,16 @@ export function initControls(handlers) {
     const value = Number(colors?.value ?? 16);
     const colorCount = Number.isFinite(value) ? Math.min(256, Math.max(2, Math.round(value))) : 16;
     return {
-      method: method?.value === 'popularity' ? 'popularity' : 'median-cut',
+      method:
+        method?.value === 'popularity'
+          ? 'popularity'
+          : method?.value === 'wu'
+            ? 'wu'
+            : method?.value === 'octree'
+              ? 'octree'
+              : method?.value === 'kmeans'
+                ? 'kmeans'
+                : 'median-cut',
       colors: colorCount,
       space: space?.value === 'srgb' ? 'srgb' : 'oklab',
     };

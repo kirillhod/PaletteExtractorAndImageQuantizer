@@ -1,5 +1,6 @@
 // @ts-check
 import { adler32, crc32 } from './crc.js';
+import { inflateZlibSync } from './inflate.js';
 
 export const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 
@@ -102,50 +103,12 @@ export async function deflateZlib(bytes) {
 }
 
 /**
- * M1 zlib reader for stored-block streams produced by deflateZlib. External compressed
- * PNGs are rejected with a clear error until a full inflater lands in M2.
+ * Decode a zlib stream (stored, fixed Huffman, or dynamic Huffman).
  * @param {Uint8Array} bytes
  * @returns {Promise<Uint8Array>}
  */
 export async function inflateZlib(bytes) {
-  if (bytes.length < 6) throw new Error('truncated zlib stream');
-  const cmf = bytes[0];
-  const flg = bytes[1];
-  if ((cmf & 0x0f) !== 8) throw new Error('unsupported zlib compression method');
-  if ((cmf >> 4) > 7) throw new Error('unsupported zlib window size');
-  if (((cmf << 8) | flg) % 31 !== 0) throw new Error('invalid zlib header checksum');
-  if (flg & 0x20) throw new Error('zlib preset dictionaries are not supported');
-
-  let offset = 2;
-  /** @type {Uint8Array[]} */
-  const parts = [];
-  let final = false;
-
-  while (!final) {
-    if (offset >= bytes.length) throw new Error('truncated zlib block');
-    const header = bytes[offset++];
-    final = (header & 1) === 1;
-    const type = (header >> 1) & 3;
-    if (type !== 0) {
-      throw new Error(
-        'this M1 decoder only supports stored-block PNGs; compressed PNG import arrives in M2',
-      );
-    }
-    if (offset + 4 > bytes.length) throw new Error('truncated zlib stored-block header');
-    const length = bytes[offset] | (bytes[offset + 1] << 8);
-    const inverse = bytes[offset + 2] | (bytes[offset + 3] << 8);
-    offset += 4;
-    if ((length ^ 0xffff) !== inverse) throw new Error('invalid zlib stored-block length');
-    if (offset + length > bytes.length) throw new Error('truncated zlib stored-block data');
-    parts.push(bytes.subarray(offset, offset + length));
-    offset += length;
-  }
-
-  if (offset + 4 > bytes.length) throw new Error('truncated zlib checksum');
-  const expected = ((bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]) >>> 0;
-  const data = concatBytes(parts);
-  if (adler32(data) !== expected) throw new Error('zlib Adler-32 mismatch');
-  return data;
+  return inflateZlibSync(bytes);
 }
 
 /**
