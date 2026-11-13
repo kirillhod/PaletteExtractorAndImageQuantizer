@@ -36,9 +36,9 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, popularity, median cut, LUT mapper, PNG encode/decode, pipeline |
-| UI | Stage + rail, empty state, themes, drop/paste, before/after, palette strip, export |
-| Tests | 43 passing (`node --test`), including golden hashes |
-| Version | `js/core/version.js`; `v0.2.1` tagged; M1 complete |
+| UI | Stage + rail, empty state, themes, drop/paste, before/after, palette strip + sort, export |
+| Tests | 47 passing (`node --test`), including golden hashes |
+| Version | `js/core/version.js`; `v0.2.1` tagged; M1 UX patch `0.2.2` pending |
 | Next | M2: fixed palette, Wu/octree/K-means, dithering, indexed PNG |
 
 ---
@@ -111,7 +111,7 @@ to v1.0.x without changing the contracts.
 | F-07 | Map image → palette, documented tie-break | MUST | M2 | 100% of opaque pixels use a palette entry; lowest index wins ties |
 | F-08 | Dithering: none, FS, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2/4/8, blue noise | MUST | M2–M4 | Palette compliance preserved; strength/serpentine/edge-stop behave per §6.5 |
 | F-09 | Palette editor: add, remove, lock, reorder, rename, role | MUST | M3 | Locked entries survive sort/removal; IDs stable |
-| F-10 | Palette ordering: source/hue/lightness/custom | MUST | M3 | Order is a permutation; strip and CSS reflect it |
+| F-10 | Palette ordering: source, hue ↑/↓, lightness ↑/↓ | MUST | M1/M3 | Strip and swatches follow the order; custom order and locks land in M3 |
 | F-11 | Indexed PNG export with reserved transparent index | MUST | M2 | Bit depth rule, `PLTE`/`tRNS`, round-trip equality |
 | F-12 | 1×N / N×1 palette strip export + validation | MUST | M1 | Exact dimensions, no profile, every pixel validated |
 | F-13 | Exports: .hex, .gpl, .pal, .json, .css, .ase | MUST | M3 | Parse back to the same palette (where the format is lossless) |
@@ -695,16 +695,17 @@ Presets set controls; they do not lock them.
 
 ### 6.7 Palette model (`core/palette.js`)
 
-- `createPalette(colors, { order, space, transparentIndex })` assigns IDs 1..N and
-  indices 0..N-1.
-- `reorderPalette(palette, order, lockedIds)` returns a new order; locked entries keep
-  their current indices, unlocked entries fill the remaining slots using the chosen sort.
+- `createPalette(colors)` assigns stable IDs 1..N and indices 0..N-1 in extraction order.
+- `sortPalette(palette, order)` returns a new palette; IDs survive, indices are reassigned.
+  The strip export and HEX list use this order.
 - Sort keys:
-  - `source`: current index.
-  - `lightness`: Oklab L ascending, then C descending, then hue, then id.
-  - `hue`: achromatic (`C < 0.02`) first by L ascending, then hue ascending, then C
-    descending, then L ascending, then id.
-  - `custom`: `entry.index` (user order).
+  - `source`: ID ascending, restoring extraction order after any other sort.
+  - `lightness-asc` / `lightness-desc`: Oklab L, then hue, then C descending, then ID.
+  - `hue-asc` / `hue-desc`: achromatic (`C < 0.02`) first by L in the requested
+    direction; chromatic entries in a **circular hue order** (the largest hue gap becomes
+    the boundary, so reds near 0°/360° stay adjacent), then L in the requested direction,
+    C descending, ID.
+  - `custom`: M3, with lock-aware reordering.
 - `dedupePalette` folds exact RGB duplicates into the first entry and records aliases;
   a “keep duplicates” option is out of scope for v1.
 - `paletteHash` covers canonical `{order, space, entries:[{index,rgb,alpha}]}`.
@@ -808,8 +809,10 @@ without its header clutter.
   "Change image" lives in the stage toolbar, not the header.
 - **Rail:** a stack of collapsible sections — Palette (with the Extract/Map switch),
   Dither, Export, Quality. No tab bar; no separate mode screen.
-- **Palette strip:** directly under the canvas; swatches wrap and scroll. Color usage is
-  a thin bar under it.
+- **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
+  above it shows the palette count and a sort select: source, hue dark→light, hue
+  light→dark, lightness dark→light, lightness light→dark. The selected order controls
+  the swatches, HEX copy, and strip export.
 - **QA:** summary in the status line; full ΔE/worst-pixel/contrast table in the Quality
   section.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
@@ -1505,6 +1508,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Worker protocol + cancellation
 - [x] Preview UI: drop, K slider, before/after, status
 - [x] Strip export + validation
+- [x] Palette sorting (source / hue / lightness, both directions)
 - [x] Golden palette/preview hashes
 - **Exit:** drop → palette → validated strip; golden test; `0.2.0`.
 
@@ -1613,6 +1617,7 @@ A change is done only when:
 | 2026-11-13 | M1 PNG zlib uses stored blocks; `CompressionStream` deferred | The native stream stalled in headless Chrome; stored blocks are valid and portable, larger files |
 | 2026-11-13 | M1 UI uses the stage + right rail; median cut/popularity only | Working vertical slice; fixed palette, dithering, and indexed PNG are M2 |
 | 2026-11-13 | Export shows a validated `Save <file>` link instead of auto-downloading | Browsers may block async downloads after a worker response; the save click is a real gesture |
+| 2026-11-13 | M1 UX patch: 256-color range, palette sort (source/hue/lightness), footer cleanup | Owner request; keeps the strip order meaningful |
 
 ---
 

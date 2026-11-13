@@ -1,5 +1,5 @@
 // @ts-check
-import { paletteHexList } from './core/palette.js';
+import { paletteHexList, sortPalette } from './core/palette.js';
 import { copyText } from './ui/dom.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { initControls } from './ui/controls.js';
@@ -25,6 +25,8 @@ const frame = /** @type {HTMLElement} */ (document.getElementById('canvas-frame'
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('view-canvas'));
 const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
 const paletteStrip = document.getElementById('palette-strip');
+const paletteCount = document.getElementById('palette-count');
+const sortSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-sort'));
 const canvasEmpty = document.getElementById('canvas-empty');
 const toggleOriginal = /** @type {HTMLButtonElement} */ (document.getElementById('toggle-original'));
 const header = document.getElementById('header');
@@ -52,6 +54,7 @@ const app = {
 
 let nextRequestId = 1;
 let worker = createWorker();
+let sortOrder = 'source';
 
 function createWorker() {
   const instance = new Worker(new URL('./workers/pipeline.worker.js', import.meta.url), {
@@ -88,7 +91,7 @@ function onWorkerMessage(event) {
     };
     app.hasResult = true;
     canvasView.setReduced(app.reduced);
-    renderPalette(app.palette, paletteStrip);
+    renderCurrentPalette();
     updateExportState();
     if (canvasEmpty) canvasEmpty.hidden = true;
     setStatus([
@@ -134,6 +137,13 @@ function onWorkerMessage(event) {
 
 function updateExportState() {
   setExportEnabled(app.hasResult && app.palette.length > 0);
+}
+
+function renderCurrentPalette() {
+  app.palette = sortPalette(app.palette, sortOrder);
+  renderPalette(app.palette, paletteStrip);
+  if (paletteCount) paletteCount.textContent = `${app.palette.length} colors`;
+  if (sortSelect) sortSelect.disabled = app.palette.length === 0;
 }
 
 function processPreview() {
@@ -204,7 +214,7 @@ async function loadFile(file) {
     if (hero) hero.hidden = true;
     if (workspace) workspace.hidden = false;
     canvasView.setOriginal(preview);
-    renderPalette([], paletteStrip);
+    renderCurrentPalette();
     setExportEnabled(false);
     if (canvasEmpty) {
       canvasEmpty.hidden = false;
@@ -323,6 +333,11 @@ initShortcuts({
 
 document.getElementById('fit-view')?.addEventListener('click', () => canvasView.fit());
 document.getElementById('zoom-100')?.addEventListener('click', () => canvasView.zoom100());
+sortSelect?.addEventListener('change', () => {
+  sortOrder = sortSelect.value || 'source';
+  renderCurrentPalette();
+  clearDownloadLinks();
+});
 toggleOriginal.addEventListener('click', toggleOriginalState);
 document.getElementById('export-strip')?.addEventListener('click', exportStrip);
 document.getElementById('export-reduced')?.addEventListener('click', exportReduced);
