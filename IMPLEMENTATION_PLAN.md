@@ -897,6 +897,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 
 - Primary: "Download indexed PNG".
 - Secondary: "Palette strip", "Reduced PNG", "Copy HEX".
+- While an export runs, show an indeterminate progress bar and stage label; mark the
+  panel `aria-busy` and disable every export/copy button.
+- Only one export may be in flight. A second click, a different export button, or
+  `Copy HEX` while busy is ignored. Changing image or settings cancels the stale export.
 - Indexed export uses the sorted palette and declared transparent index; it is decoded
   and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
@@ -1677,6 +1681,7 @@ A change is done only when:
 | 2026-11-13 | Make export a third desktop column, left of the stage; export above canvas on mobile | Export is a primary action, but the palette needs vertical room; the narrow export column and 360 px rail give the canvas more width than the previous in-stage layout |
 | 2026-11-13 | Align palette with canvas; export column spans canvas+palette rows | Owner wants the palette and canvas to share a left edge, with export as a distinct column to their left |
 | 2026-11-13 | Release 0.3.1 with the version shown in the footer | Makes the running build identifiable; the tag marks this UI batch |
+| 2026-11-13 | Add an indeterminate export progress bar and a single-export busy lock | Users should not mistake a slow export for a frozen page; concurrent export clicks must not race |
 
 ---
 

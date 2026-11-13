@@ -75,6 +75,7 @@ const app = {
   hasResult: false,
   previewRequestId: 0,
   exportRequestId: 0,
+  exportBusy: false,
 };
 
 let nextRequestId = 1;
@@ -99,6 +100,8 @@ function createWorker() {
     toast('The processing worker failed. Reload the page.', 'error');
     setStatusMessage('Worker error');
     if (canvasEmpty) canvasEmpty.hidden = true;
+    app.exportBusy = false;
+    clearExportProgress();
     updateExportState();
   });
   return instance;
@@ -111,6 +114,14 @@ function onWorkerMessage(event) {
   if (message.type === 'progress') {
     if (message.requestId === app.previewRequestId) {
       setStatusMessage(message.stage === 'extract' ? 'Extracting palette…' : 'Processing…');
+    }
+    if (message.requestId === app.exportRequestId && app.exportBusy) {
+      const labels = {
+        strip: 'Building palette strip…',
+        index: 'Encoding indexed PNG…',
+        encode: 'Encoding reduced PNG…',
+      };
+      if (labels[message.stage]) setExportProgress(labels[message.stage]);
     }
     return;
   }
@@ -147,14 +158,14 @@ function onWorkerMessage(event) {
       toast(`Export failed validation: ${detail}`, 'error');
       setStatusMessage('Export failed validation');
       clearDownloadLinks();
-      updateExportState();
+      finishExport();
       return;
     }
     showDownloadLinks(files);
     const detail = files[0]?.validation?.detail ?? 'export complete';
     toast('Validated. Click Save to download.', 'success');
     setStatusMessage(`Validated: ${detail} — save link ready`);
-    updateExportState();
+    finishExport();
     return;
   }
 
@@ -165,12 +176,58 @@ function onWorkerMessage(event) {
     toast(message.message || 'Processing failed', 'error');
     setStatusMessage('Error');
     if (canvasEmpty) canvasEmpty.hidden = true;
-    updateExportState();
+    if (message.requestId === app.exportRequestId) finishExport();
+    else updateExportState();
   }
 }
 
 function updateExportState() {
-  setExportEnabled(app.hasResult && app.palette.length > 0);
+  setExportEnabled(app.hasResult && app.palette.length > 0 && !app.exportBusy);
+}
+
+/** @param {string} label */
+function setExportProgress(label) {
+  const host = document.getElementById('export-progress');
+  const labelNode = document.getElementById('export-progress-label');
+  const panel = document.querySelector('.peiq-export-panel');
+  if (labelNode) labelNode.textContent = label;
+  if (host) host.hidden = false;
+  if (panel) panel.setAttribute('aria-busy', 'true');
+}
+
+function clearExportProgress() {
+  const host = document.getElementById('export-progress');
+  const panel = document.querySelector('.peiq-export-panel');
+  if (host) host.hidden = true;
+  if (panel) panel.removeAttribute('aria-busy');
+}
+
+/**
+ * @param {string} label
+ * @returns {number} request id, or 0 when an export is already running
+ */
+function beginExport(label) {
+  if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return 0;
+  const id = nextRequestId++;
+  app.exportRequestId = id;
+  app.exportBusy = true;
+  setExportEnabled(false);
+  clearDownloadLinks();
+  setExportProgress(label);
+  return id;
+}
+
+function finishExport() {
+  app.exportBusy = false;
+  clearExportProgress();
+  updateExportState();
+}
+
+function cancelExport() {
+  if (!app.exportBusy) return;
+  worker.postMessage({ type: 'cancel', requestId: app.exportRequestId });
+  app.exportRequestId = 0;
+  finishExport();
 }
 
 function renderCurrentPalette() {
@@ -301,6 +358,7 @@ function processPreview() {
   if (mode === 'map' && fixedColors.length === 0) {
     if (!loadTargetPalette(paletteSelect?.value || 'pico-8')) return;
   }
+  cancelExport();
   clearDownloadLinks();
   if (app.previewRequestId) {
     worker.postMessage({ type: 'cancel', requestId: app.previewRequestId });
@@ -330,6 +388,7 @@ function processPreview() {
 
 async function loadFile(file) {
   try {
+    cancelExport();
     setStatusMessage('Decoding image…');
     const bitmap = await decodeBitmap(file);
     const width = bitmap.width;
@@ -420,12 +479,9 @@ function drawToImageData(bitmap, width, height, smooth) {
 }
 
 function exportStrip() {
-  if (!app.hasResult || app.palette.length === 0) return;
-  const id = nextRequestId++;
-  app.exportRequestId = id;
-  setExportEnabled(false);
+  const id = beginExport('Building palette strip…');
+  if (!id) return;
   setStatusMessage('Building and validating the palette strip…');
-  clearDownloadLinks();
   worker.postMessage({
     type: 'export-strip',
     requestId: id,
@@ -437,12 +493,10 @@ function exportStrip() {
 }
 
 function exportReduced() {
-  if (!app.hasResult || !app.full || app.palette.length === 0) return;
-  const id = nextRequestId++;
-  app.exportRequestId = id;
-  setExportEnabled(false);
+  if (!app.full) return;
+  const id = beginExport('Encoding reduced PNG…');
+  if (!id) return;
   setStatusMessage('Encoding the full-resolution PNG…');
-  clearDownloadLinks();
   const copy = new Uint8ClampedArray(app.full.data);
   worker.postMessage(
     {
@@ -457,12 +511,10 @@ function exportReduced() {
 }
 
 function exportIndexed() {
-  if (!app.hasResult || !app.full || app.palette.length === 0) return;
-  const id = nextRequestId++;
-  app.exportRequestId = id;
-  setExportEnabled(false);
+  if (!app.full) return;
+  const id = beginExport('Encoding indexed PNG…');
+  if (!id) return;
   setStatusMessage('Encoding and validating the indexed PNG…');
-  clearDownloadLinks();
   const copy = new Uint8ClampedArray(app.full.data);
   worker.postMessage(
     {
@@ -478,7 +530,7 @@ function exportIndexed() {
 }
 
 function copyHex() {
-  if (!app.hasResult || app.palette.length === 0) return;
+  if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return;
   copyText(paletteHexList(app.palette))
     .then(() => toast(`Copied ${app.palette.length} HEX values`, 'success'))
     .catch(() => toast('Clipboard is unavailable', 'error'));

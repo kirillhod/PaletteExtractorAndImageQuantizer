@@ -80,6 +80,10 @@
               <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips.">?</button>
             </div>
           </div>
+          <div class="peiq-export-progress" id="export-progress" role="status" aria-live="polite" hidden>
+            <div class="peiq-export-progress__track" aria-hidden="true"><span></span></div>
+            <p class="peiq-export-progress__label" id="export-progress-label">Preparing export…</p>
+          </div>
           <div class="peiq-download-result" id="download-result" hidden></div>
           <p class="peiq-hint">Decoded and validated before Save.</p>
         </div>
