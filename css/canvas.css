@@ -83,3 +83,12 @@
   min-width: 32px;
   padding: 0 8px;
 }
+
+/* The desktop stage grid gives the canvas the space left by the palette, export,
+   and status rows. This rule must live after the base clamp() above. */
+@media (min-width: 980px) {
+  .peiq-canvas-frame {
+    height: auto;
+    min-height: 0;
+  }
+}

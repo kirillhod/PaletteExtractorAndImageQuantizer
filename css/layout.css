@@ -214,11 +214,6 @@
     align-content: stretch;
   }
 
-  .peiq-canvas-frame {
-    height: auto;
-    min-height: 0;
-  }
-
   .peiq-rail {
     position: static;
     height: 100%;
