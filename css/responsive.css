@@ -23,7 +23,7 @@
 
 @media (max-width: 1219px) {
   .peiq-workspace {
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: 180px minmax(0, 1fr) 340px;
   }
 }
 

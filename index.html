@@ -56,13 +56,32 @@
     </section>
 
     <section class="peiq-workspace" id="workspace" hidden>
-      <div class="peiq-stage">
-        <div class="peiq-stage__toolbar">
+      <div class="peiq-stage__toolbar">
           <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="change-image" type="button">Change image</button>
           <span class="peiq-stage__spacer"></span>
           <button class="peiq-icon-btn" id="fit-view" type="button" aria-label="Fit image to view">Fit</button>
           <button class="peiq-icon-btn" id="zoom-100" type="button" aria-label="Zoom to 100%">100%</button>
           <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" aria-pressed="false">Original</button>
+        </div>
+
+        <div class="peiq-export-panel" aria-labelledby="export-heading">
+          <div class="peiq-export-bar">
+            <span class="peiq-label" id="export-heading">Export</span>
+            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" aria-label="Download indexed PNG" disabled>Indexed PNG</button>
+            <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" disabled>Palette strip</button>
+            <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" disabled>Reduced PNG</button>
+            <button class="peiq-btn peiq-btn--small" id="copy-hex" type="button" disabled>Copy HEX</button>
+            <div class="peiq-export-option">
+              <label class="peiq-label" for="strip-orientation">Strip</label>
+              <select class="peiq-select peiq-select--compact" id="strip-orientation">
+                <option value="Nx1">N×1</option>
+                <option value="1xN">1×N</option>
+              </select>
+              <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips.">?</button>
+            </div>
+          </div>
+          <div class="peiq-download-result" id="download-result" hidden></div>
+          <p class="peiq-hint">Decoded and validated before Save.</p>
         </div>
 
         <div class="peiq-canvas-frame peiq-canvas-frame--pixelated" id="canvas-frame">
@@ -94,28 +113,7 @@
           <div class="peiq-palette-strip" id="palette-strip" aria-label="Extracted palette"></div>
         </div>
 
-        <div class="peiq-export-panel" aria-labelledby="export-heading">
-          <div class="peiq-export-bar">
-            <span class="peiq-label" id="export-heading">Export</span>
-            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" disabled>Download indexed PNG</button>
-            <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" disabled>Palette strip</button>
-            <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" disabled>Reduced PNG</button>
-            <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="copy-hex" type="button" disabled>Copy HEX</button>
-            <div class="peiq-export-option">
-              <label class="peiq-label" for="strip-orientation">Strip</label>
-              <select class="peiq-select peiq-select--compact" id="strip-orientation">
-                <option value="Nx1">N×1 (horizontal)</option>
-                <option value="1xN">1×N (vertical)</option>
-              </select>
-              <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips.">?</button>
-            </div>
-          </div>
-          <div class="peiq-download-result" id="download-result" hidden></div>
-          <p class="peiq-hint">Every export is decoded and validated before the Save link appears.</p>
-        </div>
-
         <div class="peiq-statusbar" id="statusbar"></div>
-      </div>
 
       <aside class="peiq-rail" aria-label="Controls">
         <details class="peiq-rail-section" open>

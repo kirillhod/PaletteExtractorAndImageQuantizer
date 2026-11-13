@@ -786,7 +786,38 @@
   }
 
   .peiq-palette-strip {
-    max-height: 96px;
+    max-height: 160px;
+  }
+
+  .peiq-export-panel {
+    padding: var(--peiq-space-3);
+  }
+
+  .peiq-export-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--peiq-space-2);
+  }
+
+  .peiq-export-bar > .peiq-label {
+    margin-right: 0;
+  }
+
+  .peiq-export-panel .peiq-btn {
+    width: 100%;
+  }
+
+  .peiq-export-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    margin-left: 0;
+  }
+
+  .peiq-export-option .peiq-select {
+    width: 100%;
+    min-width: 0;
   }
 
   .peiq-rail-section > summary {

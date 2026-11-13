@@ -105,25 +105,42 @@
 
 .peiq-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: var(--peiq-space-4);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "toolbar"
+    "export"
+    "canvas"
+    "palette"
+    "status"
+    "rail";
+  gap: var(--peiq-space-3);
   align-items: start;
   min-height: calc(100dvh - 64px);
   padding-block: var(--peiq-space-4);
 }
 
-.peiq-stage {
-  min-width: 0;
-  display: grid;
-  gap: var(--peiq-space-3);
-  align-content: start;
-}
-
 .peiq-stage__toolbar {
+  grid-area: toolbar;
   display: flex;
   align-items: center;
   gap: var(--peiq-space-2);
   min-height: 36px;
+}
+
+.peiq-export-panel {
+  grid-area: export;
+}
+
+.peiq-canvas-frame {
+  grid-area: canvas;
+}
+
+.peiq-palette-panel {
+  grid-area: palette;
+}
+
+.peiq-statusbar {
+  grid-area: status;
 }
 
 .peiq-stage__spacer {
@@ -131,6 +148,7 @@
 }
 
 .peiq-rail {
+  grid-area: rail;
   position: sticky;
   top: 80px;
   display: grid;
@@ -203,15 +221,19 @@
   .peiq-workspace {
     flex: 1 1 auto;
     min-height: 0;
-    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: clamp(180px, 14vw, 220px) minmax(0, 1fr) 360px;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "toolbar toolbar rail"
+      "export canvas rail"
+      "palette palette rail"
+      "status status rail";
     align-items: stretch;
     padding-block: var(--peiq-space-3);
   }
 
-  .peiq-stage {
-    min-height: 0;
-    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-    align-content: stretch;
+  .peiq-export-panel {
+    align-self: start;
   }
 
   .peiq-rail {
