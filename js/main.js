@@ -1,6 +1,7 @@
 // @ts-check
 import { parseHex } from './core/color.js';
 import { createPalette, paletteHexList, sortPalette } from './core/palette.js';
+import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
 import { copyText, debounce } from './ui/dom.js';
@@ -22,6 +23,9 @@ import { initTooltips } from './ui/tooltips.js';
 
 const MAX_PIXELS = 16_777_216;
 const PREVIEW_EDGE = 1024;
+
+const versionLabel = document.getElementById('app-version');
+if (versionLabel) versionLabel.textContent = `· v${APP_VERSION}`;
 
 const hero = document.getElementById('hero');
 const workspace = document.getElementById('workspace');

@@ -563,8 +563,8 @@ body instead of making the rail scroll.
 Export is its own column to the left of the canvas on desktop and above the canvas on
 mobile. It reads as the primary action area: a bright primary indexed-PNG button,
 quieter strip, reduced-PNG, and HEX buttons, then strip orientation. The desktop column
-is 180–220 px, so the canvas keeps (and gains) width; the palette spans the export and
-canvas columns below them, giving large palettes more room.
+is 180–220 px, so the canvas keeps its width; the export column spans the canvas and
+palette rows, and the palette aligns with the canvas’s left edge below it.
 
 ```css
 .peiq-workspace {
@@ -1185,8 +1185,8 @@ screen block.
 - **Empty state:** full-width hero with the drop zone; no rail.
 - **Loaded state:** **three columns** – a narrow export column, the stage (canvas +
   palette strip + status), and a 360/340 px right rail (palette settings, dither,
-  quality). The palette spans the export and canvas columns, so large palettes get the
-  full width below both. Below 980 px the order is toolbar, export, canvas, palette,
+  quality). The export column spans the canvas and palette rows; the palette aligns with
+  the canvas’s left edge. Below 980 px the order is toolbar, export, canvas, palette,
   settings.
 - **Header:** 64 px; brand left; theme toggle + Help right. No subbar, no nav links, no
   download button in the header.
@@ -1424,7 +1424,7 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 - On desktop, keep the page itself fixed between header and footer; only the settings
   rail and a long palette strip may scroll.
 - Put export actions in their own left column, not inside the settings rail or under the
-  canvas; the palette then spans the export and canvas columns.
+  canvas; the palette starts where the canvas starts, to the right of export.
 - Keep the header to brand + theme toggle + Help; settings and export live below it.
 - Switch themes instantly; do not cross-fade colors between themes.
 - Respect `prefers-reduced-motion`; keep every interaction keyboard-operable.

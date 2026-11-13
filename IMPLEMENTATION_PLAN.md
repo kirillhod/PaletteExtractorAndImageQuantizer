@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
-| Version | `js/core/version.js`; `v0.3.0` tagged; M2 complete |
+| Version | `js/core/version.js`; `v0.3.1` tagged; M2 complete |
 | Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
 
 ---
@@ -802,8 +802,9 @@ hashes are reviewed when intentional changes occur.
 
 Empty state: full-width hero with the drop zone; no rail.
 Loaded state: three columns on desktop — export, stage, and settings rail — following the
-PaletteForge workflow without its header clutter. The palette spans the export and stage
-columns. On mobile the order is toolbar, export, canvas, palette, settings.
+PaletteForge workflow without its header clutter. The export column spans the canvas and
+palette rows; the palette starts at the canvas’s left edge. On mobile the order is
+toolbar, export, canvas, palette, settings.
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
@@ -840,8 +841,8 @@ columns. On mobile the order is toolbar, export, canvas, palette, settings.
   fill the viewport; the stage gives the canvas the remaining height and only the rail
   (or a palette strip with many colors) scrolls.
 - **Export panel:** a separate left column with the primary indexed-PNG action and the
-  strip/reduced/HEX actions; above the canvas below 980 px. The palette spans the export
-  and canvas columns, so a large palette gets more width and height.
+  strip/reduced/HEX actions; above the canvas below 980 px. The column spans the canvas and
+  palette rows, and the palette aligns with the canvas’s left edge.
 - **QA:** summary in the status line; full ΔE/worst-pixel/contrast table in the Quality
   section.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
@@ -1673,7 +1674,9 @@ A change is done only when:
 | 2026-11-13 | Add `.nojekyll` and stage only runtime files in the Pages workflow | Pages readiness; keeps tests, tools, docs, and `.git` out of the deployed artifact |
 | 2026-11-13 | Move Export to a stage panel; fix the desktop page frame; compact footer with repository link | Export is the primary output action, not a setting; only the rail should scroll; owner asked for a repo link |
 | 2026-11-13 | Add `?` tooltips for non-obvious controls, including serpentine scan and edge stop | Plain-language explanations without permanently growing the rail; 13 hints cover the algorithm settings |
-| 2026-11-13 | Make export a third desktop column, left of the stage; palette spans export+stage; export above canvas on mobile | Export is a primary action, but the palette needs vertical room; the narrow export column and 360 px rail give the canvas more width than the previous in-stage layout |
+| 2026-11-13 | Make export a third desktop column, left of the stage; export above canvas on mobile | Export is a primary action, but the palette needs vertical room; the narrow export column and 360 px rail give the canvas more width than the previous in-stage layout |
+| 2026-11-13 | Align palette with canvas; export column spans canvas+palette rows | Owner wants the palette and canvas to share a left edge, with export as a distinct column to their left |
+| 2026-11-13 | Release 0.3.1 with the version shown in the footer | Makes the running build identifiable; the tag marks this UI batch |
 
 ---
 

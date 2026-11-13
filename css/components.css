@@ -786,6 +786,7 @@
   }
 
   .peiq-palette-strip {
+    gap: 3px;
     max-height: 160px;
   }
 
