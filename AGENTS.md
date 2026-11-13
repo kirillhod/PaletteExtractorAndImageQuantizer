@@ -254,7 +254,7 @@ and the change is committed locally with a descriptive body (plan §16).
 ## 12. Current state and next task
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ (82 tests); version `0.3.0` bump pending.
+  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0` (82 tests).
 - Working: five extractors, fixed palettes + import, exact/LUT mapping, ED/Bayer/blue-noise
   dithering, indexed PNG with `tRNS`, strip/reduced exports, themes, Help drawer.
 - Next: M3 — ΔE00 QA, palette editor/locks, presets, all palette formats, theory guide;

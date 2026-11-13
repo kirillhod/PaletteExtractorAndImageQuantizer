@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, strip, reduced PNG |
 | Tests | 82 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG |
-| Version | `js/core/version.js`; `v0.2.2` tagged; M2 version bump to `0.3.0` pending |
+| Version | `js/core/version.js`; `v0.3.0` tagged; M2 complete |
 | Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, theory guide |
 
 ---
