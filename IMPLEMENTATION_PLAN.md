@@ -34,10 +34,12 @@ agents; it defers to this plan for *what* to build.
 |---|---|
 | Research report | Complete |
 | Plan | This document, v1.0.0 |
-| Scaffold | `package.json`, `.gitignore`, `tools/dev-server.mjs` |
-| Color core | `js/core/color.js`, known-answer tests green |
-| Version | `js/core/version.js`, `version.test.js`; tagged `v0.1.0` |
-| Everything else | Not started |
+| Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
+| Core | Color, histogram, popularity, median cut, LUT mapper, PNG encode/decode, pipeline |
+| UI | Stage + rail, empty state, themes, drop/paste, before/after, palette strip, export |
+| Tests | 43 passing (`node --test`), including golden hashes |
+| Version | `js/core/version.js`; `v0.1.0` tagged; M1 version bump to `0.2.0` pending |
+| Next | M2: fixed palette, Wu/octree/K-means, dithering, indexed PNG |
 
 ---
 
@@ -1232,10 +1234,15 @@ No error may be swallowed. Every warning is visible in the status bar and in the
 
 Zlib:
 
-- Default: `CompressionStream('deflate')` (zlib wrapper, verified `78 9c`).
-- Fallback: stored blocks (`0x78 0x01`, 65535-byte blocks, Adler-32).
+- **M1 default: stored blocks** (`0x78 0x01`, 65535-byte blocks, Adler-32). This is valid,
+  portable, and larger than compressed output. It was chosen after `CompressionStream`
+  stalled in headless Chrome during verification.
+- Intended optimization: `CompressionStream('deflate')` once it is verified in real
+  browsers; keep stored blocks as the fallback.
 - Compression output is implementation-defined; byte equality is guaranteed only within
   the same browser/version.
+- The M1 decoder reads stored-block streams only and rejects compressed PNGs with a clear
+  error. A full inflater lands in M2 before palette-strip import.
 
 ### 12.4 Other formats
 
@@ -1462,6 +1469,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `assets/blue-noise-64.bin` | 64×64 blue-noise mask (checksum in `assets/README.md`) |
 | `assets/fonts/InterVariable-latin.woff2` | Self-hosted Inter variable Latin subset (~48 KB) |
 | `assets/fonts/OFL.txt` | Inter SIL Open Font License |
+| `assets/favicon.svg` | Local orange-on-charcoal PEIQ mark |
 | `assets/README.md` | Provenance, font source/license, regeneration command |
 | `tools/dev-server.mjs` ✅ | Zero-dep static server |
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
@@ -1475,25 +1483,26 @@ Legend: **S** = signatures/notes, **T** = required tests.
 Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 `0.2.0` M1, `0.3.0` M2, `0.4.0` M3, `1.0.0` M4.
 
-### M0 — Foundation (current)
+### M0 — Foundation
 
 - [x] Research report
 - [x] Plan v1.0.0
 - [x] `package.json`, `.gitignore`, dev server
 - [x] Color core + tests
 - [x] `version.js` + sync test; tagged `v0.1.0`
-- [ ] `types.js`, `rng.js`, `hash.js`
-- [ ] Test helpers
-- [ ] CI skeleton
+- [x] `types.js`, `rng.js`, `hash.js`
+- [x] Test helpers
+- [x] CI skeleton
 - **Exit:** `node --test` green; page shell loads; no dependencies.
 
-### M1 — Vertical slice
+### M1 — Vertical slice (current)
 
-- [ ] Histogram, popularity, median cut
-- [ ] PNG encoder (RGBA + strip) + decoder
-- [ ] Worker protocol + cancellation
-- [ ] Preview UI: drop, K slider, before/after, status
-- [ ] Strip export + validation
+- [x] Histogram, popularity, median cut
+- [x] PNG encoder (RGBA + strip) + decoder
+- [x] Worker protocol + cancellation
+- [x] Preview UI: drop, K slider, before/after, status
+- [x] Strip export + validation
+- [x] Golden palette/preview hashes
 - **Exit:** drop → palette → validated strip; golden test; `0.2.0`.
 
 ### M2 — Fixed palette and dithering
@@ -1598,6 +1607,8 @@ A change is done only when:
 | 2026-11-13 | Two complete themes, auto by system + 3-state toggle (auto/light/dark), persisted; no mixed tokens | Owner requirement; `theme.test.js` enforces parity |
 | 2026-11-13 | Loaded layout = PaletteForge-like stage + right rail; header only brand + theme + Help | Owner requirement; remove clutter |
 | 2026-11-13 | `theme-init.js` is an external classic head script, not inline | CSP-safe, no FOUC |
+| 2026-11-13 | M1 PNG zlib uses stored blocks; `CompressionStream` deferred | The native stream stalled in headless Chrome; stored blocks are valid and portable, larger files |
+| 2026-11-13 | M1 UI uses the stage + right rail; median cut/popularity only | Working vertical slice; fixed palette, dithering, and indexed PNG are M2 |
 
 ---
 

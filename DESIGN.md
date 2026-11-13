@@ -93,8 +93,10 @@ and light-theme variables.
   /* Text */
   --peiq-text: #c7cbd1;               /* body */
   --peiq-text-strong: #f9fafa;        /* headings, key values */
-  --peiq-text-secondary: #89939f;     /* secondary labels */
-  --peiq-text-tertiary: #6e7987;      /* metadata, muted */
+  --peiq-text-secondary: #a3adb9;     /* secondary labels (AA-adjusted) */
+  --peiq-text-tertiary: #89939f;      /* metadata, muted (AA-adjusted) */
+  --peiq-link: var(--peiq-accent);
+  --peiq-link-hover: var(--peiq-accent-hover);
 
   /* Borders */
   --peiq-border: rgba(199, 203, 209, 0.15);
@@ -114,6 +116,7 @@ and light-theme variables.
   --peiq-brand: #ed8f31;
   --peiq-brand-rgb: 237, 143, 49;
   --peiq-brand-soft: rgba(237, 143, 49, 0.16);
+  --peiq-brand-text: var(--peiq-brand);
   --peiq-brand-ink: #b35c00;          /* on light surfaces */
 
   /* Buttons (site dark theme) */
@@ -123,9 +126,8 @@ and light-theme variables.
   --peiq-btn-accent-bg: linear-gradient(350deg, #6183ff, #47aaf5);
   --peiq-btn-accent-bg-hover: linear-gradient(350deg, #708fff, #5ab3f6);
   --peiq-btn-accent-shadow:
-    2px 4px 4px rgba(0, 82, 255, 0.102),
-    1px 8px 24px rgba(0, 82, 255, 0.102),
-    2px 8px 48px rgba(0, 82, 255, 0.549);
+    0 2px 4px rgba(0, 82, 255, 0.18),
+    0 8px 24px rgba(0, 82, 255, 0.12);
 
   /* Inputs (site dark theme) */
   --peiq-input-bg: #25282d;
@@ -191,13 +193,15 @@ and light-theme variables.
 
   --peiq-text: hsl(230, 4%, 31%);
   --peiq-text-strong: hsl(230, 4%, 27%);
-  --peiq-text-secondary: hsl(230, 4%, 57%);
-  --peiq-text-tertiary: hsl(230, 4%, 71%);
+  --peiq-text-secondary: hsl(230, 4%, 36%);
+  --peiq-text-tertiary: hsl(230, 4%, 42%);
+  --peiq-link: #0066cc;
+  --peiq-link-hover: #004f9e;
 
   --peiq-border: hsl(210, 4%, 89%);
   --peiq-border-strong: #d3d9df;
 
-  --peiq-btn-color: #677a8e;
+  --peiq-btn-color: #4f6275;
   --peiq-btn-bg: #eaedf0;
   --peiq-btn-bg-hover: #f3f5f6;
   --peiq-input-bg: #eaedf0;
@@ -230,6 +234,7 @@ and light-theme variables.
   --peiq-checker-b: #f8f9fa;
 
   --peiq-text-on-accent: #0b1220;
+  --peiq-brand-text: #a84800;
   --peiq-brand-ink: #a84800;
 }
 ```
@@ -262,16 +267,21 @@ and light-theme variables.
 
 **Color rules**
 
-- **Blue is interaction.** Primary buttons, links, active tabs, focus rings, selected
-  swatches, and progress use `--peiq-accent`.
-- **Orange is brand.** Use `--peiq-brand` only for the wordmark/mark, a brand eyebrow, or
-  one editorial highlight. Never use it for primary buttons or body links.
+- **Blue is interaction.** Primary buttons, active tabs, focus rings, selected swatches,
+  and progress use `--peiq-accent`. Links use `--peiq-link` (accent on dark, a darker
+  blue on light for contrast).
+- **Orange is brand.** Use `--peiq-brand` for the mark/dot and `--peiq-brand-text` for a
+  brand eyebrow or one editorial highlight. Never use it for primary buttons or body
+  links.
 - Body text is `--peiq-text` on `--peiq-bg`; headings and key values are
   `--peiq-text-strong`.
 - Cards use `--peiq-surface` with no border; structure comes from the surface step and
   shadow. Borders are for inputs, dividers, and the header.
 - The site uses white text on the blue gradient; PEIQ uses
   `--peiq-text-on-accent` for 4.5:1 contrast. This is a deliberate accessibility fix.
+- Light-theme secondary/tertiary text, links, and secondary button text are darker than
+  the site’s defaults so 12 px labels still meet 4.5:1. Dark-theme secondary/tertiary
+  text is lightened for the same reason; this is recorded in Appendix A.
 - One accent per view. Do not import the release page’s per-feature pastel colors
   (pink/purple/green) into the tool; keep blue + orange brand.
 - Use `rgba(var(--peiq-accent-rgb), α)` for tints; the RGB variants are defined in
@@ -284,8 +294,10 @@ and light-theme variables.
 |---|---:|---|
 | `--peiq-text` on `--peiq-bg` | ≈ 8.8:1 | body |
 | `--peiq-text-strong` on `--peiq-bg` | ≈ 15:1 | headings |
-| `--peiq-text-secondary` on `--peiq-bg` | ≈ 5.4:1 | secondary labels |
-| `--peiq-text-tertiary` on `--peiq-bg` | ≈ 3.7:1 | metadata only |
+| `--peiq-text-secondary` on `--peiq-bg` | ≈ 6.7:1 | secondary labels |
+| `--peiq-text-tertiary` on `--peiq-bg` | ≈ 5.4:1 | metadata, hints |
+| `--peiq-link` on `--peiq-bg` | ≈ 5.8:1 | links |
+| `--peiq-brand-text` on `--peiq-bg` | ≈ 6.9:1 | brand eyebrow |
 | `--peiq-accent` on `--peiq-bg` | ≈ 5.8:1 | links/icons |
 | `--peiq-text-on-accent` on `#47aaf5` | ≈ 7:1 | primary button |
 | `#ffffff` on `#47aaf5` | ≈ 2.9:1 | **not** used |
@@ -702,13 +714,13 @@ Example labels:
 
 ```css
 .peiq-link {
-  color: var(--peiq-accent);
+  color: var(--peiq-link);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   transition: color 150ms ease-out;
 }
-.peiq-link:hover { color: var(--peiq-accent-hover); }
+.peiq-link:hover { color: var(--peiq-link-hover); }
 .peiq-link:focus-visible {
   outline: 2px solid var(--peiq-focus);
   outline-offset: 2px;
@@ -912,7 +924,7 @@ light “paper” sheet.
   transition: transform 250ms ease-out;
 }
 .peiq-drawer[data-open="true"] { transform: translateX(0); }
-.peiq-drawer a { color: var(--peiq-accent); }
+.peiq-drawer a { color: var(--peiq-link); }
 
 .peiq-popover {
   z-index: 50;
@@ -1050,7 +1062,7 @@ It reports dimensions, unique colors, stage/progress, timings, and the QA summar
   font: 400 0.875rem/1.43 var(--peiq-font-ui);
 }
 .peiq-footer a { color: var(--peiq-text-secondary); }
-.peiq-footer a:hover { color: var(--peiq-accent); }
+.peiq-footer a:hover { color: var(--peiq-link); }
 ```
 
 ### Keyboard hint
@@ -1419,8 +1431,8 @@ inspected locally. The following values were extracted, not guessed:
 | `--color-bg-primary` | `#30353b` | `--peiq-surface` |
 | `--color-text` | `#c7cbd1` | `--peiq-text` |
 | `--color-text-primary` | `#f9fafa` | `--peiq-text-strong` |
-| `--color-text-secondary` | `#89939f` | `--peiq-text-secondary` |
-| `--color-text-tertiary` | `#6e7987` | `--peiq-text-tertiary` |
+| `--color-text-secondary` | `#89939f` | `--peiq-text-secondary` (`#a3adb9`, AA-adjusted) |
+| `--color-text-tertiary` | `#6e7987` | `--peiq-text-tertiary` (`#89939f`, AA-adjusted) |
 | `--border-color` | `rgba(199,203,209,.15)` | `--peiq-border` |
 | `--color-accent-h` | `204` | blue interaction accent |
 | `--color-accent-s/l` | `100% / 50%` | `hsl(204 100% 50%)` |
@@ -1429,7 +1441,8 @@ inspected locally. The following values were extracted, not guessed:
 | `--btn-color-bg-hover` | `#454c54` | `--peiq-btn-bg-hover` |
 | `--btn-accent-bg-img` | `linear-gradient(350deg,#6183ff,#47aaf5)` | primary button |
 | `--btn-accent-bg-img-hover` | `linear-gradient(350deg,#708fff,#5ab3f6)` | primary hover |
-| `--btn-accent-box-shadow` | 3-layer blue shadow | primary button |
+| `--btn-accent-box-shadow` | 3-layer blue shadow | softened 2-layer blue shadow |
+
 | `--input-color-bg` | `#25282d` | `--peiq-input-bg` |
 | `--input-color-bg-hover` | `#202327` | `--peiq-input-bg-hover` |
 | `--code-color` | `#d6b6d8` | `--peiq-code` |
@@ -1469,6 +1482,9 @@ inspected locally. The following values were extracted, not guessed:
 | Artwork | 3D renders, screenshots, video | Live canvas, palette mosaic, SVG | No brand assets; offline |
 | Cards | Surface + shadow, no border | Same | Exact |
 | Fonts | Inter variable | Self-hosted Inter + OFL | Offline-first, zero CDN |
+| Secondary/tertiary text | `#89939f` / `#6e7987` | `#a3adb9` / `#89939f` dark; darkened light values | WCAG AA for 12 px labels and hints |
+| Light button/link text | `#677a8e` / accent blue | `#4f6275` / `#0066cc` | WCAG AA on light surfaces |
+| Primary shadow | 3-layer blue glow | softened 2-layer | Avoids a halo on stacked rail buttons |
 
 **Theme parity**
 
@@ -1478,7 +1494,8 @@ inspected locally. The following values were extracted, not guessed:
 - Required token list (asserted by `test/theme.test.js`):
   `--peiq-bg`, `--peiq-bg-secondary`, `--peiq-bg-tertiary`, `--peiq-surface`,
   `--peiq-surface-hover`, `--peiq-text`, `--peiq-text-strong`,
-  `--peiq-text-secondary`, `--peiq-text-tertiary`, `--peiq-border`,
+  `--peiq-text-secondary`, `--peiq-text-tertiary`, `--peiq-link`,
+  `--peiq-link-hover`, `--peiq-border`,
   `--peiq-border-strong`, `--peiq-btn-color`, `--peiq-btn-bg`,
   `--peiq-btn-bg-hover`, `--peiq-input-bg`, `--peiq-input-bg-hover`,
   `--peiq-input-border`, `--peiq-code`, `--peiq-code-bg`,
@@ -1487,7 +1504,8 @@ inspected locally. The following values were extracted, not guessed:
   `--peiq-danger`, `--peiq-danger-bg`, `--peiq-danger-text`,
   `--peiq-info`, `--peiq-info-bg`, `--peiq-info-text`,
   `--peiq-shadow-card`, `--peiq-shadow-card-lg`, `--peiq-shadow-popover`,
-  `--peiq-shadow-drawer`, `--peiq-brand-soft`, `--peiq-brand-ink`,
+  `--peiq-shadow-drawer`, `--peiq-brand-soft`, `--peiq-brand-text`,
+  `--peiq-brand-ink`,
   `--peiq-checker-a`, `--peiq-checker-b`, `--peiq-text-on-accent`.
 - Shared tokens (identical in both themes): accent, accent-hover/pressed/bg, brand,
   primary button gradient/shadow, focus, radii, spacing, type. They are declared once in

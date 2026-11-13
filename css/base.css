@@ -1,0 +1,116 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--peiq-bg);
+  color: var(--peiq-text);
+  font-family: var(--peiq-font-ui);
+  font-size: 0.875rem;
+  line-height: 1.43;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0 0 var(--peiq-space-2);
+  color: var(--peiq-text-strong);
+  font-weight: 600;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0 0 var(--peiq-space-3);
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--peiq-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--peiq-link-hover);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+img,
+canvas,
+video {
+  max-width: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+::selection {
+  background: var(--peiq-accent-bg-hover);
+  color: var(--peiq-text-strong);
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.peiq-muted {
+  color: var(--peiq-text-secondary);
+}
+
+.peiq-hint {
+  margin: 0;
+  color: var(--peiq-text-tertiary);
+  font-size: 0.75rem;
+  line-height: 1.43;
+}
+
+.peiq-eyebrow {
+  margin: 0 0 var(--peiq-space-2);
+  color: var(--peiq-brand-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,45 @@
+.peiq-learn-note {
+  padding: var(--peiq-space-3);
+  border-left: 3px solid var(--peiq-brand);
+  border-radius: 0 var(--peiq-radius) var(--peiq-radius) 0;
+  background: var(--peiq-brand-soft);
+  color: var(--peiq-text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.peiq-learn-note p:last-child {
+  margin-bottom: 0;
+}
+
+.peiq-shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.peiq-shortcuts th,
+.peiq-shortcuts td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--peiq-border);
+  text-align: left;
+}
+
+.peiq-shortcuts th {
+  color: var(--peiq-text-tertiary);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.peiq-shortcuts kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--peiq-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--peiq-bg-tertiary);
+  color: var(--peiq-text-secondary);
+  font-family: var(--peiq-font-mono);
+  font-size: 0.75rem;
+}
