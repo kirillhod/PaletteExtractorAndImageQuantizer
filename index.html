@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-theme-mode="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PaletteExtractorAndImageQuantizer — palette compiler</title>
+  <meta name="description" content="Extract a palette from any image, compare the result, and export a validated palette strip or reduced PNG. Runs locally in your browser.">
+  <meta name="theme-color" content="#1c1e22">
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <script src="./js/theme-init.js"></script>
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/canvas.css">
+  <link rel="stylesheet" href="./css/learn.css">
+  <link rel="stylesheet" href="./css/responsive.css">
+</head>
+<body>
+  <header class="peiq-header" id="header">
+    <a class="peiq-header__brand" href="./" aria-label="PaletteExtractorAndImageQuantizer home">
+      <span class="peiq-header__brand-dot" aria-hidden="true"></span>
+      <span class="peiq-header__name-long">PaletteExtractorAndImageQuantizer</span>
+      <span class="peiq-header__name-short" aria-hidden="true">PEIQ</span>
+    </a>
+    <div class="peiq-header__actions">
+      <button class="peiq-theme-toggle" id="theme-toggle" type="button" data-mode="auto" aria-label="Theme: automatic (follows system). Activate for light theme.">
+        <svg class="peiq-theme-toggle__icon peiq-icon-auto" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8"></circle>
+          <path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" stroke="none"></path>
+        </svg>
+        <svg class="peiq-theme-toggle__icon peiq-icon-light" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+        <svg class="peiq-theme-toggle__icon peiq-icon-dark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5z"></path>
+        </svg>
+      </button>
+      <button class="peiq-icon-btn" id="help-toggle" type="button" aria-label="Open help" aria-expanded="false" aria-controls="help-drawer">?</button>
+    </div>
+  </header>
+
+  <main class="peiq-shell">
+    <section class="peiq-hero" id="hero">
+      <p class="peiq-eyebrow">Local-first palette compiler</p>
+      <h1 class="peiq-hero__title">Turn any image into a usable palette.</h1>
+      <p class="peiq-hero__subtitle">Drop an image, choose how many colors you need, compare the result, and export a validated palette strip or a reduced PNG. Nothing leaves your device.</p>
+      <div class="peiq-hero__drop" id="drop-target">
+        <p class="peiq-hero__drop-title">Drop an image here</p>
+        <p class="peiq-hint">or paste with <kbd class="peiq-kbd">Ctrl/Cmd+V</kbd></p>
+        <button class="peiq-btn peiq-btn--primary" id="pick-image" type="button">Choose an image</button>
+        <p class="peiq-hint">PNG, JPEG, WebP, GIF, BMP · up to 16.7 MP · processed locally</p>
+      </div>
+      <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif" hidden>
+    </section>
+
+    <section class="peiq-workspace" id="workspace" hidden>
+      <div class="peiq-stage">
+        <div class="peiq-stage__toolbar">
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="change-image" type="button">Change image</button>
+          <span class="peiq-stage__spacer"></span>
+          <button class="peiq-icon-btn" id="fit-view" type="button" aria-label="Fit image to view">Fit</button>
+          <button class="peiq-icon-btn" id="zoom-100" type="button" aria-label="Zoom to 100%">100%</button>
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" aria-pressed="false">Original</button>
+        </div>
+
+        <div class="peiq-canvas-frame peiq-canvas-frame--pixelated" id="canvas-frame">
+          <canvas id="view-canvas" aria-label="Image preview. Left is the original, right is the reduced palette result."></canvas>
+          <div class="peiq-divider" id="divider" role="slider" tabindex="0" aria-label="Before and after divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <span class="peiq-divider__handle"></span>
+          </div>
+          <div class="peiq-canvas__empty" id="canvas-empty" hidden>Processing…</div>
+        </div>
+
+        <div class="peiq-palette-strip" id="palette-strip" aria-label="Extracted palette"></div>
+        <div class="peiq-statusbar" id="statusbar"></div>
+      </div>
+
+      <aside class="peiq-rail" aria-label="Controls">
+        <details class="peiq-rail-section" open>
+          <summary>Palette</summary>
+          <div class="peiq-rail-section__body">
+            <div class="peiq-field">
+              <label class="peiq-label" for="method">Method</label>
+              <select class="peiq-select" id="method">
+                <option value="median-cut">Median cut</option>
+                <option value="popularity">Popularity</option>
+              </select>
+            </div>
+            <div class="peiq-field">
+              <label class="peiq-label" for="colors">Colors <span id="colors-value">16</span></label>
+              <input class="peiq-range" id="colors" type="range" min="2" max="64" step="1" value="16">
+            </div>
+            <div class="peiq-field">
+              <label class="peiq-label" for="space">Working space</label>
+              <select class="peiq-select" id="space">
+                <option value="oklab">Oklab (recommended)</option>
+                <option value="srgb">sRGB</option>
+              </select>
+            </div>
+            <p class="peiq-hint">Preview uses a downscaled copy. Export always uses the full image.</p>
+          </div>
+        </details>
+
+        <details class="peiq-rail-section" open>
+          <summary>Export</summary>
+          <div class="peiq-rail-section__body">
+            <div class="peiq-field">
+              <label class="peiq-label" for="strip-orientation">Strip orientation</label>
+              <select class="peiq-select" id="strip-orientation">
+                <option value="Nx1">N×1 (horizontal)</option>
+                <option value="1xN">1×N (vertical)</option>
+              </select>
+            </div>
+            <button class="peiq-btn peiq-btn--primary" id="export-strip" type="button" disabled>Download palette strip</button>
+            <button class="peiq-btn" id="export-reduced" type="button" disabled>Download reduced PNG</button>
+            <button class="peiq-btn peiq-btn--ghost" id="copy-hex" type="button" disabled>Copy HEX list</button>
+            <p class="peiq-hint">The strip is decoded and compared pixel-by-pixel before download.</p>
+          </div>
+        </details>
+
+        <details class="peiq-rail-section">
+          <summary>Quality</summary>
+          <div class="peiq-rail-section__body">
+            <p class="peiq-hint">ΔE00, error map, and contrast checks arrive in M3. For now the status line reports palette count and strip validation.</p>
+          </div>
+        </details>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="peiq-footer">
+    <p>Runs locally. No uploads, no accounts, no tracking. <a href="./DESIGN.md">Design notes</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a></p>
+  </footer>
+
+  <aside class="peiq-drawer" id="help-drawer" data-open="false" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="help-title">
+    <div class="peiq-drawer__header">
+      <h2 class="peiq-drawer__title" id="help-title">Help</h2>
+      <button class="peiq-icon-btn" id="help-close" type="button" aria-label="Close help">×</button>
+    </div>
+    <div class="peiq-drawer__body">
+      <p>Load an image, choose a color count, and compare the original with the reduced result. Export a palette strip for engines and pixel editors, or a reduced PNG for quick use.</p>
+      <div class="peiq-learn-note">
+        <p><strong>M1 preview.</strong> Median cut and popularity extraction, palette strip validation, and reduced PNG export are working. Fixed-palette mapping, Floyd–Steinberg/Bayer/blue-noise, indexed PNG, and the full theory guide are next.</p>
+      </div>
+      <h2>How it works</h2>
+      <ol>
+        <li>Build a 5-bit, alpha-weighted color histogram.</li>
+        <li>Split or select colors in Oklab (or sRGB).</li>
+        <li>Map each pixel to the nearest palette color.</li>
+        <li>Encode a PNG strip and decode it back to verify every pixel.</li>
+      </ol>
+      <h2>Shortcuts</h2>
+      <table class="peiq-shortcuts">
+        <thead>
+          <tr><th scope="col">Key</th><th scope="col">Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><kbd>F</kbd></td><td>Fit image</td></tr>
+          <tr><td><kbd>1</kbd></td><td>100% zoom</td></tr>
+          <tr><td><kbd>O</kbd></td><td>Toggle original</td></tr>
+          <tr><td><kbd>T</kbd></td><td>Cycle theme</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Toggle this drawer</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Close this drawer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </aside>
+
+  <div class="peiq-toast-host" id="toast-host" aria-live="polite"></div>
+  <div class="sr-only" id="live-region" aria-live="polite"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

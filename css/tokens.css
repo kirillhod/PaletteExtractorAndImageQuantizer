@@ -1,0 +1,168 @@
+/* PaletteExtractorAndImageQuantizer — design tokens. See DESIGN.md §2–§3. */
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/InterVariable-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  --peiq-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Oxygen, Ubuntu, Cantarell, "Open Sans", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --peiq-font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+    "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro", "Fira Mono",
+    "Droid Sans Mono", "Courier New", monospace;
+
+  --peiq-bg: #1c1e22;
+  --peiq-bg-secondary: #25282d;
+  --peiq-bg-tertiary: #202327;
+  --peiq-surface: #30353b;
+  --peiq-surface-hover: #454c54;
+
+  --peiq-text: #c7cbd1;
+  --peiq-text-strong: #f9fafa;
+  --peiq-text-secondary: #a3adb9;
+  --peiq-text-tertiary: #89939f;
+  --peiq-link: var(--peiq-accent);
+  --peiq-link-hover: var(--peiq-accent-hover);
+
+  --peiq-border: rgba(199, 203, 209, 0.15);
+  --peiq-border-strong: #40474f;
+
+  --peiq-accent: hsl(204, 100%, 50%);
+  --peiq-accent-hover: hsl(204, 100%, 62%);
+  --peiq-accent-pressed: hsl(204, 100%, 42%);
+  --peiq-accent-bg: hsla(204, 100%, 50%, 0.10);
+  --peiq-accent-bg-hover: hsla(204, 100%, 50%, 0.20);
+  --peiq-accent-text: var(--peiq-accent);
+  --peiq-accent-rgb: 0, 153, 255;
+  --peiq-text-on-accent: #0b1220;
+
+  --peiq-brand: #ed8f31;
+  --peiq-brand-rgb: 237, 143, 49;
+  --peiq-brand-soft: rgba(237, 143, 49, 0.16);
+  --peiq-brand-text: var(--peiq-brand);
+  --peiq-brand-ink: #b35c00;
+
+  --peiq-btn-color: #bec6d0;
+  --peiq-btn-bg: #40474f;
+  --peiq-btn-bg-hover: #454c54;
+  --peiq-btn-accent-bg: linear-gradient(350deg, #6183ff, #47aaf5);
+  --peiq-btn-accent-bg-hover: linear-gradient(350deg, #708fff, #5ab3f6);
+  --peiq-btn-accent-shadow:
+    0 2px 4px rgba(0, 82, 255, 0.18),
+    0 8px 24px rgba(0, 82, 255, 0.12);
+
+  --peiq-input-bg: #25282d;
+  --peiq-input-bg-hover: #202327;
+  --peiq-input-border: #25282d;
+
+  --peiq-code: #d6b6d8;
+  --peiq-code-bg: rgba(208, 38, 217, 0.08);
+
+  --peiq-success: #5c9325;
+  --peiq-success-bg: #404f30;
+  --peiq-success-text: #99b77b;
+  --peiq-warning: #e4a511;
+  --peiq-warning-bg: rgba(234, 185, 72, 0.40);
+  --peiq-warning-text: #f4dca4;
+  --peiq-danger: #ee5353;
+  --peiq-danger-bg: #4d2e2e;
+  --peiq-danger-text: #e96363;
+  --peiq-info: #51aefb;
+  --peiq-info-bg: rgba(76, 153, 240, 0.20);
+  --peiq-info-text: #4c99f0;
+  --peiq-focus: var(--peiq-accent);
+
+  --peiq-checker-a: #202327;
+  --peiq-checker-b: #25282d;
+
+  --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --peiq-shadow-card-lg: rgba(5, 5, 6, 0.20) 0 8px 24px;
+  --peiq-shadow-popover: 0 16px 40px rgba(5, 5, 6, 0.32);
+  --peiq-shadow-drawer: -24px 0 64px rgba(5, 5, 6, 0.32);
+
+  --peiq-radius: 6px;
+  --peiq-radius-lg: 12px;
+  --peiq-radius-pill: 999px;
+
+  --peiq-space-1: 4px;
+  --peiq-space-2: 8px;
+  --peiq-space-3: 16px;
+  --peiq-space-4: 24px;
+  --peiq-space-5: 48px;
+  --peiq-space-6: 96px;
+  --peiq-space-7: 192px;
+
+  --peiq-ease: ease-out;
+  --peiq-dur-fast: 80ms;
+  --peiq-dur: 150ms;
+  --peiq-dur-slow: 250ms;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --peiq-bg: hsl(210, 4%, 95%);
+  --peiq-bg-secondary: hsl(210, 4%, 92%);
+  --peiq-bg-tertiary: hsl(210, 4%, 89%);
+  --peiq-surface: hsl(210, 4%, 98%);
+  --peiq-surface-hover: hsl(210, 4%, 99%);
+
+  --peiq-text: hsl(230, 4%, 31%);
+  --peiq-text-strong: hsl(230, 4%, 27%);
+  --peiq-text-secondary: hsl(230, 4%, 36%);
+  --peiq-text-tertiary: hsl(230, 4%, 42%);
+  --peiq-link: #0066cc;
+  --peiq-link-hover: #004f9e;
+
+  --peiq-border: hsl(210, 4%, 89%);
+  --peiq-border-strong: #d3d9df;
+
+  --peiq-btn-color: #4f6275;
+  --peiq-btn-bg: #eaedf0;
+  --peiq-btn-bg-hover: #f3f5f6;
+  --peiq-input-bg: #eaedf0;
+  --peiq-input-bg-hover: #f3f5f6;
+  --peiq-input-border: #d3d9df;
+
+  --peiq-code: #903d94;
+  --peiq-code-bg: rgba(121, 0, 128, 0.04);
+
+  --peiq-success: #6bb125;
+  --peiq-success-bg: #dbf4c2;
+  --peiq-success-text: #4d8118;
+  --peiq-warning: #e4a511;
+  --peiq-warning-bg: #faeed1;
+  --peiq-warning-text: #896510;
+  --peiq-danger: #ee5353;
+  --peiq-danger-bg: #fce4e4;
+  --peiq-danger-text: #df5353;
+  --peiq-info: #13bde7;
+  --peiq-info-bg: #d9f5fc;
+  --peiq-info-text: #10a2c6;
+  --peiq-focus: var(--peiq-accent);
+
+  --peiq-checker-a: #e9ecef;
+  --peiq-checker-b: #f8f9fa;
+
+  --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --peiq-shadow-card-lg: rgba(149, 157, 165, 0.20) 0 8px 24px;
+  --peiq-shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.18);
+  --peiq-shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.18);
+  --peiq-brand-soft: rgba(237, 143, 49, 0.12);
+
+  --peiq-text-on-accent: #0b1220;
+  --peiq-brand-text: #a84800;
+  --peiq-brand-ink: #a84800;
+}
+
+html.peiq-theme-switching *,
+html.peiq-theme-switching *::before,
+html.peiq-theme-switching *::after {
+  transition: none !important;
+}
