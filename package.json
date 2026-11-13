@@ -1,6 +1,6 @@
 {
   "name": "palette-extractor-and-image-quantizer",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Browser-local palette compiler: extract, map, dither and export engine-ready indexed assets.",
