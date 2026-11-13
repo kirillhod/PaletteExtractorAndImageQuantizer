@@ -35,7 +35,8 @@ agents; it defers to this plan for *what* to build.
 | Research report | Complete |
 | Plan | This document, v1.0.0 |
 | Scaffold | `package.json`, `.gitignore`, `tools/dev-server.mjs` |
-| Color core | `js/core/color.js`, known-answer tests green (9/9) |
+| Color core | `js/core/color.js`, known-answer tests green |
+| Version | `js/core/version.js`, `version.test.js`; tagged `v0.1.0` |
 | Everything else | Not started |
 
 ---
@@ -1480,7 +1481,8 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Plan v1.0.0
 - [x] `package.json`, `.gitignore`, dev server
 - [x] Color core + tests
-- [ ] `types.js`, `version.js`, `rng.js`, `hash.js`
+- [x] `version.js` + sync test; tagged `v0.1.0`
+- [ ] `types.js`, `rng.js`, `hash.js`
 - [ ] Test helpers
 - [ ] CI skeleton
 - **Exit:** `node --test` green; page shell loads; no dependencies.
