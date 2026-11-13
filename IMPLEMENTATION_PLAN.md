@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
-| Version | `js/core/version.js`; `v0.3.1` tagged; M2 complete |
+| Version | `js/core/version.js`; `v0.3.2` tagged; M2 complete |
 | Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
 
 ---
@@ -1682,6 +1682,7 @@ A change is done only when:
 | 2026-11-13 | Align palette with canvas; export column spans canvas+palette rows | Owner wants the palette and canvas to share a left edge, with export as a distinct column to their left |
 | 2026-11-13 | Release 0.3.1 with the version shown in the footer | Makes the running build identifiable; the tag marks this UI batch |
 | 2026-11-13 | Add an indeterminate export progress bar and a single-export busy lock | Users should not mistake a slow export for a frozen page; concurrent export clicks must not race |
+| 2026-11-13 | Release 0.3.2 with export progress and the busy lock | Tagged patch release for the export UX fix |
 
 ---
 
