@@ -78,7 +78,8 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - **Dev server:** `npm run dev` → `http://localhost:5173/` (ES modules do not load over
   `file://`). It binds to all interfaces and prints LAN URLs so a phone on the same
   network can open the tool; `node tools/dev-server.mjs 5173 --host=localhost` keeps it
-  loopback-only. Allow Node.js on private networks in the OS firewall if prompted.
+  loopback-only. Allow Node.js on private networks in the OS firewall if prompted; the
+  README has the exact Windows inbound rule for TCP 5173.
 - **No build step.** The repository root is the site; GitHub Pages serves it directly.
   `.nojekyll` must exist.
 - **Encoding:** UTF-8, LF (enforced by `.gitattributes`). No generated artifacts except

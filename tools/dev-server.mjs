@@ -128,7 +128,13 @@ server.listen(PORT, HOST, () => {
     }
     console.log('');
     console.log('Open a Network URL on a phone or tablet on the same Wi-Fi.');
-    console.log('Allow Node.js on private networks if the firewall asks.');
+    console.log('If the phone cannot connect, allow TCP ' + PORT + ' on the private network.');
+    console.log('In an elevated PowerShell:');
+    console.log(
+      `  New-NetFirewallRule -DisplayName "PEIQ dev server (TCP ${PORT})" ` +
+        '-Direction Inbound -Action Allow -Protocol TCP ' +
+        `-LocalPort ${PORT} -Profile Private`,
+    );
   } else {
     console.log(`  Bound to ${HOST}; loopback-only if that is a local address.`);
   }
