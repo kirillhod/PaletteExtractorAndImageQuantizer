@@ -1,0 +1,13 @@
+{
+  "name": "palette-foundry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first palette compiler: extract, map, dither and export engine-ready indexed assets.",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "dev": "node tools/dev-server.mjs",
+    "test": "node --test",
+    "gen:blue-noise": "node tools/gen-blue-noise.mjs"
+  }
+}
