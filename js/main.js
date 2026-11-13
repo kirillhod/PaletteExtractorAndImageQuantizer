@@ -18,6 +18,7 @@ import { renderPalette } from './ui/palette-view.js';
 import { initShortcuts } from './ui/shortcuts.js';
 import { setStatus, setStatusMessage, toast } from './ui/status.js';
 import { initTheme } from './ui/theme.js';
+import { initTooltips } from './ui/tooltips.js';
 
 const MAX_PIXELS = 16_777_216;
 const PREVIEW_EDGE = 1024;
@@ -487,6 +488,7 @@ function toggleOriginalState() {
 }
 
 const controls = initControls({ onChange: processPreview });
+initTooltips();
 
 initDropzone({
   onFile: loadFile,
