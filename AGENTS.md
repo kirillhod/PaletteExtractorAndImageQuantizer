@@ -58,7 +58,7 @@ layout values, motion, and responsive rules.
 /js/workers/         pipeline.worker.js
 /js/core/            DOM-free, Node-testable: color, quantize, dither, png, formats,
                      palettes, metrics, pipeline
-/assets/             blue-noise-64.bin, optional OFL font (+license), own artwork
+/assets/             blue-noise-64.bin, Inter (OFL) + license, own artwork
 /test/               node --test suites and fixture helpers
 /tools/              dev-server.mjs, gen-blue-noise.mjs
 /.github/workflows/  ci.yml, pages.yml
@@ -138,10 +138,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
     `innerHTML`, Markdown parser, iframe, embed, or runtime fetch. External links open
     only on explicit click with `rel="noopener noreferrer"`; no prefetch/preconnect.
     Update the matching guide topic whenever an algorithm or contract changes.
-18. **Visual direction is Blender-inspired, not a clone.** Follow `DESIGN.md` (§1, §8).
+18. **Follow the Blender design system, not a clone.** Follow `DESIGN.md` (§1, §8).
     Do not copy Blender CSS, logo, wordmark, artwork, screenshots, or theme files. No
     external images, videos, or icon packs; use CSS/SVG/canvas/own screenshots. The
-    optional self-hosted Inter font must ship with its OFL license.
+    self-hosted Inter font must ship with its OFL license.
 
 ## 6. Coding conventions
 
