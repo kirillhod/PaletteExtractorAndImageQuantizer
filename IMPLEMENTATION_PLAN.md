@@ -134,7 +134,7 @@ to v1.0.x without changing the contracts.
 | Runtime dependencies | **Zero.** `package.json` MUST have no `dependencies` or `devDependencies`. |
 | Build step | **None.** Native ES modules served as-is; no bundler, transpiler, minifier, CSS preprocessor. |
 | Hosting | GitHub Pages, static, HTTPS. All paths relative (`./js/...`) so project pages work under `/<repo>/`. |
-| Processing | 100% client-side. No uploads, no telemetry, no CDN, no external/CDN fonts, no network calls after load. A self-hosted OFL font asset is allowed per §8.4. |
+| Processing | 100% client-side. No uploads, no telemetry, no CDN, no external/CDN fonts, no network calls after load. A self-hosted OFL font asset is allowed per `DESIGN.md` §3. |
 | Tooling | Node 22 built-ins only: `node --test`, `node:http`. |
 | Types | JSDoc + `// @ts-check`; no TypeScript compilation. |
 | License | GPL-3.0-only. Original code only; no copied GPL-incompatible snippets. |
@@ -184,10 +184,10 @@ Feature fallbacks:
 
 ```
 /                     index.html, .nojekyll, package.json, LICENSE, README.md,
-                      IMPLEMENTATION_PLAN.md, AGENTS.md
+                      IMPLEMENTATION_PLAN.md, AGENTS.md, DESIGN.md
 /css/                 tokens, base, layout, components, canvas, learn, responsive
 /js/                  main.js, ui/, content/, workers/, core/
-/assets/              blue-noise mask, icons, optional palette data, optional OFL font (+license)
+/assets/              blue-noise mask, icons, optional palette data, optional OFL font (`DESIGN.md` §3)
 /test/                node --test suites and fixtures helpers
 /tools/               dev-server.mjs, gen-blue-noise.mjs
 /.github/workflows/   ci.yml, pages.yml
@@ -792,8 +792,9 @@ hashes are reviewed when intentional changes occur.
 - The header shows the full public name at ≥960 px; below that, the short mark `PEIQ` with
   an `aria-label`/`title` carrying the full name. The document title uses the full name.
 - The `Help` button is always visible, including the empty state.
-- Visual direction: §8.9 (Blender-inspired editorial). The shell is editorial; the working
-  area stays dense and tool-first.
+- Visual language, tokens, component styles, motion, and breakpoints: see
+  [`DESIGN.md`](DESIGN.md). The shell is editorial; the working area stays dense and
+  tool-first.
 
 ### 8.2 Controls
 
@@ -862,64 +863,16 @@ hashes are reviewed when intentional changes occur.
 - Largest canvas backing store: `min(devicePixelRatio, 2)`.
 - No layout shift while processing; keep the last result visible with a progress overlay.
 
-### 8.4 Visual tokens (`css/tokens.css`)
+### 8.4 Visual system
 
-The visual direction is **Blender-inspired editorial**: charcoal surfaces, one orange accent,
-tight bold headlines, generous whitespace, thin-bordered cards, uppercase section labels.
-It is a style reference, not a clone. See §8.9 for what to adopt and what not to copy.
+All colors, typography, component styles, depth, motion, and breakpoints are defined in
+[`DESIGN.md`](DESIGN.md). The plan fixes behavior and contracts only.
 
-| Token | Value |
-|---|---|
-| `--peiq-bg` | `#1a1a1a` |
-| `--peiq-bg-deep` | `#111111` |
-| `--peiq-panel` | `#232323` |
-| `--peiq-panel-2` | `#2b2b2b` |
-| `--peiq-paper` | `#f5f5f5` |
-| `--peiq-paper-ink` | `#1a1a1a` |
-| `--peiq-paper-muted` | `#5c5c5c` |
-| `--peiq-border` | `#3a3a3a` |
-| `--peiq-border-strong` | `#4d4d4d` |
-| `--peiq-text` | `#f2f2f2` |
-| `--peiq-muted` | `#a3a3a3` |
-| `--peiq-orange` | `#ea7600` |
-| `--peiq-orange-bright` | `#ff8a1f` |
-| `--peiq-orange-ink` | `#a84800` |
-| `--peiq-danger` | `#ff5c5c` |
-| `--peiq-warn` | `#f0b429` |
-| `--peiq-ok` | `#4ade80` |
-| `--peiq-radius` | `10px` |
-| `--peiq-radius-sm` | `6px` |
-| spacing | 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px |
-| font | system UI stack; optional self-hosted Inter (OFL) |
-
-**Typography**
-
-- System stack: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-  "Helvetica Neue", Arial, sans-serif`.
-- Optional SHOULD: self-host one variable `Inter` WOFF2 in `assets/fonts/` with `OFL.txt`,
-  `font-display: swap`, no CDN. It is an asset, not a dependency; the system stack remains
-  the fallback.
-- Headlines: weight 800, `letter-spacing: -0.02em`, `line-height: 1.05`,
-  `clamp(2rem, 5vw, 4.5rem)` for editorial sections; compact 14–16 px labels in controls.
-- Body: 15–16 px / 1.55; muted text uses `--peiq-muted`.
-- Eyebrow labels: 11–12 px uppercase, `letter-spacing: 0.08em`, orange.
-
-**Color usage**
-
-- Primary button: orange background, near-black text (`#1a1a1a`) for contrast; 6 px radius.
-- Secondary button: transparent with `--peiq-border-strong`; hover border orange.
-- Links on dark: `--peiq-orange-bright`; links on paper: `--peiq-orange-ink` with underline.
-- Orange is an accent, not a body-text color. On light paper, never use `--peiq-orange`
-  for small text.
-- Cards: 1 px border, 10 px radius, hover border orange + 2 px lift; no heavy shadows.
-- Subtle radial gradients are allowed in the empty state only; no noisy textures.
-- Light `paper` surfaces are reserved for editorial content (Guide drawer, empty-state
-  copy), not for controls or data panels.
-
-- Focus rings: 2 px `--peiq-orange-bright`, 2 px offset.
-- Reduced motion: disable transitions when `prefers-reduced-motion: reduce`.
-- Color is never the only signal; pair with text/icon.
-- Contrast: UI text ≥ 4.5:1, large text and components ≥ 3:1; verify orange pairings.
+- Components MUST use the `--peiq-*` variables from `DESIGN.md` ?2; no hard-coded hex.
+- Dynamic palette swatch colors are the only inline-style exception: set `--swatch` on the
+  element, never a hex in JS.
+- If a visual value and this plan disagree, `DESIGN.md` wins; if behavior disagrees, this
+  plan wins.
 
 ### 8.5 Keyboard shortcuts
 
@@ -1011,45 +964,6 @@ site. Learning is opt-in, contextual, and dismissible.
   focus moves in on open and returns on close; tabs are keyboard-operable.
 - Non-goals: first-run tour, modal onboarding, permanent explanatory paragraphs,
   documentation site, comments/community.
-
-### 8.9 Visual direction (Blender-inspired, not a clone)
-
-Reference: [blender.org](https://www.blender.org/)’s editorial language — charcoal
-surfaces, one orange accent, tight bold headlines, generous whitespace, thin-bordered
-cards, uppercase section labels, subtle motion.
-
-**Adopt**
-
-- Dark app shell; light `paper` surfaces for the empty state and the Guide drawer.
-- One accent (orange) for primary actions, active states, focus rings, and links.
-- Large `clamp()` headlines in editorial sections; compact 14–16 px type in controls.
-- Card grid with 1 px borders, 10 px radius, 2 px hover lift.
-- Section eyebrows, numbered steps, small metadata rows.
-- Subtle reveal on scroll (`IntersectionObserver`), 120–200 ms ease-out; disabled under
-  `prefers-reduced-motion`.
-- The tool is the hero: the empty state shows a live canvas/palette preview or a
-  canvas-generated palette mosaic, not a stock render.
-
-**Do not**
-
-- Copy Blender’s logo, wordmark, artwork, screenshots, CSS, or theme files.
-- Use video backgrounds, heavy hero images, external 3D renders, or image carousels.
-- Make the working UI look like a marketing landing page: controls stay dense and
-  scannable; whitespace is for hierarchy, not for pushing the tool below the fold.
-- Use orange for body text or small text on light paper; use `--peiq-orange-ink` for links
-  and large text only.
-- Add glassmorphism, gradient text, neon glows, or animation for its own sake.
-
-**Assets**
-
-- CSS gradients/mesh, inline SVG diagrams, canvas-generated palette art, and our own
-  screenshots only.
-- Optional one variable font (`Inter`, OFL) self-hosted with its license; no CDN.
-- No external images, videos, icon packs, or third-party embeds.
-
-**Why it fits:** the product is visual, and an editorial shell reinforces the
-“palette compiler” idea without adding dependencies. The working area remains a precise
-tool, not a landing page.
 
 ---
 
@@ -1187,7 +1101,7 @@ tool, not a landing page.
 14. Help drawer at 1280 px and 360 px: tabs work, canvas does not relayout, no network
     requests, external links open only on click.
 15. Visual review: dark shell + paper Guide, orange accent contrast, focus rings,
-    reduced motion, no layout shift, no copied Blender assets.
+    reduced motion, no layout shift, no copied Blender assets; check against `DESIGN.md`.
 
 ---
 
@@ -1406,6 +1320,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `.nojekyll` | Disable Jekyll on Pages |
 | `README.md` | User-facing usage, privacy, browser support, dev commands, license |
 | `IMPLEMENTATION_PLAN.md` | This document |
+| `DESIGN.md` | Visual system, components, motion, responsive rules |
 | `AGENTS.md` | Agent operating rules |
 | `LICENSE` | GPL-3.0 |
 
@@ -1413,7 +1328,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 
 | Path | Responsibility |
 |---|---|
-| `css/tokens.css` | Custom properties from §8.4 |
+| `css/tokens.css` | Custom properties from `DESIGN.md` §2 |
 | `css/base.css` | Reset, typography, focus, scrollbars |
 | `css/layout.css` | Header, 3-column grid, status bar, breakpoints |
 | `css/components.css` | Buttons, inputs, tabs, sliders, swatches, tables, toasts |
@@ -1630,7 +1545,8 @@ A change is done only when:
 | 2026-11-13 | English UI and docs | Public open-source tool; no i18n in v1 |
 | 2026-11-13 | Public name = repository name `PaletteExtractorAndImageQuantizer`; short mark `PEIQ`; identifiers `peiq-` / `peiq/*` / `peiq.*` | Owner decision; no separate brand name |
 | 2026-11-13 | In-product learning layer (contextual hints + Help drawer), closed by default | Owner requirement: theory accessible without blocking the workflow |
-| 2026-11-13 | Visual direction: Blender-inspired editorial dark/orange; style only, no brand assets | Owner preference; reproducible in CSS; tool-first layout |
+| 2026-11-13 | Visual direction: Blender-inspired editorial dark/orange; style only, no brand assets | Owner preference; see `DESIGN.md` §1 and §8 |
+| 2026-11-13 | Design system extracted to `DESIGN.md`; plan keeps behavior only | Single design source; easier reuse and audit |
 | 2026-11-13 | System font stack; optional self-hosted Inter (OFL), no CDN | Closer typography without a dependency; fallback stays readable |
 
 ---

@@ -30,22 +30,27 @@ M1 is not started.
 ## 2. Source of truth
 
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) is authoritative for scope, algorithms,
-contracts, tests, milestones, and the decision log.
+behavior, contracts, tests, milestones, and the decision log.
+[`DESIGN.md`](DESIGN.md) is authoritative for colors, typography, component styles,
+layout values, motion, and responsive rules.
 
-- Read §1–§4 before code, §5–§7 for color/mapping/dithering, §8 for UI, §10–§12 for
-  tests and output contracts, §14–§15 for the file map and current milestone.
+- Read §1–§4 before code, §5–§7 for color/mapping/dithering, §8 for UI behavior, §10–§12
+  for tests and output contracts, §14–§15 for the file map and current milestone.
+- Read `DESIGN.md` before any UI work. If a visual value conflicts with the plan, DESIGN
+  wins; if behavior conflicts, the plan wins.
 - Do not silently diverge from a **MUST**. Update the plan and decision log first.
 - Do not simplify a formula, constant, tie-break, or chunk layout without a test proving
   equivalence.
 - [`RESEARCH_REPORT.md`](RESEARCH_REPORT.md) is evidence, not a spec; do not edit it
   except for a sourced factual correction.
-- This file is the process contract; the plan is the product contract.
+- This file is the process contract; the plan is the product contract; DESIGN.md is the
+  visual contract.
 
 ## 3. Layout
 
 ```text
 /                    index.html, .nojekyll, package.json, LICENSE, README.md,
-                     plan/research/agent docs
+                     plan/design/research/agent docs
 /css/                tokens, base, layout, components, canvas, learn, responsive
 /js/main.js          bootstrap, feature detection, worker wiring
 /js/ui/              DOM, state, canvas, palette, QA, export, help, status, shortcuts
@@ -133,10 +138,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
     `innerHTML`, Markdown parser, iframe, embed, or runtime fetch. External links open
     only on explicit click with `rel="noopener noreferrer"`; no prefetch/preconnect.
     Update the matching guide topic whenever an algorithm or contract changes.
-18. **Visual direction is Blender-inspired, not a clone.** Follow the tokens and rules in
-    plan §8.4/§8.9. Do not copy Blender CSS, logo, wordmark, artwork, screenshots, or
-    theme files. No external images, videos, or icon packs; use CSS/SVG/canvas/own
-    screenshots. The optional self-hosted Inter font must ship with its OFL license.
+18. **Visual direction is Blender-inspired, not a clone.** Follow `DESIGN.md` (§1, §8).
+    Do not copy Blender CSS, logo, wordmark, artwork, screenshots, or theme files. No
+    external images, videos, or icon packs; use CSS/SVG/canvas/own screenshots. The
+    optional self-hosted Inter font must ship with its OFL license.
 
 ## 6. Coding conventions
 
@@ -151,8 +156,11 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - Core functions are pure: no argument mutation; document any locally owned buffer
   mutation. Prefer functions + plain data over classes.
 - No `console.log` in shipped code; `js/core/log.js` is debug-gated and off by default.
-- No `innerHTML` with user-controlled strings; no inline event handlers or inline styles.
-  Toggle classes/data attributes; style with `css/tokens.css` and component classes.
+- No `innerHTML` with user-controlled strings; no inline event handlers. Avoid inline
+  styles; the only exception is dynamic palette swatches via
+  `style.setProperty('--swatch', hex)`. Style with `css/tokens.css` and `DESIGN.md`
+  components.
+- All colors come from `--peiq-*` variables in `DESIGN.md`; no hard-coded hex in CSS or JS.
 - No dead code, speculative abstractions, or TODOs without a plan/backlog entry.
 - Comments explain *why*; cite the plan section or paper for non-obvious math.
 
@@ -176,8 +184,8 @@ and the change is committed locally with a descriptive body (plan §16).
 
 ## 9. Documentation
 
-- Plan first: behavior belongs in `IMPLEMENTATION_PLAN.md`; `README.md` is user-facing;
-  this file is process.
+- Plan first: behavior belongs in `IMPLEMENTATION_PLAN.md`; visual design belongs in
+  `DESIGN.md`; `README.md` is user-facing; this file is process.
 - Update the plan and decision log in the same change when a fact or contract changes.
 - Use clickable canonical Markdown links on first mention; relative links for internal
   references; never bare URLs.
@@ -210,7 +218,8 @@ and the change is committed locally with a descriptive body (plan §16).
 
 ## 11. Agent workflow
 
-1. Read the relevant plan sections and check §15 for the current milestone.
+1. Read the relevant plan sections and check §15 for the current milestone. Read
+   `DESIGN.md` before UI work.
 2. Make the smallest coherent change that advances that milestone; do not start another.
 3. Implement, add tests, run `npm test`, then verify UI work in a browser.
 4. Update plan checkboxes and the decision log when behavior or contracts change.
@@ -224,7 +233,8 @@ and the change is committed locally with a descriptive body (plan §16).
 
 ## 12. Current state and next task
 
-- Plan: ✅ `1.0.0`; color core ✅ (9/9 tests); README minimal; no UI/core pipeline yet.
+- Plan: ✅ `1.0.0`; `DESIGN.md` ✅; color core ✅ (9/9 tests); README minimal; no UI/core
+  pipeline yet.
 - Next: `types.js`, `version.js`, `rng.js`, `hash.js`, `test/helpers.js`, then M1
   (histogram → median cut → PNG encoder/decoder → worker → preview → strip).
 - Do not assume UI files exist.
