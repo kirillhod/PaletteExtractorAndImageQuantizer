@@ -74,14 +74,84 @@ export async function encodeStripPng(colors, options = {}) {
 }
 
 /**
+ * Encode an indexed PNG with PLTE and optional tRNS.
+ * @param {{
+ *   width:number,
+ *   height:number,
+ *   indices:Uint8Array,
+ *   palette:{ color:{ r:number,g:number,b:number,a:number } }[],
+ *   transparentIndex?: number,
+ * }} input
+ * @returns {Promise<Uint8Array>}
+ */
+export async function encodeIndexedPng(input) {
+  const { width, height, indices, palette } = input;
+  assertDimensions(width, height);
+  if (!Array.isArray(palette) || palette.length < 1 || palette.length > 256) {
+    throw new RangeError('palette must contain 1..256 entries');
+  }
+  if (indices.length !== width * height) {
+    throw new RangeError('indices length must be width * height');
+  }
+
+  const colorCount = palette.length;
+  const bitDepth = colorCount <= 2 ? 1 : colorCount <= 4 ? 2 : colorCount <= 16 ? 4 : 8;
+  const transparentIndex = input.transparentIndex ?? -1;
+  if (transparentIndex >= colorCount) throw new RangeError('transparent index is out of range');
+
+  const rowBytes = Math.ceil((width * bitDepth) / 8);
+  const raw = new Uint8Array((rowBytes + 1) * height);
+  const mask = (1 << bitDepth) - 1;
+
+  for (let y = 0; y < height; y++) {
+    const rowStart = y * (rowBytes + 1);
+    raw[rowStart] = 0;
+    for (let x = 0; x < width; x++) {
+      const index = indices[y * width + x];
+      if (index >= colorCount) throw new RangeError(`index ${index} is outside the palette`);
+      if (bitDepth === 8) {
+        raw[rowStart + 1 + x] = index;
+      } else {
+        const bitPosition = x * bitDepth;
+        const byteOffset = rowStart + 1 + (bitPosition >> 3);
+        const shift = 8 - bitDepth - (bitPosition & 7);
+        raw[byteOffset] |= (index & mask) << shift;
+      }
+    }
+  }
+
+  const plte = new Uint8Array(colorCount * 3);
+  for (let i = 0; i < colorCount; i++) {
+    plte[i * 3] = palette[i].color.r;
+    plte[i * 3 + 1] = palette[i].color.g;
+    plte[i * 3 + 2] = palette[i].color.b;
+  }
+
+  const hasAlpha = palette.some((entry) => entry.color.a < 255) || transparentIndex >= 0;
+  /** @type {Uint8Array[]} */
+  const extraChunks = [makeChunk('PLTE', plte)];
+  if (hasAlpha) {
+    const trns = new Uint8Array(colorCount).fill(255);
+    for (let i = 0; i < colorCount; i++) {
+      if (palette[i].color.a < 255) trns[i] = palette[i].color.a;
+    }
+    if (transparentIndex >= 0) trns[transparentIndex] = 0;
+    extraChunks.push(makeChunk('tRNS', trns));
+  }
+
+  return encodeFromRaw(width, height, bitDepth, 3, raw, extraChunks);
+}
+
+/**
  * @param {number} width
  * @param {number} height
  * @param {number} bitDepth
- * @param {2|6} colorType
+ * @param {number} colorType
  * @param {Uint8Array} raw filtered rows
+ * @param {Uint8Array[]} [extraChunks]
  * @returns {Promise<Uint8Array>}
  */
-async function encodeFromRaw(width, height, bitDepth, colorType, raw) {
+async function encodeFromRaw(width, height, bitDepth, colorType, raw, extraChunks = []) {
   const ihdr = new Uint8Array(13);
   const view = new DataView(ihdr.buffer);
   view.setUint32(0, width);
@@ -96,6 +166,7 @@ async function encodeFromRaw(width, height, bitDepth, colorType, raw) {
   return concatBytes([
     PNG_SIGNATURE,
     makeChunk('IHDR', ihdr),
+    ...extraChunks,
     makeChunk('IDAT', idat),
     makeChunk('IEND', new Uint8Array(0)),
   ]);

@@ -34,7 +34,7 @@
 
 /**
  * @typedef {Object} ExtractParams
- * @property {'popularity'|'median-cut'} method
+ * @property {'popularity'|'median-cut'|'wu'|'octree'|'kmeans'} method
  * @property {number} colors
  * @property {'oklab'|'srgb'} space
  * @property {number=} seed

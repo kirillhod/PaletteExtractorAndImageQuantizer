@@ -46,7 +46,7 @@ export function clearDownloadLinks() {
  * @param {boolean} enabled
  */
 export function setExportEnabled(enabled) {
-  for (const id of ['export-strip', 'export-reduced', 'copy-hex']) {
+  for (const id of ['export-indexed', 'export-strip', 'export-reduced', 'copy-hex']) {
     const button = /** @type {HTMLButtonElement|null} */ (document.getElementById(id));
     if (button) button.disabled = !enabled;
   }
