@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, popularity, median cut, LUT mapper, PNG encode/decode, pipeline |
 | UI | Stage + rail, empty state, themes, drop/paste, before/after, palette strip, export |
 | Tests | 43 passing (`node --test`), including golden hashes |
-| Version | `js/core/version.js`; `v0.2.0` tagged; M1 complete |
+| Version | `js/core/version.js`; `v0.2.1` tagged; M1 complete |
 | Next | M2: fixed palette, Wu/octree/K-means, dithering, indexed PNG |
 
 ---
