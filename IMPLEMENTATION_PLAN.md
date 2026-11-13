@@ -1056,6 +1056,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | File | Covers |
 |---|---|
 | `color.test.js` ✅ | sRGB/Oklab/Lab, ΔE00 Sharma pairs, hex, contrast |
+| `version.test.js` | `APP_VERSION` matches `package.json`; `ALGORITHM_VERSION` positive |
 | `rng.test.js` | splitmix64 sequence, seed determinism |
 | `hash.test.js` | SHA-256/FNV fallback, canonical JSON |
 | `histogram.test.js` | binning, alpha weights, representatives |

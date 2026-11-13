@@ -223,6 +223,15 @@ and the change is committed locally with a descriptive body (plan §16).
 - Release commits that bump the version get an annotated local tag
   (`git tag -a v1.0.0 -m "PaletteExtractorAndImageQuantizer 1.0.0"`). The tag,
   `package.json`, and `APP_VERSION` must match. Never move, delete, or reuse a tag.
+- **Version bump checklist.** The tagged commit must contain both `package.json` and
+  `js/core/version.js` with matching versions; a bump updates both in that commit. Then
+  run `npm test`, commit, and tag that exact commit:
+  ```bash
+  git tag -a v0.1.0 -m "PaletteExtractorAndImageQuantizer 0.1.0"
+  git show v0.1.0:package.json
+  git show v0.1.0:js/core/version.js
+  ```
+  Never tag a commit that lacks either update. Tags stay local; do not push them.
 - Do not rewrite history. Check `git status` before committing; never commit generated
   files (except the blue-noise asset), logs, OS junk, or secrets.
 - One coherent change per commit; keep refactors separate from behavior changes.
