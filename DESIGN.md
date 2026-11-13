@@ -504,13 +504,15 @@ subtle shadow, no border.
 ### Rail section
 
 The right rail is a stack of `<details>` sections styled as the site’s boxes. Each section
-has a 12 px radius and a surface step — no border. Sections are an exclusive accordion:
-opening one closes the others, and **Palette** starts open. This keeps every section
-header visible and the active body usable without a long inner scroll.
+has a 12 px radius and a surface step — no border. Sections are independently
+collapsible; **Palette** starts open, and users may open **Dither** and **Export** at the
+same time. The rail scrolls only when the combined bodies exceed the viewport, so no
+section blocks another.
 
-On ≥ 980 px the rail uses compact density: 8 px between sections, 8/16 px summary
-padding, 16 px body inset, 34 px selects, 30 px buttons, 28 px tabs. At ≤ 599 px the
-44 px touch targets from `responsive.css` win.
+On ≥ 980 px the rail uses compact density: 8 px between sections, 10/16 px summary
+padding, 8 px body top inset, 12 px between fields, 8 px between a label and its control,
+34 px selects, 30 px buttons, 28 px tabs. The color count is a range plus a 68 px number
+field in the same row. At ≤ 599 px the 44 px touch targets from `responsive.css` win.
 
 ```css
 .peiq-rail-section {
