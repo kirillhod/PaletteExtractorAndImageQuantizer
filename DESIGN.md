@@ -540,17 +540,43 @@ has a 24 px body, a 12 px radius, and a surface step — no border. **Palette**,
 }
 ```
 
-### Palette strip and usage bar
+### Palette strip and sort bar
+
+The palette card contains a compact bar and the swatches. The sort select controls the
+swatch order, the HEX list, and the exported strip.
 
 ```css
-.peiq-palette-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--peiq-space-1);
+.peiq-palette-panel {
+  display: grid;
+  gap: var(--peiq-space-2);
   padding: var(--peiq-space-3) var(--peiq-space-4);
   border-radius: var(--peiq-radius-lg);
   background: var(--peiq-surface);
   box-shadow: var(--peiq-shadow-card);
+}
+.peiq-palette-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2);
+}
+.peiq-palette-bar > .peiq-label { margin-right: auto; }
+.peiq-palette-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+}
+.peiq-select--compact {
+  width: auto;
+  min-height: 32px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+.peiq-palette-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-1);
+  min-height: 32px;
 }
 .peiq-color-usage {
   display: flex;
@@ -564,6 +590,10 @@ has a 24 px body, a 12 px radius, and a surface step — no border. **Palette**,
   background: var(--swatch);
 }
 ```
+
+Sort options: source order, hue dark→light, hue light→dark, lightness dark→light,
+lightness light→dark. Hue sorting groups similar hues (circular order) and keeps the
+requested lightness direction inside each group.
 
 ### Empty state / hero
 
@@ -1318,6 +1348,8 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 - Use `text-wrap: balance` on headings and `pretty` on paragraphs.
 - Keep the tool above the fold; editorial scale belongs to the empty state and Guide.
 - Use tabular numbers for metrics and mono for hex/index values.
+- Expose palette order as data: source, hue, or lightness, both directions; the strip
+  export must follow the selected order.
 - Ship both themes with complete token sets; verify parity before release.
 - Keep the loaded layout two-column: stage + right rail, like PaletteForge.
 - Keep the header to brand + theme toggle + Help; put everything else in the rail.

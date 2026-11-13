@@ -254,7 +254,8 @@ and the change is committed locally with a descriptive body (plan §16).
 ## 12. Current state and next task
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  M0 ✅ (tagged `v0.1.0`); M1 vertical slice ✅ (43 tests); tagged `v0.2.1`.
+  M0 ✅ (tagged `v0.1.0`); M1 vertical slice ✅ (47 tests); tagged `v0.2.1`;
+  M1 UX patch `0.2.2` pending.
 - Working: drop/paste, median cut/popularity, Oklab/sRGB, before/after, palette strip
   validation, reduced PNG, themes, Help drawer.
 - Next: M2 — fixed palette, Wu/octree/K-means, dithering, indexed PNG; then `0.3.0`.

@@ -12,7 +12,7 @@ export function initControls(handlers) {
 
   function getParams() {
     const value = Number(colors?.value ?? 16);
-    const colorCount = Number.isFinite(value) ? Math.min(64, Math.max(2, Math.round(value))) : 16;
+    const colorCount = Number.isFinite(value) ? Math.min(256, Math.max(2, Math.round(value))) : 16;
     return {
       method: method?.value === 'popularity' ? 'popularity' : 'median-cut',
       colors: colorCount,

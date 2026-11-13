@@ -73,7 +73,23 @@
           <div class="peiq-canvas__empty" id="canvas-empty" hidden>Processing…</div>
         </div>
 
-        <div class="peiq-palette-strip" id="palette-strip" aria-label="Extracted palette"></div>
+        <div class="peiq-palette-panel">
+          <div class="peiq-palette-bar">
+            <span class="peiq-label">Palette</span>
+            <label class="peiq-palette-sort" for="palette-sort">
+              <span class="peiq-label">Sort</span>
+              <select class="peiq-select peiq-select--compact" id="palette-sort" disabled>
+                <option value="source">Source order</option>
+                <option value="hue-asc">Hue · dark → light</option>
+                <option value="hue-desc">Hue · light → dark</option>
+                <option value="lightness-asc">Lightness · dark → light</option>
+                <option value="lightness-desc">Lightness · light → dark</option>
+              </select>
+            </label>
+            <span class="peiq-hint" id="palette-count">0 colors</span>
+          </div>
+          <div class="peiq-palette-strip" id="palette-strip" aria-label="Extracted palette"></div>
+        </div>
         <div class="peiq-statusbar" id="statusbar"></div>
       </div>
 
@@ -90,7 +106,7 @@
             </div>
             <div class="peiq-field">
               <label class="peiq-label" for="colors">Colors <span id="colors-value">16</span></label>
-              <input class="peiq-range" id="colors" type="range" min="2" max="64" step="1" value="16">
+              <input class="peiq-range" id="colors" type="range" min="2" max="256" step="1" value="16">
             </div>
             <div class="peiq-field">
               <label class="peiq-label" for="space">Working space</label>
@@ -132,7 +148,7 @@
   </main>
 
   <footer class="peiq-footer">
-    <p>Runs locally. No uploads, no accounts, no tracking. <a href="./DESIGN.md">Design notes</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a></p>
+    <p>Runs locally. No uploads, no accounts, no tracking. <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a></p>
   </footer>
 
   <aside class="peiq-drawer" id="help-drawer" data-open="false" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="help-title">
