@@ -858,6 +858,9 @@ The loaded UI has two control surfaces: the stage toolbar and the right rail.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
 - Contract summary before download: `K`, bit depth, transparent index, dimensions.
 - Export validation runs automatically; failures block the download.
+- After validation, show a `Save <file>` link. The actual file write is a real user
+  gesture; browsers may block an async automatic download after a worker response. No
+  silent auto-download.
 
 **Quality rail section** (collapsed by default)
 
@@ -1609,6 +1612,7 @@ A change is done only when:
 | 2026-11-13 | `theme-init.js` is an external classic head script, not inline | CSP-safe, no FOUC |
 | 2026-11-13 | M1 PNG zlib uses stored blocks; `CompressionStream` deferred | The native stream stalled in headless Chrome; stored blocks are valid and portable, larger files |
 | 2026-11-13 | M1 UI uses the stage + right rail; median cut/popularity only | Working vertical slice; fixed palette, dithering, and indexed PNG are M2 |
+| 2026-11-13 | Export shows a validated `Save <file>` link instead of auto-downloading | Browsers may block async downloads after a worker response; the save click is a real gesture |
 
 ---
 

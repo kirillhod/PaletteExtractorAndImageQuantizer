@@ -4,7 +4,12 @@ import { copyText } from './ui/dom.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
-import { downloadFiles, getStripOrientation, setExportEnabled } from './ui/export-view.js';
+import {
+  clearDownloadLinks,
+  getStripOrientation,
+  setExportEnabled,
+  showDownloadLinks,
+} from './ui/export-view.js';
 import { initLearn } from './ui/learn-view.js';
 import { renderPalette } from './ui/palette-view.js';
 import { initShortcuts } from './ui/shortcuts.js';
@@ -104,13 +109,14 @@ function onWorkerMessage(event) {
       const detail = files[0]?.validation?.detail ?? 'unknown validation error';
       toast(`Export failed validation: ${detail}`, 'error');
       setStatusMessage('Export failed validation');
+      clearDownloadLinks();
       updateExportState();
       return;
     }
-    downloadFiles(files);
+    showDownloadLinks(files);
     const detail = files[0]?.validation?.detail ?? 'export complete';
-    toast(`Validated: ${detail}`, 'success');
-    setStatusMessage(`Validated: ${detail}`);
+    toast('Validated. Click Save to download.', 'success');
+    setStatusMessage(`Validated: ${detail} — save link ready`);
     updateExportState();
     return;
   }
@@ -132,6 +138,7 @@ function updateExportState() {
 
 function processPreview() {
   if (!app.preview) return;
+  clearDownloadLinks();
   if (app.previewRequestId) {
     worker.postMessage({ type: 'cancel', requestId: app.previewRequestId });
   }
@@ -192,6 +199,7 @@ async function loadFile(file) {
     app.reduced = null;
     app.palette = [];
     app.hasResult = false;
+    clearDownloadLinks();
 
     if (hero) hero.hidden = true;
     if (workspace) workspace.hidden = false;
@@ -254,6 +262,7 @@ function exportStrip() {
   app.exportRequestId = id;
   setExportEnabled(false);
   setStatusMessage('Building and validating the palette strip…');
+  clearDownloadLinks();
   worker.postMessage({
     type: 'export-strip',
     requestId: id,
@@ -269,6 +278,7 @@ function exportReduced() {
   app.exportRequestId = id;
   setExportEnabled(false);
   setStatusMessage('Encoding the full-resolution PNG…');
+  clearDownloadLinks();
   const copy = new Uint8ClampedArray(app.full.data);
   worker.postMessage(
     {

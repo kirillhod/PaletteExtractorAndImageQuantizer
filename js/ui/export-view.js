@@ -1,19 +1,44 @@
 // @ts-check
+/** @type {string[]} */
+const activeUrls = [];
+
 /**
- * @param {{ name:string, mime:string, data:ArrayBuffer }[]} files
+ * @param {{ name:string, mime:string, data:ArrayBuffer, validation?:{ok:boolean,detail:string} }[]} files
  */
-export function downloadFiles(files) {
+export function showDownloadLinks(files) {
+  clearDownloadLinks();
+  const host = document.getElementById('download-result');
+  if (!host) return;
+
+  const hint = document.createElement('p');
+  hint.className = 'peiq-hint';
+  hint.textContent = 'Validated. Click Save to write the file.';
+  host.append(hint);
+
   for (const file of files) {
     const blob = new Blob([file.data], { type: file.mime });
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = file.name;
-    anchor.rel = 'noopener';
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    activeUrls.push(url);
+
+    const link = document.createElement('a');
+    link.className = 'peiq-btn peiq-btn--primary';
+    link.href = url;
+    link.download = file.name;
+    link.rel = 'noopener';
+    link.textContent = `Save ${file.name}`;
+    host.append(link);
+  }
+
+  host.hidden = false;
+}
+
+export function clearDownloadLinks() {
+  for (const url of activeUrls) URL.revokeObjectURL(url);
+  activeUrls.length = 0;
+  const host = document.getElementById('download-result');
+  if (host) {
+    host.replaceChildren();
+    host.hidden = true;
   }
 }
 
