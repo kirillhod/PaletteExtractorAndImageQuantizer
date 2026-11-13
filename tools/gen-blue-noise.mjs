@@ -9,6 +9,8 @@
 
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createRng } from '../js/core/rng.js';
 import { encodeRgbaPng } from '../js/core/png/encode.js';
 
@@ -144,4 +146,6 @@ for (let y = 0; y < SIZE * 8; y++) {
   }
 }
 const png = await encodeRgbaPng(SIZE * 8, SIZE * 8, preview);
-fs.writeFileSync('tmp/blue-noise-preview.png', png);
+const previewPath = join(tmpdir(), 'peiq-blue-noise-preview.png');
+fs.writeFileSync(previewPath, png);
+console.log(`preview: ${previewPath}`);
