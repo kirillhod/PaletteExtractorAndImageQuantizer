@@ -29,8 +29,16 @@ npm run dev
 
 The dev server binds to all interfaces and prints LAN URLs. Open one of those on a
 phone or tablet connected to the same Wi-Fi; allow Node.js on private networks if the
-firewall asks. Use `node tools/dev-server.mjs 5173 --host=localhost` to keep the server
-loopback-only.
+firewall asks. On Windows, if the phone times out, add an inbound rule from an elevated
+PowerShell:
+
+```powershell
+New-NetFirewallRule -DisplayName "PEIQ dev server (TCP 5173)" `
+  -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5173 -Profile Private
+```
+
+Remove it with `Remove-NetFirewallRule -DisplayName "PEIQ dev server (TCP 5173)"`.
+Use `node tools/dev-server.mjs 5173 --host=localhost` to keep the server loopback-only.
 
 Test it:
 
