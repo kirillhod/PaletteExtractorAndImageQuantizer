@@ -53,7 +53,7 @@ contracts, tests, milestones, and the decision log.
 /js/workers/         pipeline.worker.js
 /js/core/            DOM-free, Node-testable: color, quantize, dither, png, formats,
                      palettes, metrics, pipeline
-/assets/             blue-noise-64.bin (+ provenance)
+/assets/             blue-noise-64.bin, optional OFL font (+license), own artwork
 /test/               node --test suites and fixture helpers
 /tools/              dev-server.mjs, gen-blue-noise.mjs
 /.github/workflows/  ci.yml, pages.yml
@@ -80,8 +80,9 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 ## 5. Non-negotiable rules
 
 1. **Zero dependencies, zero build.** `package.json` must not gain `dependencies` or
-   `devDependencies`. No bundler, transpiler, CSS preprocessor, CDN, external font, or
-   icon library. Implement with platform APIs or add to the backlog.
+   `devDependencies`. No bundler, transpiler, CSS preprocessor, CDN, external/CDN font, or
+   icon library. A self-hosted OFL font asset is allowed only when the plan declares it.
+   Implement with platform APIs or add to the backlog.
 2. **Local-only.** No `fetch`, XHR, WebSocket, beacon, analytics, or third-party script at
    runtime. Downloads use `Blob` + object URLs, revoked after use. Verify zero network
    requests in DevTools.
@@ -132,6 +133,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
     `innerHTML`, Markdown parser, iframe, embed, or runtime fetch. External links open
     only on explicit click with `rel="noopener noreferrer"`; no prefetch/preconnect.
     Update the matching guide topic whenever an algorithm or contract changes.
+18. **Visual direction is Blender-inspired, not a clone.** Follow the tokens and rules in
+    plan §8.4/§8.9. Do not copy Blender CSS, logo, wordmark, artwork, screenshots, or
+    theme files. No external images, videos, or icon packs; use CSS/SVG/canvas/own
+    screenshots. The optional self-hosted Inter font must ship with its OFL license.
 
 ## 6. Coding conventions
 
