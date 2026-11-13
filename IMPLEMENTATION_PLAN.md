@@ -1,4 +1,4 @@
-# Palette Foundry — Implementation Plan
+# PaletteExtractorAndImageQuantizer — Implementation Plan
 
 **Plan version:** 1.0.0
 **Product version at completion:** 1.0.0
@@ -6,8 +6,10 @@
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
 **Source research:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
-**Working title:** Palette Foundry. The public name is the only unresolved product decision;
-identifiers below are frozen until `1.0.0-rc.1`.
+**Public name:** `PaletteExtractorAndImageQuantizer` (the repository name).
+**Short mark:** `PEIQ`.
+**Identifiers:** frozen from this revision (`peiq-` CSS prefix, `peiq/*` JSON namespace,
+`peiq.*` storage keys).
 
 Normative keywords: **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, **MAY**
 (RFC 2119 semantics). A deviation from a MUST requires updating this document first.
@@ -60,12 +62,17 @@ deterministic output and no uploads.
 - A single-page, static, local-only web tool.
 - An extractor **and** a fixed-palette mapper.
 - A producer of validated artifacts: indexed PNG, palette strip, palette JSON, QA report.
+- An **in-product learning layer**: contextual hints and a Help drawer that explain the
+  theory and link to canonical sources without blocking the workflow.
 - Deterministic for a fixed browser version + parameters + seed.
 
 ### 1.4 What v1.0.0 is not
 
 Batch/ZIP, CLI, server API, accounts, print/CMYK, neural quantization, animated-frame
 decoding, per-tile palette banks, palette cycling, cloud sync. See §19.
+
+It is also **not** a separate documentation site, a first-run tour, or a wall of permanent
+explanatory text. Learning is opt-in, contextual, and dismissible.
 
 ### 1.5 Success criteria
 
@@ -78,6 +85,7 @@ decoding, per-tile palette banks, palette cycling, cloud sync. See §19.
 | Determinism | Same browser/version + params + seed → identical palette, index map, decoded pixels |
 | Privacy | Zero network requests after page load (verified in DevTools) |
 | Dependency count | Zero runtime dependencies, zero build step |
+| Learning layer | ≥12 guide topics; every non-obvious control has a hint; nothing auto-opens |
 
 ---
 
@@ -112,6 +120,8 @@ to v1.0.x without changing the contracts.
 | F-22 | DTCG design-token export | SHOULD | M3 | Valid DTCG JSON for ≤64 entries |
 | F-23 | URL-hash state (params only) | SHOULD | M4 | Reload restores params; no image data in URL |
 | F-24 | Light theme | SHOULD | M4 | Meets the same contrast requirements |
+| F-25 | In-product learning layer: contextual hints + Help drawer | MUST | M3–M4 | Every non-obvious control has a hint; ≥12 guide topics with canonical links; never auto-opens; keyboard accessible |
+| F-26 | Deep links to Help topics | SHOULD | M4 | `#help=<topic>` opens the matching topic; params hash still works |
 
 ---
 
@@ -165,6 +175,9 @@ Feature fallbacks:
   required chunks).
 - A meta CSP SHOULD be added: `default-src 'self'; img-src 'self' blob: data:;
   style-src 'self'; script-src 'self'; worker-src 'self' blob:; connect-src 'none'`.
+- External references open only on an explicit user click, with `target="_blank"` and
+  `rel="noopener noreferrer"`. No prefetch, preconnect, embed, iframe, or automatic
+  navigation. The tool itself remains local-only.
 - Cap dimensions before allocation; reject decompression bombs.
 
 ### 3.5 Repository and deploy
@@ -172,8 +185,8 @@ Feature fallbacks:
 ```
 /                     index.html, .nojekyll, package.json, LICENSE, README.md,
                       IMPLEMENTATION_PLAN.md, AGENTS.md
-/css/                 tokens, base, layout, components, canvas, responsive
-/js/                  main.js, ui/, workers/, core/
+/css/                 tokens, base, layout, components, canvas, learn, responsive
+/js/                  main.js, ui/, content/, workers/, core/
 /assets/              blue-noise mask, icons, optional palette data
 /test/                node --test suites and fixtures helpers
 /tools/               dev-server.mjs, gen-blue-noise.mjs
@@ -181,7 +194,8 @@ Feature fallbacks:
 ```
 
 GitHub Pages serves the repository root. CI runs `node --test`; deploy uses the official
-Pages actions. `.nojekyll` MUST exist.
+Pages actions. `.nojekyll` MUST exist. `js/content/` holds static, trusted learning data;
+it is never fetched at runtime.
 
 ---
 
@@ -209,11 +223,13 @@ and canvas; core receives an `ImageDataLite`. The **own PNG decoder** lives in c
 
 ### 4.2 Import rules
 
-- `core/**` MUST NOT import from `ui/**`, `workers/**`, or `main.js`.
+- `core/**` MUST NOT import from `ui/**`, `workers/**`, `content/**`, or `main.js`.
 - `core/**` MUST NOT touch `window`, `document`, `Image`, `canvas`, `localStorage`,
   `navigator`, or `fetch`.
 - `ui/**` MUST NOT implement color math, quantization, dithering, or file formats.
-- The worker MAY import `core/**` and nothing from `ui/**`.
+- The worker MAY import `core/**` and nothing from `ui/**` or `content/**`.
+- `content/**` is static data only: no fetch, no DOM access, no side effects, no imports
+  from `core/**` or `ui/**`. UI modules render it.
 - All color conversions and distance computations go through `core/color.js`.
 - All randomness goes through `core/rng.js`; `Math.random` is forbidden.
 - All sorting with ties uses explicit comparators; no reliance on hash-map order.
@@ -757,7 +773,7 @@ hashes are reviewed when intentional changes occur.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Header: Palette Foundry · local-only badge · Extract | Map · Help        │
+│ Header: public name · local-only badge · Extract | Map · Help            │
 ├────────────────┬──────────────────────────────────┬──────────────────────┤
 │ Controls       │ Canvas                           │ Palette + QA         │
 │ (scroll)       │  checkerboard, before/after      │ swatches, stats      │
@@ -773,6 +789,9 @@ hashes are reviewed when intentional changes occur.
 - 960–1279 px: two columns; palette panel becomes a tab below controls.
 - < 960 px: stacked; canvas sticky at the top; tabs: Controls / Palette / QA / Export.
 - < 640 px: single column; controls are collapsible sections.
+- The header shows the full public name at ≥960 px; below that, the short mark `PEIQ` with
+  an `aria-label`/`title` carrying the full name. The document title uses the full name.
+- The `Help` button is always visible, including the empty state.
 
 ### 8.2 Controls
 
@@ -823,6 +842,13 @@ hashes are reviewed when intentional changes occur.
 - Contract summary before download: `K`, bit depth, transparent index, dimensions.
 - Export validation runs automatically; failures block the download.
 
+**Help**
+
+- Header `?` button opens the Help drawer with `Guide` and `Shortcuts` tabs.
+- A small info icon next to every non-obvious control opens a contextual popover with a
+  “Read more” link into the matching guide topic.
+- Nothing auto-opens; `Esc` and outside-click close; focus returns to the trigger.
+
 ### 8.3 Canvas interactions
 
 - Before/after divider at 50%, draggable; keyboard: `role="slider"`, arrow keys ±1%.
@@ -838,17 +864,17 @@ hashes are reviewed when intentional changes occur.
 
 | Token | Value |
 |---|---|
-| `--pf-bg` | `#0e1116` |
-| `--pf-panel` | `#151a21` |
-| `--pf-panel-2` | `#1b222b` |
-| `--pf-border` | `#252d38` |
-| `--pf-text` | `#e6edf3` |
-| `--pf-muted` | `#8b949e` |
-| `--pf-accent` | `#4c9aff` |
-| `--pf-danger` | `#f85149` |
-| `--pf-warn` | `#d29922` |
-| `--pf-ok` | `#3fb950` |
-| `--pf-radius` | `8px` |
+| `--peiq-bg` | `#0e1116` |
+| `--peiq-panel` | `#151a21` |
+| `--peiq-panel-2` | `#1b222b` |
+| `--peiq-border` | `#252d38` |
+| `--peiq-text` | `#e6edf3` |
+| `--peiq-muted` | `#8b949e` |
+| `--peiq-accent` | `#4c9aff` |
+| `--peiq-danger` | `#f85149` |
+| `--peiq-warn` | `#d29922` |
+| `--peiq-ok` | `#3fb950` |
+| `--peiq-radius` | `8px` |
 | spacing | 4 / 8 / 12 / 16 / 24 px |
 | font | system UI stack, no external fonts |
 
@@ -866,8 +892,8 @@ hashes are reviewed when intentional changes occur.
 | `O` | Toggle original |
 | `E` | Toggle error map |
 | `Ctrl/Cmd+S` | Download indexed PNG |
-| `?` | Shortcuts dialog |
-| `Esc` | Close dialog / cancel drag |
+| `?` | Toggle Help drawer (Guide / Shortcuts) |
+| `Esc` | Close popover/drawer / cancel drag |
 
 Shortcuts are disabled while an input/textarea/select has focus.
 
@@ -886,6 +912,66 @@ Shortcuts are disabled while an input/textarea/select has focus.
   “This PNG is 8,192×8,192 (67 MP). The limit is 16.7 MP. Resize it or use a smaller export.”
 - Warnings are specific: “Semi-transparent pixels will become fully transparent or
   opaque in indexed PNG.”
+
+### 8.8 Learning layer
+
+Goal: explain the theory **in place**, without turning the tool into a tutorial or a docs
+site. Learning is opt-in, contextual, and dismissible.
+
+**Contextual hints**
+
+- A small outlined `?` icon sits next to non-obvious controls: algorithm, colors, space,
+  refine, seed, dither method, strength, serpentine, edge stop, order, transparent index,
+  alpha threshold, ΔE00 stats, and export options.
+- Hover/focus (desktop) or tap (touch) opens a popover: 2–4 short sentences plus a
+  “Read more” link. Maximum width 320 px; positioned next to the trigger.
+- `Esc`, outside-click, or a second click closes it; focus returns to the trigger.
+- Hints never cover the canvas, never block a control, and never auto-open.
+
+**Help drawer**
+
+- The header `?` button opens a non-modal right-side drawer with two tabs:
+  - **Guide** — topics, each with a summary, 2–4 short paragraphs, and canonical links.
+  - **Shortcuts** — the table from §8.5.
+- Closed by default. Remembers the last tab for the session only.
+- Desktop: 360 px overlay above the right panel; the canvas does not relayout.
+  < 960 px: full-height sheet; `Esc` closes.
+- Topic list (minimum 12):
+  1. `quantization-basics` — what quantization is and what it trades away.
+  2. `popularity` — dominant-color selection.
+  3. `median-cut` — Heckbert’s box splitting.
+  4. `wu` — moment-based splitting.
+  5. `octree` — tree reduction.
+  6. `kmeans` — Lloyd/LBG and k-means++.
+  7. `oklab-vs-srgb` — perceptual spaces and the content-dependent caveat.
+  8. `delta-e` — CIEDE2000 and practical thresholds.
+  9. `error-diffusion` — FS/Atkinson/Stucki/Jarvis/Burkes/Sierra.
+  10. `ordered-dithering` — Bayer and two-candidate ordered dithering.
+  11. `blue-noise` — void-and-cluster masks.
+  12. `indexed-png` — `PLTE`, `tRNS`, and engine import.
+  13. `palette-strips` — the 1×N contract and Aseprite/Godot/Unity.
+  14. `alpha` — transparency in indexed output.
+  15. `determinism` — seeds, hashes, and reproducibility.
+  16. `contrast` — WCAG/APCA and why one number is not “accessible”.
+
+**Content and safety**
+
+- Content lives in `js/content/learn.js` as structured data:
+  `{ id, title, summary, paragraphs: string[], links: string[] }`.
+- `js/content/references.js` holds canonical references:
+  `{ id, title, authors, year, url }`.
+- Rendered with `createElement`/`textContent`; no Markdown parser, no `innerHTML`, no
+  iframe, no embedded video, no third-party widget.
+- Links are canonical sources (papers, specs, engine docs), `target="_blank"`,
+  `rel="noopener noreferrer"`. No prefetch/preconnect. The page remains local-only; only
+  an explicit click navigates away.
+- Content is static and bundled; zero runtime fetches.
+- Deep links (SHOULD): `#help=<topic>` opens the drawer at a topic. Params use
+  `#p=<encoded>`; combined as `#p=<encoded>&help=<topic>`.
+- Drawer semantics: `role="dialog"`, `aria-modal="false"`, labelled by its heading;
+  focus moves in on open and returns on close; tabs are keyboard-operable.
+- Non-goals: first-run tour, modal onboarding, permanent explanatory paragraphs,
+  documentation site, comments/community.
 
 ---
 
@@ -919,6 +1005,8 @@ Shortcuts are disabled while an input/textarea/select has focus.
 - Debounce 150 ms; abort stale jobs.
 - Transfer `ArrayBuffer`s; never clone pixel data unnecessarily.
 - Display timings per stage in the status bar and manifest.
+- Learning content is static in the bundle: no fetch, no runtime parsing beyond module
+  load. Hints/drawer must not trigger canvas relayout or a re-render of the result.
 - Cap work, not wall-clock: if a job exceeds its budget, reduce iterations or resolution
   only with an explicit UI note — never silently.
 
@@ -969,6 +1057,7 @@ Shortcuts are disabled while an input/textarea/select has focus.
 | `pipeline.test.js` | stage composition, preview vs final params |
 | `determinism.test.js` | two runs → identical palette/index-map hashes |
 | `golden.test.js` | synthetic fixture → reviewed hashes |
+| `learn.test.js` | unique topic/reference IDs, required fields, https links, every referenced ID exists |
 
 ### 10.3 Required known-answer tests
 
@@ -1013,6 +1102,10 @@ Shortcuts are disabled while an input/textarea/select has focus.
 10. DevTools: no network requests; no console errors.
 11. Large image rejection; 1×1; fully transparent; single color.
 12. `prefers-reduced-motion`; keyboard-only pass.
+13. Open every info popover with mouse and keyboard; `Esc` closes; focus returns;
+    “Read more” opens the matching guide topic.
+14. Help drawer at 1280 px and 360 px: tabs work, canvas does not relayout, no network
+    requests, external links open only on click.
 
 ---
 
@@ -1051,7 +1144,7 @@ No error may be swallowed. Every warning is visible in the status bar and in the
 
 ```json
 {
-  "format": "palette-foundry/palette",
+  "format": "peiq/palette",
   "version": 1,
   "meta": {
     "name": "sprite",
@@ -1116,7 +1209,7 @@ Zlib:
 | `.hex` | One `#rrggbb` per line, lowercase, no blank lines except an optional trailing newline |
 | `.gpl` | `GIMP Palette`, `Name:`, `Columns:`, `#`, then `R G B\tName` |
 | `.pal` | JASC: `JASC-PAL`, `0100`, count, then `R G B` |
-| `.css` | `:root { --pf-color-1: #rrggbb; ... }` (1-based, stable order) |
+| `.css` | `:root { --peiq-color-1: #rrggbb; ... }` (1-based, stable order) |
 | `.tokens.json` | DTCG `color` object; names are `color-1` or sanitized entry names |
 | `.ase` | Adobe Swatch Exchange; RGB float32 entries; verify in Aseprite/Photoshop |
 | Manifest | §12.6 |
@@ -1128,7 +1221,7 @@ All text formats use LF and UTF-8. No BOM.
 
 ```json
 {
-  "format": "palette-foundry/report",
+  "format": "peiq/report",
   "version": 1,
   "source": { "name": "sprite.png", "width": 256, "height": 256, "hash": "sha256:…" },
   "params": { "method": "wu", "colors": 16, "space": "oklab",
@@ -1149,7 +1242,7 @@ All text formats use LF and UTF-8. No BOM.
 
 ```json
 {
-  "format": "palette-foundry/manifest",
+  "format": "peiq/manifest",
   "version": 1,
   "tool": { "version": "1.0.0", "algorithmVersion": 1 },
   "source": { "name": "sprite.png", "width": 256, "height": 256,
@@ -1204,7 +1297,7 @@ emulator/PPU revision and the meaningful workflow requires per-region banks.
   lines and `;`/`//` comments.
 - `.gpl`: parse `GIMP Palette`, `Name:`, `Columns:`, skip `#` comments, read `R G B [name]`.
 - `.pal`: JASC header only; reject unknown versions.
-- `.json`: validate `format === "palette-foundry/palette"`, version 1, entries.
+- `.json`: validate `format === "peiq/palette"`, version 1, entries.
 - `.ase`: parse color-entry blocks; flatten groups; RGB only; reject CMYK/LAB entries.
 - PNG strip: own decoder; require `width === 1 || height === 1`; 1..256 pixels; dedupe
   exact duplicates by default (record aliases).
@@ -1243,6 +1336,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `css/layout.css` | Header, 3-column grid, status bar, breakpoints |
 | `css/components.css` | Buttons, inputs, tabs, sliders, swatches, tables, toasts |
 | `css/canvas.css` | Checkerboard, canvas, divider handle, overlays |
+| `css/learn.css` | Info popovers, Help drawer, guide typography, reference list |
 | `css/responsive.css` | Mobile tabs/accordion rules |
 
 ### JS entry and UI
@@ -1260,8 +1354,16 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/qa-view.js` | ΔE stats, worst pixels, compliance, contrast, error-map toggle |
 | `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
-| `js/ui/shortcuts.js` | Keyboard map and `?` dialog |
+| `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs |
+| `js/ui/shortcuts.js` | Keyboard map; opens the Help drawer’s Shortcuts tab |
 | `js/ui/url-state.js` | Serialize/restore params in `location.hash` (no image data) |
+
+### Content
+
+| Path | Responsibility |
+|---|---|
+| `js/content/learn.js` | Static guide topics: `{id, title, summary, paragraphs, links}` |
+| `js/content/references.js` | Canonical references: `{id, title, authors, year, url}` |
 
 ### Worker
 
@@ -1369,12 +1471,14 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [ ] Built-in palettes, presets
 - [ ] All palette formats + manifest
 - [ ] Palette swap preview, contrast matrix
+- [ ] Contextual hints + Help drawer shell + ≥12 guide topics
 - **Exit:** full feature matrix complete; all exports green; `0.4.0`.
 
 ### M4 — Release
 
 - [ ] Responsive + accessibility pass
 - [ ] Performance tuning against §9
+- [ ] Learning layer polish, deep links, link audit
 - [ ] README, screenshots, usage
 - [ ] GitHub Pages deploy + smoke test
 - [ ] Release checklist §17
@@ -1401,7 +1505,7 @@ A change is done only when:
 7. Warnings/errors are surfaced; no silent catch.
 8. Non-obvious math cites a plan section or a paper.
 9. The plan/decision log is updated if a rule or contract changed.
-10. The change is committed locally with a descriptive body (see AGENTS.md §9).
+10. The change is committed locally with a descriptive body (see AGENTS.md §10).
 
 ---
 
@@ -1442,6 +1546,8 @@ A change is done only when:
 | 2026-11-13 | Batch/CLI deferred to v1.1 | Web single-image first; avoid scope creep |
 | 2026-11-13 | PNG byte equality is same-browser only | `CompressionStream` settings are implementation-defined |
 | 2026-11-13 | English UI and docs | Public open-source tool; no i18n in v1 |
+| 2026-11-13 | Public name = repository name `PaletteExtractorAndImageQuantizer`; short mark `PEIQ`; identifiers `peiq-` / `peiq/*` / `peiq.*` | Owner decision; no separate brand name |
+| 2026-11-13 | In-product learning layer (contextual hints + Help drawer), closed by default | Owner requirement: theory accessible without blocking the workflow |
 
 ---
 
@@ -1494,6 +1600,8 @@ A change is done only when:
 - [Godot palette swap shader](https://github.com/KoBeWi/Godot-Palette-Swap-Shader)
 
 Algorithm references are in [RESEARCH_REPORT.md §References](RESEARCH_REPORT.md#references).
+The Help drawer uses a curated subset of these links plus the algorithm papers above;
+`js/content/references.js` is the single source for URLs shown in the UI.
 
 ## Appendix C — Built-in palette data
 

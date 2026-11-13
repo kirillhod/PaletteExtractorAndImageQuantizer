@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Color-science primitives for Palette Foundry.
+ * Color-science primitives for PaletteExtractorAndImageQuantizer.
  *
  * Pure, DOM-free, dependency-free. Everything here is covered by
  * known-answer tests in test/color.test.js.
