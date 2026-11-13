@@ -1,96 +1,123 @@
 # PaletteExtractorAndImageQuantizer
 
-Browser-local palette compiler: extract palettes, map images to fixed palettes, dither,
-and export engine-ready indexed PNGs, validated palette strips, palette sidecars, and QA
-reports. Dark and light themes, no uploads, no dependencies, no build step.
+**Turn any image into a clean, usable palette — right in your browser.**
 
-**Status: M2 is working.**
+Extract colors, map an image to a fixed palette, dither the result, and export
+engine-ready indexed PNGs and palette strips. Everything runs on your device: no uploads,
+no accounts, no dependencies, no build step.
 
-- Drop, paste, or pick a PNG/JPEG/WebP/GIF/BMP image.
-- Extract with popularity, median cut, Wu, octree, or K-means++ in Oklab or sRGB, up to
-  256 colors. Median cut and Wu use a Lloyd refinement pass.
-- Map to a built-in palette (PICO-8, Game Boy, C64, ZX Spectrum, EGA) or import `.hex`,
-  `.gpl`, `.pal`, `.json`, or a PNG palette strip.
-- Sort the palette by source order, hue (dark→light / light→dark), or lightness
-  (dark→light / light→dark); the swatches, HEX list, and strip export follow.
-- Dither with Floyd–Steinberg, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2×2/4×4/8×8,
-  or blue noise; control strength, serpentine, and edge stop.
-- Set a transparent index and alpha threshold for sprites.
-- Export from the panel under the palette: a **4/8-bit indexed PNG** with `PLTE`/`tRNS`,
-  a validated `N×1`/`1×N` strip, or a reduced RGBA PNG. Every export is decoded and
-  checked before the Save link appears.
-- Hover or tap the `?` next to algorithm settings for short explanations, including
-  serpentine scan and edge stop.
-- Copy HEX values and switch dark/light/auto themes; the preference persists.
+![PEIQ workspace with a sunset image, a 24-color palette, and the export panel](assets/screenshots/workspace-dark.png)
 
-Run it:
+*Extract up to 256 colors, compare before and after, and export a validated indexed PNG.*
+
+## What you can do
+
+### Extract a palette
+
+Choose the colors that define your image.
+
+- Five extractors: **popularity**, **median cut**, **Wu**, **octree**, and **K-means++**.
+- From **2 to 256 colors**, with a slider or an exact number.
+- Work in **Oklab** for perceptual results or **sRGB** for legacy pipelines.
+- Median cut and Wu get a Lloyd refinement pass for cleaner clusters.
+- Sort the result by source order, hue, or lightness — both directions.
+- See the original and the reduced image side by side with a draggable divider.
+
+### Map to a fixed palette
+
+Constrain artwork to the palette your engine or hardware expects.
+
+- Built-in palettes: **PICO-8**, **Game Boy DMG**, **Commodore 64**, **ZX Spectrum**, and
+  **EGA**.
+- Import `.hex`, `.gpl`, `.pal`, `.json`, or a PNG palette strip (`N×1` or `1×N`).
+- Choose a transparent index for sprites.
+- Tune the alpha threshold and preview the result immediately.
+
+### Dither like a pixel artist
+
+- **Error diffusion:** Floyd–Steinberg, Atkinson, Stucki, Jarvis, Burkes, Sierra.
+- **Ordered:** Bayer 2×2, 4×4, and 8×8.
+- **Blue noise:** a generated 64×64 void-and-cluster mask.
+- Adjust strength, serpentine scan, and edge stop.
+- Hover or tap the `?` next to any setting for a short explanation.
+
+![Mapping the sunset image to PICO-8 with Floyd–Steinberg dithering](assets/screenshots/map-dither-dark.png)
+
+*Map to a built-in palette and tune error diffusion until the result looks right.*
+
+### Export files your tools can use
+
+- **Indexed PNG** with `PLTE` and optional `tRNS`, using the smallest bit depth for the
+  palette (1, 2, 4, or 8 bits).
+- **Palette strip** as an exact `N×1` or `1×N` PNG.
+- **Reduced RGBA PNG** for quick previews and sharing.
+- **HEX list** copied to the clipboard.
+
+Every export is decoded again and compared with the expected pixel data before the Save
+link appears. If something does not match, the download is blocked.
+
+### Work comfortably
+
+- Dark, light, and automatic themes.
+- Before/after divider, fit, 100% zoom, and original toggle.
+- Helpful tooltips and a Help drawer with a reference list.
+- Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `T` theme, `?` Help.
+- Everything stays responsive down to phone width.
+
+## How it works
+
+1. **Drop an image** or paste it from the clipboard.
+2. **Extract** a palette or pick a fixed one.
+3. **Dither** if you want to trade sharp dots for smoother gradients.
+4. **Export** an indexed PNG, a palette strip, or a reduced image.
+
+The preview uses a downscaled copy for speed. Export always processes the original image
+at full resolution.
+
+## Built-in palettes
+
+| Palette | Colors |
+|---|---:|
+| PICO-8 | 16 |
+| Game Boy DMG | 4 |
+| Commodore 64 (VICE) | 16 |
+| ZX Spectrum | 15 |
+| EGA | 16 |
+
+You can also import any palette with up to 256 colors.
+
+## Privacy
+
+Images are decoded and processed entirely in your browser. Nothing is uploaded, and the
+page makes no network requests after loading. No analytics, accounts, cookies, or
+third-party scripts.
+
+## Browser support
+
+Current Chrome, Edge, Firefox, and Safari. The app needs ES modules, Web Workers, canvas,
+and `createImageBitmap`; no extensions or WebAssembly are required.
+
+## Run it locally
+
+The app is a static page with no install or build step. Serve the folder and open it in a
+browser:
 
 ```bash
 npm run dev
-# http://localhost:5173/
 ```
 
-The dev server binds to all interfaces and prints LAN URLs. Open one of those on a
-phone or tablet connected to the same Wi-Fi; allow Node.js on private networks if the
-firewall asks. On Windows, if the phone times out, add an inbound rule from an elevated
-PowerShell:
+Then open `http://localhost:5173/`.
 
-```powershell
-New-NetFirewallRule -DisplayName "PEIQ dev server (TCP 5173)" `
-  -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5173 -Profile Private
-```
+## Credits
 
-Remove it with `Remove-NetFirewallRule -DisplayName "PEIQ dev server (TCP 5173)"`.
-Use `node tools/dev-server.mjs 5173 --host=localhost` to keep the server loopback-only.
-
-Test it:
-
-```bash
-npm test   # 85 tests, zero dependencies
-```
-
-## GitHub Pages
-
-The repository is the static site; there is no build step. `.nojekyll` is committed, and
-`.github/workflows/pages.yml` stages only `index.html`, `css/`, `js/`, `assets/`, and
-`LICENSE` before deploying through GitHub Actions.
-
-1. Make the repository public if you are on the free plan.
-2. Open **Settings → Pages → Build and deployment** and set **Source** to
-   **GitHub Actions**.
-3. Run the **pages** workflow, or push to `main`.
-4. Open `https://<user>.github.io/PaletteExtractorAndImageQuantizer/`.
-
-The app uses relative paths, so the project-page subpath works without configuration.
-No secret, token, or environment variable is needed for deployment.
-
-Not in M2 yet: ΔE00 QA/error maps, palette editor with locks, all palette-format exports,
-batch, animated frames, and the full theory guide. These are M3–M4 in the plan.
-
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for scope and contracts, and
-[DESIGN.md](DESIGN.md) for the visual system.
-
-## Credits and licenses
-
-- **Application code:** original work, GPL-3.0-only. No third-party source code is
-  bundled. See [LICENSE](LICENSE).
-- **Inter font:** self-hosted variable font under the SIL Open Font License 1.1; the
-  license ships as [assets/fonts/OFL.txt](assets/fonts/OFL.txt).
+- **Code:** original work, GPL-3.0-only. See [LICENSE](LICENSE).
+- **Inter font:** self-hosted under the SIL Open Font License 1.1. The license ships as
+  [assets/fonts/OFL.txt](assets/fonts/OFL.txt).
 - **Algorithms:** implementations are original and follow the published methods. The
-  Help drawer’s **References** section links the papers for median cut, Wu, octree,
-  K-means/LBG and k-means++, Floyd–Steinberg, Bayer, void-and-cluster blue noise,
-  CIEDE2000, Oklab, PNG, sRGB, and WCAG. Print-only papers are cited without a
-  redistributed PDF.
-- **Built-in palettes:** factual hardware/community color values. Product names and
+  Help drawer’s **References** section links the papers for the extractors, dithering,
+  CIEDE2000, Oklab, PNG, sRGB, and WCAG.
+- **Built-in palettes:** factual hardware and community color values. Names and
   trademarks belong to their owners; this project is not affiliated with them.
-- **Blue-noise mask:** generated locally by `tools/gen-blue-noise.mjs`; no third-party
-  mask is redistributed.
-- **Visual design:** original CSS, SVG, and layout inspired by Blender’s public design
-  language. No Blender code, logo, theme file, or artwork is included.
-- **Research:** sources and trade-offs are recorded in
-  [RESEARCH_REPORT.md](RESEARCH_REPORT.md). Links open only on an explicit click.
-
-The full attribution policy is in
-[IMPLEMENTATION_PLAN.md §3.6](IMPLEMENTATION_PLAN.md#36-licensing-and-attribution).
+- **Blue-noise mask:** generated locally by `tools/gen-blue-noise.mjs`.
 
 **License:** GPL-3.0-only. See [LICENSE](LICENSE).
