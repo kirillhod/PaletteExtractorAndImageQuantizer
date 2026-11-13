@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, popularity, median cut, LUT mapper, PNG encode/decode, pipeline |
 | UI | Stage + rail, empty state, themes, drop/paste, before/after, palette strip, export |
 | Tests | 43 passing (`node --test`), including golden hashes |
-| Version | `js/core/version.js`; `v0.1.0` tagged; M1 version bump to `0.2.0` pending |
+| Version | `js/core/version.js`; `v0.2.0` tagged; M1 complete |
 | Next | M2: fixed palette, Wu/octree/K-means, dithering, indexed PNG |
 
 ---
@@ -1495,7 +1495,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] CI skeleton
 - **Exit:** `node --test` green; page shell loads; no dependencies.
 
-### M1 — Vertical slice (current)
+### M1 — Vertical slice
 
 - [x] Histogram, popularity, median cut
 - [x] PNG encoder (RGBA + strip) + decoder
@@ -1505,7 +1505,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Golden palette/preview hashes
 - **Exit:** drop → palette → validated strip; golden test; `0.2.0`.
 
-### M2 — Fixed palette and dithering
+### M2 — Fixed palette and dithering (current)
 
 - [ ] Wu, octree, K-means++, refinement
 - [ ] Palette import (.hex/.gpl/.pal/.json/PNG strip)
