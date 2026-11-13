@@ -13,6 +13,12 @@
 - `DESIGN.md` §3 defines the `@font-face` rule and fallback stack.
 - If the font is replaced or updated, keep `OFL.txt` and update this note.
 
+## Screenshots
+
+`screenshots/workspace-dark.png` and `screenshots/map-dither-dark.png` are captures of
+the running app using an original canvas-drawn sunset demo image. No third-party artwork,
+screenshots, or stock images are included.
+
 ## Blue noise
 
 `blue-noise-64.bin` is a 64×64 byte mask generated deterministically by
