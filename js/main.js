@@ -15,6 +15,7 @@ import {
 } from './ui/export-view.js';
 import { initLearn } from './ui/learn-view.js';
 import { renderPalette } from './ui/palette-view.js';
+import { initRailSections } from './ui/rail.js';
 import { initShortcuts } from './ui/shortcuts.js';
 import { setStatus, setStatusMessage, toast } from './ui/status.js';
 import { initTheme } from './ui/theme.js';
@@ -487,6 +488,7 @@ function toggleOriginalState() {
 }
 
 const controls = initControls({ onChange: processPreview });
+initRailSections();
 
 initDropzone({
   onFile: loadFile,

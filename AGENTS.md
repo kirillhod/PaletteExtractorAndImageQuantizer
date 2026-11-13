@@ -76,7 +76,9 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
   ES modules, Web Workers, `createImageBitmap`, canvas 2D, `CompressionStream` /
   `DecompressionStream` (`deflate`), `crypto.subtle`.
 - **Dev server:** `npm run dev` → `http://localhost:5173/` (ES modules do not load over
-  `file://`).
+  `file://`). It binds to all interfaces and prints LAN URLs so a phone on the same
+  network can open the tool; `node tools/dev-server.mjs 5173 --host=localhost` keeps it
+  loopback-only. Allow Node.js on private networks in the OS firewall if prompted.
 - **No build step.** The repository root is the site; GitHub Pages serves it directly.
   `.nojekyll` must exist.
 - **Encoding:** UTF-8, LF (enforced by `.gitattributes`). No generated artifacts except
@@ -254,11 +256,12 @@ and the change is committed locally with a descriptive body (plan §16).
 ## 12. Current state and next task
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0` (82 tests).
+  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0` (85 tests).
 - Working: five extractors, fixed palettes + import, exact/LUT mapping, ED/Bayer/blue-noise
-  dithering, indexed PNG with `tRNS`, strip/reduced exports, themes, Help drawer.
-- Next: M3 — ΔE00 QA, palette editor/locks, presets, all palette formats, theory guide;
-  then `0.4.0`.
+  dithering, indexed PNG with `tRNS`, strip/reduced exports, themes, compact accordion
+  rail, Help drawer with references and credits, LAN dev-server URLs.
+- Next: M3 — ΔE00 QA, palette editor/locks, presets, all palette formats, the remaining
+  theory topics; then `0.4.0`.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 
@@ -267,8 +270,9 @@ and the change is committed locally with a descriptive body (plan §16).
 ```bash
 npm test
 node --test test/color.test.js
-npm run dev                    # http://localhost:5173/
+npm run dev                    # http://localhost:5173/ + LAN URLs
 node tools/dev-server.mjs 8080
-node tools/gen-blue-noise.mjs  # when the generator exists
+node tools/dev-server.mjs 8080 --host=localhost   # loopback only
+node tools/gen-blue-noise.mjs
 git status
 ```

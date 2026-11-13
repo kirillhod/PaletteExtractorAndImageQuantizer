@@ -1,7 +1,16 @@
 // @ts-check
 /**
- * Built-in palettes. Values are factual hardware/community palettes; sources are listed
- * in IMPLEMENTATION_PLAN.md Appendix C.
+ * Built-in palettes. Values are factual hardware/community palettes; sources and export
+ * order are listed in IMPLEMENTATION_PLAN.md Appendix C.
+ *
+ * - PICO-8: community-documented default palette (Lexaloffle Games).
+ * - Game Boy DMG: common four-shade approximation of the original LCD.
+ * - Commodore 64: VICE emulator default palette values.
+ * - ZX Spectrum: ULA hardware colors, normal and bright.
+ * - EGA: IBM EGA 16-color default palette.
+ *
+ * Product names and trademarks belong to their owners; this project is not affiliated
+ * with them.
  */
 
 /**

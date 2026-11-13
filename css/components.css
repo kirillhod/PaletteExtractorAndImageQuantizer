@@ -605,3 +605,110 @@
   font-family: var(--peiq-font-mono);
   font-size: 0.8125em;
 }
+
+.peiq-reference-group {
+  margin: var(--peiq-space-3) 0 var(--peiq-space-2);
+  color: var(--peiq-text-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.peiq-references {
+  margin: 0 0 var(--peiq-space-3);
+  padding-left: 1.1rem;
+}
+
+.peiq-reference {
+  margin-bottom: var(--peiq-space-2);
+}
+
+.peiq-reference a {
+  font-weight: 500;
+}
+
+.peiq-reference-meta {
+  display: block;
+  color: var(--peiq-text-tertiary);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.peiq-credits {
+  margin: 0;
+}
+
+.peiq-credits dt {
+  margin-top: var(--peiq-space-3);
+  color: var(--peiq-text-strong);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.peiq-credits dd {
+  margin: 4px 0 0;
+  color: var(--peiq-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* Compact rail on desktop: one open section at a time keeps every control visible
+   without a long inner scroll. Touch layouts keep the larger 44 px targets from
+   responsive.css. */
+@media (min-width: 980px) {
+  .peiq-rail {
+    gap: var(--peiq-space-2);
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+  }
+
+  .peiq-rail-section > summary {
+    padding: var(--peiq-space-2) var(--peiq-space-3);
+    font-size: 0.9375rem;
+  }
+
+  .peiq-rail-section__body {
+    gap: var(--peiq-space-2);
+    padding: 0 var(--peiq-space-3) var(--peiq-space-3);
+  }
+
+  .peiq-rail .peiq-field {
+    gap: 4px;
+  }
+
+  .peiq-rail .peiq-input,
+  .peiq-rail .peiq-select {
+    min-height: 34px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .peiq-rail .peiq-range {
+    min-height: 22px;
+  }
+
+  .peiq-rail .peiq-label {
+    font-size: 0.6875rem;
+  }
+
+  .peiq-rail .peiq-hint {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .peiq-rail .peiq-btn {
+    min-height: 30px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .peiq-rail .peiq-tab {
+    min-height: 28px;
+    font-size: 0.8125rem;
+  }
+
+  .peiq-rail .peiq-check-label {
+    font-size: 0.8125rem;
+  }
+}

@@ -36,10 +36,10 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
-| UI | Stage + rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, strip, reduced PNG |
-| Tests | 82 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG |
+| UI | Stage + compact accordion rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
+| Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
 | Version | `js/core/version.js`; `v0.3.0` tagged; M2 complete |
-| Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, theory guide |
+| Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
 
 ---
 
@@ -202,7 +202,26 @@ Feature fallbacks:
 
 GitHub Pages serves the repository root. CI runs `node --test`; deploy uses the official
 Pages actions. `.nojekyll` MUST exist. `js/content/` holds static, trusted learning data;
-it is never fetched at runtime.
+it is never fetched at runtime. `npm run dev` binds to all interfaces so a phone on the
+same network can open the tool; `--host=localhost` keeps it loopback-only.
+
+### 3.6 Licensing and attribution
+
+- Application code is original and GPL-3.0-only; no third-party source is copied.
+- Published algorithms are implemented from their descriptions. Ideas and formulas are
+  not copyrightable, but the papers are credited. Canonical references live in
+  `js/content/references.js` and render in the Help drawer; print-only papers are cited
+  without a redistributed PDF.
+- Inter is self-hosted under the SIL Open Font License 1.1; `assets/fonts/OFL.txt` ships
+  with it and the provenance is recorded in `assets/README.md`.
+- Built-in palettes are factual hardware/community values. Product names and trademarks
+  belong to their owners; the project is not affiliated with them.
+- The visual system is original CSS/SVG inspired by Blender’s public design language. No
+  Blender code, logo, wordmark, theme file, screenshot, or artwork is included.
+- The blue-noise mask is generated in-repo by `tools/gen-blue-noise.mjs`; no third-party
+  mask or image is redistributed.
+- New assets MUST have a recorded source and license before they land. Do not add a
+  dependency, font, icon pack, image, or code snippet with unclear terms.
 
 ---
 
@@ -824,7 +843,10 @@ without its header clutter.
 
 ### 8.2 Controls
 
-The loaded UI has two control surfaces: the stage toolbar and the right rail.
+The loaded UI has two control surfaces: the stage toolbar and the right rail. Rail
+sections are mutually exclusive: opening one closes the others, and **Palette** starts
+open. Desktop spacing is compact so all four section headers and the active body fit;
+touch layouts keep 44 px targets.
 
 **Stage toolbar** (inside the stage, above the canvas)
 
@@ -1407,7 +1429,8 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/qa-view.js` | ΔE stats, worst pixels, compliance, contrast, error-map toggle |
 | `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
-| `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs |
+| `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |
+| `js/ui/rail.js` | Keeps the rail compact: opening one section closes the others |
 | `js/ui/shortcuts.js` | Keyboard map; opens the Help drawer’s Shortcuts tab |
 | `js/ui/url-state.js` | Serialize/restore params in `location.hash` (no image data) |
 
@@ -1416,7 +1439,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | Path | Responsibility |
 |---|---|
 | `js/content/learn.js` | Static guide topics: `{id, title, summary, paragraphs, links}` |
-| `js/content/references.js` | Canonical references: `{id, title, authors, year, url}` |
+| `js/content/references.js` | Canonical references `{id, title, authors, year, venue, url}`, plus credits; `url` is `null` for print-only papers |
 
 ### Worker
 
@@ -1532,6 +1555,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [ ] Built-in palettes, presets
 - [ ] All palette formats + manifest
 - [ ] Palette swap preview, contrast matrix
+- [x] Canonical reference list and credits in the Help drawer
 - [ ] Contextual hints + Help drawer shell + ≥12 guide topics
 - **Exit:** full feature matrix complete; all exports green; `0.4.0`.
 
@@ -1625,6 +1649,10 @@ A change is done only when:
 | 2026-11-13 | M2: five extractors + refinement, fixed palettes/import, exact/LUT mapping, ED/Bayer/blue noise, indexed PNG | M2 exit: PICO-8 mapping and round-trip validation green |
 | 2026-11-13 | Full DEFLATE decoder; encoder still stored blocks | Palette-strip PNG import works; compression optimization remains |
 | 2026-11-13 | Blue-noise mask generated offline and embedded as base64 | No runtime fetch, deterministic asset, checksum recorded |
+| 2026-11-13 | Dev server binds to all interfaces and prints LAN URLs | Owner wants to open the tool from a phone on the same network; `--host=localhost` restores loopback |
+| 2026-11-13 | Rail sections form an exclusive accordion and use compact desktop spacing | Almost half the controls did not fit; one body at a time removes the inner scroll without hiding section headers |
+| 2026-11-13 | Help renders canonical references and credits; print-only papers are cited without a PDF | Owner wants visible attribution; avoids redistributing copyrighted scans |
+| 2026-11-13 | Licensing/attribution rules moved into plan §3.6 | Makes the copyright boundary explicit for future assets and code |
 
 ---
 
@@ -1677,8 +1705,10 @@ A change is done only when:
 - [Godot palette swap shader](https://github.com/KoBeWi/Godot-Palette-Swap-Shader)
 
 Algorithm references are in [RESEARCH_REPORT.md §References](RESEARCH_REPORT.md#references).
-The Help drawer uses a curated subset of these links plus the algorithm papers above;
-`js/content/references.js` is the single source for URLs shown in the UI.
+The Help drawer renders a curated subset of these links plus the algorithm papers above;
+`js/content/references.js` is the single source for URLs shown in the UI. It also carries
+the credits for the font, palettes, blue-noise generator, and design. Print-only papers
+are cited without a URL rather than linking an unauthorized scan.
 
 ## Appendix C — Built-in palette data
 
