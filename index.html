@@ -105,7 +105,7 @@
               </div>
             </div>
 
-            <div id="extract-controls">
+            <div class="peiq-field-stack" id="extract-controls">
               <div class="peiq-field">
                 <label class="peiq-label" for="method">Method</label>
                 <select class="peiq-select" id="method">
@@ -117,8 +117,12 @@
                 </select>
               </div>
               <div class="peiq-field">
-                <label class="peiq-label" for="colors">Colors <span id="colors-value">16</span></label>
-                <input class="peiq-range" id="colors" type="range" min="2" max="256" step="1" value="16">
+                <label class="peiq-label" for="colors">Colors</label>
+                <div class="peiq-range-row">
+                  <input class="peiq-range" id="colors" type="range" min="2" max="256" step="1" value="16">
+                  <label class="sr-only" for="colors-number">Color count</label>
+                  <input class="peiq-input peiq-number" id="colors-number" type="number" min="2" max="256" step="1" value="16" inputmode="numeric">
+                </div>
               </div>
               <div class="peiq-field">
                 <label class="peiq-label" for="space">Working space</label>
@@ -129,7 +133,7 @@
               </div>
             </div>
 
-            <div id="map-controls" hidden>
+            <div class="peiq-field-stack" id="map-controls" hidden>
               <div class="peiq-field">
                 <label class="peiq-label" for="palette-select">Target palette</label>
                 <select class="peiq-select" id="palette-select"></select>

@@ -36,7 +36,7 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
-| UI | Stage + compact accordion rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
+| UI | Stage + compact collapsible rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
 | Version | `js/core/version.js`; `v0.3.0` tagged; M2 complete |
 | Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
@@ -844,9 +844,10 @@ without its header clutter.
 ### 8.2 Controls
 
 The loaded UI has two control surfaces: the stage toolbar and the right rail. Rail
-sections are mutually exclusive: opening one closes the others, and **Palette** starts
-open. Desktop spacing is compact so all four section headers and the active body fit;
-touch layouts keep 44 px targets.
+sections are independently collapsible; **Palette** starts open and users may open
+**Dither** and **Export** together. Desktop spacing is compact but keeps an 8 px gap
+between labels and controls; the rail scrolls only when open bodies exceed the viewport.
+Touch layouts keep 44 px targets.
 
 **Stage toolbar** (inside the stage, above the canvas)
 
@@ -861,7 +862,8 @@ touch layouts keep 44 px targets.
 
 - Mode tabs `Extract` and `Map` (inside the section, not the header).
 - Extract: five algorithms (popularity, median cut, Wu, octree, K-means++), colors
-  2–256, working space, with refinement defaulting on for median cut and Wu.
+  2–256 via a range plus a numeric field (kept in sync; commits clamp and empty falls back
+  to 16), working space, with refinement defaulting on for median cut and Wu.
 - Map: built-in target palette (PICO-8, Game Boy, C64, ZX Spectrum, EGA), "Load palette
   file…" for `.hex`, `.gpl`, `.pal`, `.json`, and 1×N/N×1 PNG strips, transparent index,
   alpha threshold.
@@ -1430,7 +1432,6 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
 | `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |
-| `js/ui/rail.js` | Keeps the rail compact: opening one section closes the others |
 | `js/ui/shortcuts.js` | Keyboard map; opens the Help drawer’s Shortcuts tab |
 | `js/ui/url-state.js` | Serialize/restore params in `location.hash` (no image data) |
 
@@ -1651,6 +1652,7 @@ A change is done only when:
 | 2026-11-13 | Blue-noise mask generated offline and embedded as base64 | No runtime fetch, deterministic asset, checksum recorded |
 | 2026-11-13 | Dev server binds to all interfaces and prints LAN URLs | Owner wants to open the tool from a phone on the same network; `--host=localhost` restores loopback |
 | 2026-11-13 | Rail sections form an exclusive accordion and use compact desktop spacing | Almost half the controls did not fit; one body at a time removes the inner scroll without hiding section headers |
+| 2026-11-13 | Restore independent rail sections and raise label/body spacing; add a numeric color-count field | Owner needs Palette and Dither open together; tight gaps made the first label touch the summary and the colors label touch Method |
 | 2026-11-13 | Help renders canonical references and credits; print-only papers are cited without a PDF | Owner wants visible attribution; avoids redistributing copyrighted scans |
 | 2026-11-13 | Licensing/attribution rules moved into plan §3.6 | Makes the copyright boundary explicit for future assets and code |
 
