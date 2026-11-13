@@ -65,6 +65,8 @@ deterministic output and no uploads.
 - An **in-product learning layer**: contextual hints and a Help drawer that explain the
   theory and link to canonical sources without blocking the workflow.
 - Deterministic for a fixed browser version + parameters + seed.
+- Two complete themes, dark and light, with automatic system detection, a 3-state header
+  toggle (auto / light / dark), persisted preference, and no mixed tokens.
 
 ### 1.4 What v1.0.0 is not
 
@@ -85,6 +87,7 @@ explanatory text. Learning is opt-in, contextual, and dismissible.
 | Determinism | Same browser/version + params + seed → identical palette, index map, decoded pixels |
 | Privacy | Zero network requests after page load (verified in DevTools) |
 | Dependency count | Zero runtime dependencies, zero build step |
+| Theme parity | Every theme-sensitive token defined in both themes; auto + 3-state toggle; no FOUC; instant switch |
 | Learning layer | ≥12 guide topics; every non-obvious control has a hint; nothing auto-opens |
 
 ---
@@ -119,7 +122,7 @@ to v1.0.x without changing the contracts.
 | F-21 | Yliluoma ordered dithering | SHOULD | v1.1 | Deferred; not release-blocking |
 | F-22 | DTCG design-token export | SHOULD | M3 | Valid DTCG JSON for ≤64 entries |
 | F-23 | URL-hash state (params only) | SHOULD | M4 | Reload restores params; no image data in URL |
-| F-24 | Light theme | SHOULD | M4 | Meets the same contrast requirements |
+| F-24 | Two complete themes: dark + light, auto by system + 3-state toggle, persisted | MUST | M4 | No mixed tokens; no FOUC; instant switch; light/dark parity test |
 | F-25 | In-product learning layer: contextual hints + Help drawer | MUST | M3–M4 | Every non-obvious control has a hint; ≥12 guide topics with canonical links; never auto-opens; keyboard accessible |
 | F-26 | Deep links to Help topics | SHOULD | M4 | `#help=<topic>` opens the matching topic; params hash still works |
 
@@ -145,7 +148,8 @@ Chrome/Edge 111+, Firefox 113+, Safari 16.4+.
 
 Required APIs: ES modules, Web Workers, `createImageBitmap`, canvas 2D,
 `CompressionStream('deflate')`, `DecompressionStream('deflate')`, `crypto.subtle`,
-`structuredClone` only if feature-detected.
+`structuredClone` only if feature-detected. Theme APIs: `matchMedia('(prefers-color-scheme: dark)')`,
+`localStorage` (optional; invalid/unavailable falls back to `auto`), CSS `color-scheme`.
 
 Feature fallbacks:
 
@@ -186,7 +190,7 @@ Feature fallbacks:
 /                     index.html, .nojekyll, package.json, LICENSE, README.md,
                       IMPLEMENTATION_PLAN.md, AGENTS.md, DESIGN.md
 /css/                 tokens, base, layout, components, canvas, learn, responsive
-/js/                  main.js, ui/, content/, workers/, core/
+/js/                  main.js, theme-init.js, ui/, content/, workers/, core/
 /assets/              blue-noise mask, icons, optional palette data, self-hosted Inter (OFL) + license
 /test/                node --test suites and fixtures helpers
 /tools/               dev-server.mjs, gen-blue-noise.mjs
@@ -230,6 +234,8 @@ and canvas; core receives an `ImageDataLite`. The **own PNG decoder** lives in c
 - The worker MAY import `core/**` and nothing from `ui/**` or `content/**`.
 - `content/**` is static data only: no fetch, no DOM access, no side effects, no imports
   from `core/**` or `ui/**`. UI modules render it.
+- Theme resolution/persistence lives in `js/theme-init.js` and `js/ui/theme.js`; core has
+  no theme knowledge.
 - All color conversions and distance computations go through `core/color.js`.
 - All randomness goes through `core/rng.js`; `Math.random` is forbidden.
 - All sorting with ties uses explicit comparators; no reliance on hash-map order.
@@ -769,87 +775,102 @@ hashes are reviewed when intentional changes occur.
 
 ## 8. UI / UX specification
 
-### 8.1 Layout (desktop ≥ 1380 px)
+### 8.1 Layout (desktop ≥ 1220 px)
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ Header: public name · local-only badge · Extract | Map · Help            │
-├────────────────┬──────────────────────────────────┬──────────────────────┤
-│ Controls       │ Canvas                           │ Palette + QA         │
-│ (scroll)       │  checkerboard, before/after      │ swatches, stats      │
-│ Source         │  zoom, fit, error map            │ export buttons       │
-│ Extract/Map    │                                  │                      │
-│ Dither         │                                  │                      │
-│ Order          │                                  │                      │
-├────────────────┴──────────────────────────────────┴──────────────────────┤
-│ Status: dimensions · unique colors · stage/progress · timing · warnings  │
-└──────────────────────────────────────────────────────────────────────────┘
+Empty state: full-width hero with the drop zone; no rail.
+Loaded state: two columns — stage + right rail, following the PaletteForge workflow
+without its header clutter.
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ [PEIQ]                                      [theme] [help]   │ 64 px
+├──────────────────────────────────────────┬───────────────────┤
+│ Stage                                    │ Rail (380/340 px) │
+│  toolbar: change · fit · 100% · original │  Palette          │
+│  canvas / before-after                   │   mode, algorithm │
+│  palette strip + usage bar               │  Dither           │
+│  status line                             │  Export           │
+│                                          │  Quality          │
+└──────────────────────────────────────────┴───────────────────┘
 ```
 
-- 980–1379 px: two columns; palette panel becomes a tab below controls.
-- < 980 px: stacked; canvas sticky at the top; tabs: Controls / Palette / QA / Export.
-- < 640 px: single column; controls are collapsible sections.
-- The header shows the full public name at ≥980 px; below that, the short mark `PEIQ` with
-  an `aria-label`/`title` carrying the full name. The document title uses the full name.
-- The `Help` button is always visible, including the empty state.
+- **Header:** brand on the left; theme toggle and Help on the right. No mode tabs, nav
+  links, download buttons, account controls, or secondary subbar.
+- **Empty state:** full-width hero; no rail. After an image loads, the hero collapses into
+  the stage and the rail appears.
+- **≥ 1220 px:** stage `1fr` + rail **380 px**. **980–1219 px:** rail **340 px**.
+  **< 980 px:** stacked; stage first, rail becomes an accordion below; canvas sticky at
+  the top. **< 600 px:** single column, 44 px touch targets.
+- **Stage:** canvas, toolbar, palette strip, usage bar, and a compact status line.
+  "Change image" lives in the stage toolbar, not the header.
+- **Rail:** a stack of collapsible sections — Palette (with the Extract/Map switch),
+  Dither, Export, Quality. No tab bar; no separate mode screen.
+- **Palette strip:** directly under the canvas; swatches wrap and scroll. Color usage is
+  a thin bar under it.
+- **QA:** summary in the status line; full ΔE/worst-pixel/contrast table in the Quality
+  section.
+- The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
+  with an `aria-label`/`title` carrying the full name. The document title uses the full
+  name.
+- The `Help` and theme buttons are always visible, including the empty state.
 - Visual language, tokens, component styles, motion, and breakpoints: see
-  [`DESIGN.md`](DESIGN.md). The shell is editorial; the working area stays dense and
-  tool-first.
+  [`DESIGN.md`](DESIGN.md).
 
 ### 8.2 Controls
 
-**Source**
+The loaded UI has two control surfaces: the stage toolbar and the right rail.
 
-- Drop zone: click, drag, paste. Text: “Drop an image, click to browse, or paste”.
-- Supported formats and the privacy note are always visible in the empty state.
-- After load: thumbnail/name/dimensions, “Change image” button.
+**Stage toolbar** (inside the stage, above the canvas)
 
-**Mode**
+- "Change image" button (file picker, drag, paste).
+- Fit, 100%, zoom out/in.
+- Original/result toggle.
+- Error-map toggle.
+- Palette-swap preview toggle.
+- Image info: filename, dimensions, unique colors (5-bit bins).
 
-- Tabs `Extract` and `Map`.
+**Palette rail section**
+
+- Mode tabs `Extract` and `Map` (inside the section, not the header).
 - Extract: algorithm, colors (range + number), space, refine, seed/iterations under
-  “Advanced”.
+  "Advanced".
 - Map: import palette, built-in palette, transparent index, alpha threshold.
+- Palette order: source / hue / lightness / custom.
+- Palette rows: index badge, swatch, hex (click copies), name, lock, remove, drag handle.
+- Add color (`<input type="color">`), import, built-in dropdown.
+- Counter: `N / 256`; duplicate warning; transparent index selector.
+- Locked entries survive sorting and removal.
 
-**Dither**
+**Dither rail section**
 
 - Method select with plain-language hints.
 - Strength slider (disabled for none).
 - Serpentine and edge-stop (error diffusion only).
 
-**Order**
+**Export rail section**
 
-- Select source / hue / lightness / custom.
-- Custom enables drag reorder and up/down buttons.
-
-**Palette**
-
-- Rows: index badge, swatch, hex (click copies), name, lock, remove, drag handle.
-- Add color (`<input type="color">`), import, built-in dropdown.
-- Counter: `N / 256`; duplicate warning; transparent index selector.
-
-**QA**
-
-- ΔE00 mean/p95/max with pass/warn badges.
-- Compliance and transparent-index status.
-- Worst-pixels list; clicking an item centers the canvas on it.
-- Error-map toggle.
-- Contrast matrix (collapsible).
-
-**Export**
-
-- Primary: “Download indexed PNG”, “Download palette strip”.
+- Primary: "Download indexed PNG", "Download palette strip".
 - Secondary: `.json`, `.hex`, `.gpl`, `.pal`, `.ase`, `.css`, `.tokens.json`, manifest,
   QA JSON.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
 - Contract summary before download: `K`, bit depth, transparent index, dimensions.
 - Export validation runs automatically; failures block the download.
 
+**Quality rail section** (collapsed by default)
+
+- ΔE00 mean/p95/max with pass/warn badges.
+- Compliance and transparent-index status.
+- Worst-pixels list; clicking an item centers the canvas on it.
+- Error-map preview (the toggle itself is in the stage toolbar).
+- Contrast matrix (collapsible).
+
 **Help**
 
 - Header `?` button opens the Help drawer with `Guide` and `Shortcuts` tabs.
+- Header theme toggle cycles `auto → light → dark`; the preference persists in
+  `localStorage` under `peiq.theme`; the current mode is announced.
 - A small info icon next to every non-obvious control opens a contextual popover with a
-  “Read more” link into the matching guide topic.
+  "Read more" link into the matching guide topic.
 - Nothing auto-opens; `Esc` and outside-click close; focus returns to the trigger.
 
 ### 8.3 Canvas interactions
@@ -883,6 +904,7 @@ All colors, typography, component styles, depth, motion, and breakpoints are def
 | `[` / `]` | Zoom out/in |
 | `O` | Toggle original |
 | `E` | Toggle error map |
+| `T` | Cycle theme: auto → light → dark |
 | `Ctrl/Cmd+S` | Download indexed PNG |
 | `?` | Toggle Help drawer (Guide / Shortcuts) |
 | `Esc` | Close popover/drawer / cancel drag |
@@ -894,6 +916,10 @@ Shortcuts are disabled while an input/textarea/select has focus.
 - Every input has a `<label>`; swatches are `<button>` with `aria-label="Index 3, #ff004d"`.
 - Status uses `aria-live="polite"`.
 - The before/after divider is keyboard-operable with `role="slider"`.
+- The theme toggle is a 32 px button with a dynamic `aria-label` naming the current mode
+  and the next action; theme changes are announced via a polite live region.
+- Both themes meet the same contrast requirements; no state is communicated by color alone.
+- Theme switching does not move focus or trigger layout shift.
 - Target: WCAG 2.2 AA for the UI itself (4.5:1 text, 3:1 components).
 - No keyboard traps; visible focus; dialogs close on `Esc`.
 
@@ -926,7 +952,7 @@ site. Learning is opt-in, contextual, and dismissible.
   - **Guide** — topics, each with a summary, 2–4 short paragraphs, and canonical links.
   - **Shortcuts** — the table from §8.5.
 - Closed by default. Remembers the last tab for the session only.
-- Desktop: 360 px overlay above the right panel; the canvas does not relayout.
+- Desktop: 360 px overlay above the right rail; the canvas does not relayout.
   < 960 px: full-height sheet; `Esc` closes.
 - Topic list (minimum 12):
   1. `quantization-basics` — what quantization is and what it trades away.
@@ -999,6 +1025,8 @@ site. Learning is opt-in, contextual, and dismissible.
 - Display timings per stage in the status bar and manifest.
 - Learning content is static in the bundle: no fetch, no runtime parsing beyond module
   load. Hints/drawer must not trigger canvas relayout or a re-render of the result.
+- Theme switching only swaps CSS variables: no component re-render, no layout shift, no
+  color transition. `theme-init.js` resolves the theme before first paint.
 - Page weight target: < 500 KB uncompressed HTML/CSS/JS, plus a self-hosted Inter subset
   ≤ 200 KB. No video backgrounds or large hero images; the Blender look is CSS/SVG/canvas.
 - Cap work, not wall-clock: if a job exceeds its budget, reduce iterations or resolution
@@ -1052,6 +1080,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | `determinism.test.js` | two runs → identical palette/index-map hashes |
 | `golden.test.js` | synthetic fixture → reviewed hashes |
 | `learn.test.js` | unique topic/reference IDs, required fields, https links, every referenced ID exists |
+| `theme.test.js` | dark/light token parity, auto resolution, 3-state cycle, invalid storage |
 
 ### 10.3 Required known-answer tests
 
@@ -1102,6 +1131,10 @@ site. Learning is opt-in, contextual, and dismissible.
     requests, external links open only on click.
 15. Visual review: dark shell + Guide, blue accent contrast, orange brand, focus rings,
     reduced motion, no layout shift, no copied Blender assets; check against `DESIGN.md`.
+16. Both themes: auto follows the OS, toggle cycles auto/light/dark, preference persists
+    after reload, no flash of the wrong theme.
+17. Theme switch: no layout shift, no half-light frame, both themes meet contrast, and no
+    component keeps a color from the other theme.
 
 ---
 
@@ -1126,6 +1159,10 @@ site. Learning is opt-in, contextual, and dismissible.
 | Invalid `.gpl`/`.pal`/`.json`/`.ase` | Format-specific error with line/offset where possible |
 | Palette strip not 1×N/N×1 | Rejected as “not a palette strip” |
 | Cancelled job | `CANCELLED`; last result stays; no error toast |
+| `localStorage` unavailable/invalid | Fall back to `auto`; no error surfaced |
+| OS theme changes while `auto` | Update the theme live |
+| OS theme changes while manual | Ignore; keep the user’s choice |
+| Theme init before paint | No flash of the wrong theme |
 | Worker crash | Replace worker; show recoverable error with “Retry” |
 | Clipboard permission denied | Show “Paste with Ctrl/Cmd+V instead” |
 | Download blocked | Show the generated blob link as a fallback |
@@ -1330,7 +1367,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 |---|---|
 | `css/tokens.css` | Custom properties from `DESIGN.md` §2 |
 | `css/base.css` | Reset, typography, focus, scrollbars |
-| `css/layout.css` | Header, 3-column grid, status bar, breakpoints |
+| `css/layout.css` | Header, stage + rail workspace, status line, breakpoints |
 | `css/components.css` | Buttons, inputs, tabs, sliders, swatches, tables, toasts |
 | `css/canvas.css` | Checkerboard, canvas, divider handle, overlays |
 | `css/learn.css` | Info popovers, Help drawer, guide typography, reference list |
@@ -1341,8 +1378,10 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | Path | Responsibility |
 |---|---|
 | `js/main.js` | Bootstrap, feature detection, worker creation, wiring |
+| `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` before paint, set `data-theme` |
 | `js/ui/dom.js` | `el()`, `on()`, `raf()`, `debounce()`; no framework |
 | `js/ui/state.js` | Store: `getState`, `setState`, `subscribe`; single mutation point |
+| `js/ui/theme.js` | 3-state toggle, matchMedia listener, persistence, meta theme-color |
 | `js/ui/strings.js` | User-facing strings and error templates |
 | `js/ui/dropzone.js` | File picker/drag/paste; decode + downscale preview |
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
@@ -1476,6 +1515,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 ### M4 — Release
 
 - [ ] Responsive + accessibility pass
+- [ ] Two themes: auto + 3-state toggle + token parity test
 - [ ] Performance tuning against §9
 - [ ] Learning layer polish, deep links, link audit
 - [ ] README, screenshots, usage
@@ -1500,7 +1540,7 @@ A change is done only when:
 3. Determinism is preserved; no `Math.random`, no wall-clock decisions.
 4. No dependency, build step, CDN, or network call was added.
 5. Contracts in §12 still hold; validation still runs on export.
-6. UI changes are checked in a browser at 1280 px and 360 px, keyboard-only.
+6. UI changes are checked in a browser at 1280 px and 360 px, keyboard-only, in both themes.
 7. Warnings/errors are surfaced; no silent catch.
 8. Non-obvious math cites a plan section or a paper.
 9. The plan/decision log is updated if a rule or contract changed.
@@ -1519,6 +1559,8 @@ A change is done only when:
 - [ ] Strip round-trip and indexed round-trip validated on the release corpus.
 - [ ] Aseprite and Godot import smoke tests pass.
 - [ ] Mobile 360 px and keyboard-only pass.
+- [ ] Both themes: auto follows OS, toggle cycles, persists, no FOUC; `theme.test.js` parity green.
+- [ ] Header shows only brand + theme + Help; no extra buttons.
 - [ ] README complete; screenshots current.
 - [ ] `APP_VERSION`, `package.json`, manifest = `1.0.0`.
 - [ ] `LICENSE` = GPL-3.0; README states it.
@@ -1547,9 +1589,12 @@ A change is done only when:
 | 2026-11-13 | English UI and docs | Public open-source tool; no i18n in v1 |
 | 2026-11-13 | Public name = repository name `PaletteExtractorAndImageQuantizer`; short mark `PEIQ`; identifiers `peiq-` / `peiq/*` / `peiq.*` | Owner decision; no separate brand name |
 | 2026-11-13 | In-product learning layer (contextual hints + Help drawer), closed by default | Owner requirement: theory accessible without blocking the workflow |
-| 2026-11-13 | Visual direction: exact Blender dark theme (`#1c1e22` / `#30353b`), blue accent `hsl(204 100% 50%)`, orange brand `#ed8f31`, Inter | Tokens extracted from the saved 5.3 page CSS; see `DESIGN.md` §2 and Appendix A |
+| 2026-11-13 | Visual direction: exact Blender dark + light themes (`#1c1e22` / `#30353b`, light HSL set), blue accent `hsl(204 100% 50%)`, orange brand `#ed8f31`, Inter | Tokens extracted from the saved 5.3 page CSS; see `DESIGN.md` §2 and Appendix A |
 | 2026-11-13 | Design system extracted to `DESIGN.md`; plan keeps behavior only | Single design source; easier reuse and audit |
 | 2026-11-13 | Self-hosted Inter (OFL), no CDN | Exact site font; fallback stack remains readable |
+| 2026-11-13 | Two complete themes, auto by system + 3-state toggle (auto/light/dark), persisted; no mixed tokens | Owner requirement; `theme.test.js` enforces parity |
+| 2026-11-13 | Loaded layout = PaletteForge-like stage + right rail; header only brand + theme + Help | Owner requirement; remove clutter |
+| 2026-11-13 | `theme-init.js` is an external classic head script, not inline | CSP-safe, no FOUC |
 
 ---
 

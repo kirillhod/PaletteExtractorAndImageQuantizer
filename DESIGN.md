@@ -10,6 +10,9 @@
 **Scope:** single-page browser tool: app shell, empty state, working panels, Help drawer.
 **Constraints:** zero dependencies, no build step, no runtime external/CDN assets
 (Inter is self-hosted), offline-first, GPL-3.0.
+**Themes:** two complete themes, dark and light, with **no mixed tokens**. Default is
+automatic (`prefers-color-scheme`); a 3-state header toggle cycles
+**auto → light → dark** and persists as `peiq.theme`. Switching is instant.
 **Interaction tier:** **L1 — precise static** for the app; the site’s editorial reveal is
 used only in the empty state and Guide.
 **Dependencies:** CSS + a small vanilla `IntersectionObserver`. No GSAP, Lenis, WebGL,
@@ -19,16 +22,17 @@ video backgrounds, or scroll-jacking.
 this file wins; if they disagree on behavior, the plan wins.
 
 > **Exactness note.** The site is a light-theme-first WordPress theme with a dark override.
-> PEIQ uses the **dark theme** as its primary surface (better for image work) and keeps
-> the exact dark-theme tokens. The light-theme tokens are included for the optional light
-> mode. The site’s UI accent is **blue** (`hsl(204 100% 50%)`); **orange** (`#ed8f31`) is
-> the brand/logo color. We preserve that split instead of turning everything orange.
+> PEIQ ships **both themes as first-class**: the default follows the OS, and the dark theme
+> is the fallback when no preference is available. Both token sets are complete; neither
+> is an “optional skin.” The site’s UI accent is **blue** (`hsl(204 100% 50%)`); **orange**
+> (`#ed8f31`) is the brand/logo color. We preserve that split instead of turning everything
+> orange.
 
 ---
 
 ## 1. Visual Theme & Atmosphere
 
-**Style:** Blender UI / Editorial Dark.
+**Style:** Blender UI / Editorial (dark + light).
 
 **Keywords:** charcoal, blue accent, orange brand, Inter, precise, editorial, dense,
 technical, calm, matte.
@@ -36,9 +40,9 @@ technical, calm, matte.
 **Tone:** confident and utilitarian — **NOT** corporate SaaS, neon gaming, glassmorphism,
 or playful illustration. It is a workshop interface with an editorial voice.
 
-**Feel:** the Blender release page’s dark theme, compressed into a tool: the image is the
-hero, the panels are matte charcoal blocks, the blue accent marks the active path, and the
-orange brand appears only where the product signs its name.
+**Feel:** the Blender release page’s design language, compressed into a tool: the image is
+the hero, the panels are matte charcoal (or paper) blocks, the blue accent marks the active
+path, and the orange brand appears only where the product signs its name.
 
 **Interaction tier:** **L1** for the working UI. State changes only: hover, focus, active,
 drawer, progress. The site’s `in-viewport-fade fade-up` reveal is allowed **only** in the
@@ -57,6 +61,13 @@ empty state and Guide sections, because it is editorial, not functional.
   canvas-generated palette mosaic, not a 3D render or video.
 - The working UI is denser than the marketing site: editorial type belongs to the empty
   state, Guide, and footer; controls stay compact and scannable.
+- **Two complete themes.** Every surface, text, border, shadow, input, semantic, and
+  checkerboard token is defined in both dark and light. Components never rely on a value
+  from the other theme; theme switching is instant and leaves no half-light state.
+- **Minimal header.** Brand on the left; only the theme toggle and Help on the right.
+  No mode tabs, download buttons, nav links, or account controls in the header. Mode,
+  palette, dither, export, and QA live in the right rail; the image actions live in the
+  stage toolbar.
 
 ---
 
@@ -66,7 +77,7 @@ All colors are CSS variables. Components must never contain hard-coded hex value
 `--peiq-` is the required prefix. The values below are taken from the site’s dark theme
 and light-theme variables.
 
-### Dark theme (primary)
+### Dark theme (default fallback)
 
 ```css
 :root {
@@ -166,7 +177,7 @@ and light-theme variables.
 }
 ```
 
-### Light theme (optional, exact site variables)
+### Light theme (complete, exact site variables)
 
 ```css
 [data-theme="light"] {
@@ -211,6 +222,9 @@ and light-theme variables.
 
   --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
   --peiq-shadow-card-lg: rgba(149, 157, 165, 0.20) 0 8px 24px;
+  --peiq-shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.18);
+  --peiq-shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.18);
+  --peiq-brand-soft: rgba(237, 143, 49, 0.12);
 
   --peiq-checker-a: #e9ecef;
   --peiq-checker-b: #f8f9fa;
@@ -219,6 +233,32 @@ and light-theme variables.
   --peiq-brand-ink: #a84800;
 }
 ```
+
+### Theme system
+
+- `<html data-theme="dark|light">` is the single **effective** switch; `color-scheme`
+  matches the theme. The stored preference is `peiq.theme = auto | light | dark`; the
+  header button exposes it as `data-mode`. In `auto`, `data-theme` follows the system; in
+  `light`/`dark`, it equals the chosen mode.
+- `js/theme-init.js` is a tiny **classic** script loaded in `<head>` before the first
+  paint. It reads `peiq.theme` (`auto | light | dark`), resolves `auto` with
+  `matchMedia('(prefers-color-scheme: dark)')`, and sets `document.documentElement.dataset.theme`.
+  The static HTML ships `data-theme="dark"` as a no-JS fallback; the script replaces it
+  before paint. No flash of the wrong theme; no inline script (CSP-safe).
+- The header toggle is a **3-state button**: `auto → light → dark → auto`. It persists
+  `peiq.theme`, updates `data-theme`, `color-scheme`, and
+  `meta[name="theme-color"]` (dark `#1c1e22`, light `#f5f5f5`). In `auto`, listen to
+  `matchMedia` changes; in manual mode, ignore system changes.
+- **Instant switching.** Add `peiq-theme-switching` to `<html>` for one frame to disable
+  transitions, set the theme, then remove it in `requestAnimationFrame`. No cross-fade
+  between themes, no half-light surfaces.
+- **Full parity.** Every theme-sensitive surface, text, border, shadow, input, semantic,
+  and checkerboard token is defined in both blocks. Theme-independent accent/brand tokens
+  are declared once and intentionally identical. `test/theme.test.js` reads
+  `css/tokens.css` and asserts the required token list exists in both `:root` and
+  `[data-theme="light"]`. No component-level `[data-theme]` overrides — only tokens.
+- Invalid or unavailable `localStorage` falls back to `auto`; a corrupt value is treated
+  as `auto`. The `matchMedia` listener is removed/re-added when toggling modes.
 
 **Color rules**
 
@@ -234,8 +274,8 @@ and light-theme variables.
   `--peiq-text-on-accent` for 4.5:1 contrast. This is a deliberate accessibility fix.
 - One accent per view. Do not import the release page’s per-feature pastel colors
   (pink/purple/green) into the tool; keep blue + orange brand.
-- Use `rgba(var(--peiq-accent-rgb), α)` for tints if needed; do not invent new hex values.
-  (Add `--peiq-accent-rgb: 0, 153, 255` if a component needs it.)
+- Use `rgba(var(--peiq-accent-rgb), α)` for tints; the RGB variants are defined in
+  `:root`. Do not invent new hex values.
 - Semantic colors are exact site tokens; they are for status only, never decoration.
 
 **Key contrast pairs (dark theme, approximate)**
@@ -449,6 +489,70 @@ subtle shadow, no border.
 .peiq-card--elevated { box-shadow: var(--peiq-shadow-card-lg); }
 ```
 
+### Rail section
+
+The right rail is a stack of `<details>` sections styled as the site’s boxes. Each section
+has a 24 px body, a 12 px radius, and a surface step — no border. **Palette**,
+**Dither**, and **Export** start open; **Quality** starts collapsed.
+
+```css
+.peiq-rail-section {
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  box-shadow: var(--peiq-shadow-card);
+}
+.peiq-rail-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--peiq-space-2);
+  padding: var(--peiq-space-3) var(--peiq-space-4);
+  color: var(--peiq-text-strong);
+  font: 600 1rem/1 var(--peiq-font-ui);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.peiq-rail-section > summary::-webkit-details-marker { display: none; }
+.peiq-rail-section > summary:hover { background: var(--peiq-surface-hover); }
+.peiq-rail-section > summary:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: -2px;
+}
+.peiq-rail-section__body {
+  display: grid;
+  gap: var(--peiq-space-3);
+  padding: 0 var(--peiq-space-4) var(--peiq-space-4);
+}
+```
+
+### Palette strip and usage bar
+
+```css
+.peiq-palette-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-1);
+  padding: var(--peiq-space-3) var(--peiq-space-4);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  box-shadow: var(--peiq-shadow-card);
+}
+.peiq-color-usage {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--peiq-bg-tertiary);
+}
+.peiq-color-usage__seg {
+  flex: var(--usage, 1) 1 0;
+  background: var(--swatch);
+}
+```
+
 ### Empty state / hero
 
 The site’s `.hero` is 480–560 px tall (30–35 spacers), sits under the 64 px navbar, and
@@ -497,10 +601,11 @@ background: use a canvas-generated palette mosaic or the CSS gradients below.
 }
 ```
 
-### Header and navigation
+### Header
 
-The site has a 64 px primary navbar and a secondary nav with its own surface. PEIQ maps
-that to a 64 px header + 48 px mode/status subbar.
+Minimal by design: brand on the left; only the theme toggle and Help on the right. No
+nav links, mode tabs, download buttons, account controls, or secondary subbar. Mode and
+export live in the right rail; image actions live in the stage toolbar.
 
 ```css
 .peiq-header {
@@ -517,39 +622,81 @@ that to a 64 px header + 48 px mode/status subbar.
 }
 .peiq-header--scrolled { box-shadow: var(--peiq-shadow-card); }
 
-.peiq-subbar {
-  display: flex;
-  align-items: center;
-  gap: var(--peiq-space-2);
-  min-height: 48px;
-  padding: 0 var(--peiq-space-3);
-  background: var(--peiq-bg-tertiary);
-  border-bottom: 1px solid var(--peiq-border-strong);
-}
-
-.peiq-nav { display: flex; align-items: center; gap: 0; }
-.peiq-nav__link {
+.peiq-header__brand {
   display: inline-flex;
   align-items: center;
-  height: 100%;
-  padding: 0 var(--peiq-space-3);
-  color: var(--peiq-text-secondary);
-  font: 500 0.875rem/1 var(--peiq-font-ui);
+  gap: var(--peiq-space-2);
+  color: var(--peiq-text-strong);
+  font: 800 1.125rem/1 var(--peiq-font-ui);
+  letter-spacing: -0.01em;
   text-decoration: none;
+  white-space: nowrap;
+}
+.peiq-header__brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--peiq-brand);
+}
+.peiq-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--peiq-space-1);
+  margin-left: auto;
+}
+.peiq-header__name-long { display: none; }
+@media (min-width: 980px) { .peiq-header__name-long { display: inline; } }
+```
+
+### Theme toggle
+
+A single icon button cycles **auto → light → dark → auto**. The icon shows the current
+mode (half-circle / sun / moon); the accessible label names both the mode and the next
+action. No dropdown, no extra buttons.
+
+```css
+.peiq-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--peiq-radius);
+  background: transparent;
+  color: var(--peiq-text-secondary);
+  cursor: pointer;
   transition: color 150ms ease-out, background-color 150ms ease-out;
 }
-.peiq-nav__link:hover {
-  color: var(--peiq-accent);
-}
-.peiq-nav__link[aria-current="page"] {
+.peiq-theme-toggle:hover {
   color: var(--peiq-text-strong);
-  background: var(--peiq-accent-bg);
+  background: var(--peiq-surface-hover);
 }
-.peiq-nav__link:focus-visible {
+.peiq-theme-toggle:active { transform: scale(0.95); }
+.peiq-theme-toggle:focus-visible {
   outline: 2px solid var(--peiq-focus);
-  outline-offset: -2px;
+  outline-offset: 2px;
+}
+.peiq-theme-toggle[data-mode="auto"] { color: var(--peiq-text); }
+.peiq-theme-toggle__icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 ```
+
+Example labels:
+
+| Mode | Icon | `aria-label` |
+|---|---|---|
+| `auto` | half-circle | “Theme: automatic (follows system). Activate for light theme.” |
+| `light` | sun | “Theme: light. Activate for dark theme.” |
+| `dark` | moon | “Theme: dark. Activate for automatic theme.” |
 
 ### Links
 
@@ -815,6 +962,34 @@ light “paper” sheet.
 .peiq-toast--error { border-color: var(--peiq-danger); }
 ```
 
+### Status line
+
+A single compact line under the palette strip; it is not a footer bar and has no buttons.
+It reports dimensions, unique colors, stage/progress, timings, and the QA summary.
+
+```css
+.peiq-statusbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-3);
+  min-height: 32px;
+  padding: 0 4px;
+  color: var(--peiq-text-tertiary);
+  font: 400 0.75rem/1.43 var(--peiq-font-ui);
+}
+.peiq-statusbar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.peiq-statusbar__item strong {
+  color: var(--peiq-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+```
+
 ### Table
 
 ```css
@@ -897,14 +1072,25 @@ light “paper” sheet.
 
 ## 5. Layout Principles
 
+**Layout model (PaletteForge-like, cleaned up)**
+
+- **Empty state:** full-width hero with the drop zone; no rail.
+- **Loaded state:** **two columns** — stage (canvas + palette strip + status) and a
+  380 px right rail (palette, dither, export, quality). This follows the PaletteForge
+  workflow — preview first, controls at hand — without extra header buttons or panels.
+- **Header:** 64 px; brand left; theme toggle + Help right. No subbar, no nav links, no
+  download button in the header.
+- Stage actions (change image, zoom, fit, original, error map) live in the stage toolbar.
+- The palette strip sits directly under the canvas; the QA summary sits in the status line.
+- The rail is a stack of collapsible sections, not tabs; the Extract/Map mode switch lives
+  inside the Palette section.
+
 **Container**
 
-- Max width: **1600 px** (the site’s largest container).
-- Page padding: **16 px** mobile, **24 px** ≥ 980 px.
-- Editorial reading width: **840 px** for Guide sections; **62rem (620 px)** for hero
-  subtitles.
-- Header: **64 px**; subbar: **48 px**.
-- App grid: `320px / minmax(0, 1fr) / 360px` at ≥ 1380 px.
+- Max width: **1600 px** (site value).
+- Padding: **16 px** mobile, **24 px** ≥ 980 px.
+- Empty-state subtitle: max **62rem** (620 px); content centered.
+- Editorial reading width: **840 px** for Guide sections.
 
 ```css
 .peiq-shell {
@@ -916,25 +1102,41 @@ light “paper” sheet.
   .peiq-shell { padding-inline: 24px; }
 }
 
-.peiq-app {
+.peiq-workspace {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 360px;
-  gap: var(--peiq-space-3);
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--peiq-space-4);
   align-items: start;
-  min-height: calc(100dvh - 112px); /* header + subbar */
+  min-height: calc(100dvh - 64px);
 }
-.peiq-panel {
+@media (min-width: 980px) and (max-width: 1219px) {
+  .peiq-workspace { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+@media (max-width: 979px) {
+  .peiq-workspace { grid-template-columns: 1fr; }
+}
+
+.peiq-stage {
   min-width: 0;
   display: grid;
   gap: var(--peiq-space-3);
   align-content: start;
 }
-.peiq-panel--scroll {
-  max-height: calc(100dvh - 144px);
+
+.peiq-rail {
+  position: sticky;
+  top: 80px;
+  min-width: 0;
+  max-height: calc(100dvh - 96px);
   overflow: auto;
   padding-right: 4px;
+  display: grid;
+  gap: var(--peiq-space-3);
+  align-content: start;
 }
-.peiq-reading { max-width: 840px; }
+@media (max-width: 979px) {
+  .peiq-rail { position: static; max-height: none; overflow: visible; }
+}
 ```
 
 **Spacing scale (exact site values)**
@@ -959,10 +1161,11 @@ light “paper” sheet.
 
 **Grid**
 
-- Editorial sections use a 12-column grid with 24 px gaps; cards span 3/4/6/12.
-- App panels are single-column stacks; never nest complex grids in the left panel.
-- The palette list scrolls independently; max 256 rows, no virtualization.
-- The canvas takes remaining width; grid children use `min-width: 0`.
+- The stage is a single column: canvas → palette strip → status line.
+- The rail is a single column of collapsible sections; never nest complex grids inside it.
+- The palette strip wraps; up to 256 swatches; it scrolls rather than widening the stage.
+- Grid children use `min-width: 0`; the canvas never causes horizontal overflow.
+- The empty-state hero spans the full shell and is hidden once an image is loaded.
 
 ---
 
@@ -1032,7 +1235,7 @@ the canvas, or the palette list. The app shell may fade in once:
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.peiq-app { animation: peiq-fade-in 250ms ease-out both; }
+.peiq-shell { animation: peiq-fade-in 250ms ease-out both; }
 ```
 
 ```js
@@ -1103,7 +1306,10 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 - Use `text-wrap: balance` on headings and `pretty` on paragraphs.
 - Keep the tool above the fold; editorial scale belongs to the empty state and Guide.
 - Use tabular numbers for metrics and mono for hex/index values.
-- Verify light-theme tokens when the light theme ships.
+- Ship both themes with complete token sets; verify parity before release.
+- Keep the loaded layout two-column: stage + right rail, like PaletteForge.
+- Keep the header to brand + theme toggle + Help; put everything else in the rail.
+- Switch themes instantly; do not cross-fade colors between themes.
 - Respect `prefers-reduced-motion`; keep every interaction keyboard-operable.
 
 ### Don't
@@ -1122,6 +1328,10 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 - ❌ Hard-code hex values in components or JS; use CSS variables.
 - ❌ Add a border to every card; the site uses surface steps and shadow.
 - ❌ Use color alone to communicate state; pair it with text or an icon.
+- ❌ Mix tokens from the two themes (dark surface + light text, or the reverse).
+- ❌ Add mode tabs, download buttons, nav links, or account controls to the header.
+- ❌ Use per-theme component overrides; theme changes go through tokens only.
+- ❌ Animate a color cross-fade when switching themes; switch instantly.
 
 ---
 
@@ -1131,37 +1341,38 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 
 | Name | Width | App behavior |
 |---|---|---|
-| Desktop | ≥ 1380 px | 3 columns: 320 / 1fr / 360; full header |
-| Laptop | 1220–1379 px | 3 columns: 280 / 1fr / 320 |
-| Tablet | 980–1219 px | 2 columns: 280 / 1fr; palette + QA become a tab below |
-| Mobile | < 980 px | Stacked; sticky canvas; tabs: Controls / Palette / QA / Export |
+| Desktop | ≥ 1220 px | 2 columns: stage `1fr` / rail **380 px**; full header name |
+| Tablet | 980–1219 px | 2 columns: stage `1fr` / rail **340 px** |
+| Mobile | < 980 px | Stacked: stage first, rail below as an accordion; canvas sticky |
 | Small | < 600 px | Single column; 44 px targets; `PEIQ` header mark |
 
 The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale changes and
 1680 px as a wide-container cap.
 
-**Touch targets:** minimum **44 × 44 px** on mobile; 32–36 px on desktop for dense
-controls.
+**Touch targets:** minimum **44 × 44 px** on mobile; 32–36 px on desktop for dense controls.
 
 **Collapsing strategy**
 
-- Header: full public name ≥ 980 px; `PEIQ` below. Help stays visible.
-- Mode tabs move into the 48 px subbar; Export becomes an icon+label button.
-- Left panel scrolls independently; sections collapse into `<details>` below 640 px.
-- Palette panel becomes a tab; the palette list keeps its own scroll.
-- QA table rows stack into label/value pairs below 640 px.
-- Help drawer: full-width sheet below 980 px; close button in the header.
+- Header: full public name ≥ 980 px; `PEIQ` below. Theme toggle and Help stay visible.
+- No mode tabs in the header. The Extract/Map switch lives inside the Palette rail section.
+- The rail is a stack of collapsible sections; below 980 px it becomes an accordion below
+  the stage. No separate tab bar is needed.
+- The palette strip sits under the canvas and wraps; it scrolls rather than widening the
+  stage.
+- QA summary stays in the status line; the full QA table stacks into label/value pairs
+  below 640 px.
+- Help drawer: full-width sheet below 980 px; close button in the drawer header.
 - Canvas: sticky at the top on mobile; never taller than `55dvh` unless zoomed.
+- Theme switching changes colors only; it must not change layout or trigger reflow.
 
 ```css
-@media (max-width: 1379px) {
-  .peiq-app { grid-template-columns: 280px minmax(0, 1fr); }
-  .peiq-panel--right { grid-column: 1 / -1; }
+@media (max-width: 1219px) {
+  .peiq-workspace { grid-template-columns: minmax(0, 1fr) 340px; }
 }
 @media (max-width: 979px) {
   .peiq-header { height: 56px; }
-  .peiq-app { grid-template-columns: 1fr; }
-  .peiq-panel--scroll { max-height: none; overflow: visible; }
+  .peiq-workspace { grid-template-columns: 1fr; }
+  .peiq-rail { position: static; max-height: none; overflow: visible; }
   .peiq-drawer { width: 100%; }
   .peiq-reading { max-width: none; }
 }
@@ -1182,12 +1393,14 @@ img, canvas, video { max-width: 100%; }
 **Accessibility**
 
 - Every interactive element has hover and `focus-visible` states.
-- Focus rings are visible on dark and light surfaces.
+- Focus rings are visible in both themes; they use `--peiq-focus`.
 - Contrast: body ≥ 4.5:1; large text/components ≥ 3:1. `--peiq-text-tertiary` is for
   metadata only.
 - Never remove native focus without a visible replacement.
 - Touch targets ≥ 44 px on mobile.
 - `prefers-reduced-motion` is a complete fallback.
+- The theme toggle has a dynamic `aria-label` naming the current mode and the next action;
+  changes are announced via a polite live region.
 - The Help drawer is a labelled dialog; focus moves in on open and returns on close;
   `Esc` closes it.
 
@@ -1245,7 +1458,8 @@ inspected locally. The following values were extracted, not guessed:
 
 | Area | Site | PEIQ | Why |
 |---|---|---|---|
-| Theme default | Light-first with dark override | Dark primary, light optional | Image work; dark is easier on the eyes |
+| Theme | Light-first + dark override | Two complete themes, auto + 3-state toggle | User requirement; no mixed tokens |
+| Header | Nav + secondary nav | Brand + theme toggle + Help only | Cleaner tool header |
 | Accent use | Blue UI + orange brand | Same | Exact brand logic |
 | Button text | White on blue gradient | Dark text on blue gradient | WCAG AA; site is ≈ 2.9:1 |
 | Root font size | `62.5%` (10 px) | 16 px with equivalent rem | Avoid the 62.5% accessibility hack |
@@ -1256,7 +1470,36 @@ inspected locally. The following values were extracted, not guessed:
 | Cards | Surface + shadow, no border | Same | Exact |
 | Fonts | Inter variable | Self-hosted Inter + OFL | Offline-first, zero CDN |
 
+**Theme parity**
+
+- `html[data-theme="dark|light"]` is the only switch. Every theme-sensitive token is
+  defined in both `:root` (dark) and `[data-theme="light"]`; components never inherit a
+  surface/text color from the other theme.
+- Required token list (asserted by `test/theme.test.js`):
+  `--peiq-bg`, `--peiq-bg-secondary`, `--peiq-bg-tertiary`, `--peiq-surface`,
+  `--peiq-surface-hover`, `--peiq-text`, `--peiq-text-strong`,
+  `--peiq-text-secondary`, `--peiq-text-tertiary`, `--peiq-border`,
+  `--peiq-border-strong`, `--peiq-btn-color`, `--peiq-btn-bg`,
+  `--peiq-btn-bg-hover`, `--peiq-input-bg`, `--peiq-input-bg-hover`,
+  `--peiq-input-border`, `--peiq-code`, `--peiq-code-bg`,
+  `--peiq-success`, `--peiq-success-bg`, `--peiq-success-text`,
+  `--peiq-warning`, `--peiq-warning-bg`, `--peiq-warning-text`,
+  `--peiq-danger`, `--peiq-danger-bg`, `--peiq-danger-text`,
+  `--peiq-info`, `--peiq-info-bg`, `--peiq-info-text`,
+  `--peiq-shadow-card`, `--peiq-shadow-card-lg`, `--peiq-shadow-popover`,
+  `--peiq-shadow-drawer`, `--peiq-brand-soft`, `--peiq-brand-ink`,
+  `--peiq-checker-a`, `--peiq-checker-b`, `--peiq-text-on-accent`.
+- Shared tokens (identical in both themes): accent, accent-hover/pressed/bg, brand,
+  primary button gradient/shadow, focus, radii, spacing, type. They are declared once in
+  `:root` and intentionally not overridden.
+- `js/theme-init.js`: a classic `<head>` script (no module, no inline code) that reads
+  `peiq.theme`, resolves `auto` via `matchMedia`, and writes `data-theme` before paint.
+- The 3-state toggle persists `peiq.theme`, updates `meta[name="theme-color"]`
+  (`#1c1e22` dark / `#f5f5f5` light), and listens to system changes only in `auto`.
+- Theme switching is instant: add `peiq-theme-switching`, set the theme, remove it in
+  `requestAnimationFrame`. No cross-fade, no half-light frame, no layout shift.
+
 **Why this is exact enough:** the color stack, accent hue, brand orange, type scale,
 weights, spacing, radii, shadows, button gradient, transition speeds, and editorial reveal
 all come from the site’s CSS. What changes is the *application*: the tool stays dense,
-dark, and fast instead of becoming a long-form marketing page.
+dark/light-capable, and fast instead of becoming a long-form marketing page.

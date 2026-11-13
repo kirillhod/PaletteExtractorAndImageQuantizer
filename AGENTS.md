@@ -53,7 +53,9 @@ layout values, motion, and responsive rules.
                      plan/design/research/agent docs
 /css/                tokens, base, layout, components, canvas, learn, responsive
 /js/main.js          bootstrap, feature detection, worker wiring
-/js/ui/              DOM, state, canvas, palette, QA, export, help, status, shortcuts
+/js/theme-init.js    classic head script: resolve theme before paint
+/js/ui/              DOM, state, canvas, palette, QA, export, help, theme, status,
+                     shortcuts
 /js/content/         static learning topics and references (no fetch, no DOM)
 /js/workers/         pipeline.worker.js
 /js/core/            DOM-free, Node-testable: color, quantize, dither, png, formats,
@@ -142,6 +144,13 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
     Do not copy Blender CSS, logo, wordmark, artwork, screenshots, or theme files. No
     external images, videos, or icon packs; use CSS/SVG/canvas/own screenshots. The
     self-hosted Inter font must ship with its OFL license.
+19. **Themes are complete, never mixed.** Dark and light each define every
+    theme-sensitive token; components use tokens only, with no `[data-theme]` component
+    overrides. `js/theme-init.js` resolves `peiq.theme` before paint (external classic
+    head script, no inline JS). The header toggle is a 3-state auto/light/dark button; it
+    persists `peiq.theme`, updates `meta[name="theme-color"]`, and listens to system
+    changes only in `auto`. Theme switching is instant: no color cross-fade, no layout
+    shift. `test/theme.test.js` asserts token parity.
 
 ## 6. Coding conventions
 
@@ -173,6 +182,8 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - Golden hashes change only intentionally, with a decision-log entry.
 - UI changes need a manual browser pass at 1280 px and 360 px, keyboard-only, plus the
   relevant items from plan §10.6.
+- Theme changes need `test/theme.test.js` parity plus a manual auto → light → dark →
+  reload check in both themes.
 - Report the command and its result. “Should work” is not verification.
 
 ## 8. Definition of done
@@ -233,8 +244,8 @@ and the change is committed locally with a descriptive body (plan §16).
 
 ## 12. Current state and next task
 
-- Plan: ✅ `1.0.0`; `DESIGN.md` ✅; color core ✅ (9/9 tests); README minimal; no UI/core
-  pipeline yet.
+- Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
+  color core ✅ (9/9 tests); README minimal; no UI/core pipeline yet.
 - Next: `types.js`, `version.js`, `rng.js`, `hash.js`, `test/helpers.js`, then M1
   (histogram → median cut → PNG encoder/decoder → worker → preview → strip).
 - Do not assume UI files exist.
