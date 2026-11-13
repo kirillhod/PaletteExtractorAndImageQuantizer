@@ -549,6 +549,58 @@
   min-height: 30px;
 }
 
+.peiq-export-progress {
+  display: grid;
+  gap: 6px;
+}
+
+.peiq-export-progress__track {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--peiq-radius-pill);
+  background: var(--peiq-bg-tertiary);
+}
+
+.peiq-export-progress__track > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 38%;
+  border-radius: inherit;
+  background: var(--peiq-accent);
+  animation: peiq-export-sweep 1.1s ease-in-out infinite;
+}
+
+.peiq-export-progress__label {
+  margin: 0;
+  color: var(--peiq-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+@keyframes peiq-export-sweep {
+  0% {
+    transform: translateX(-110%);
+  }
+  50% {
+    transform: translateX(90%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peiq-export-progress__track > span {
+    width: 100%;
+    opacity: 0.5;
+    animation: none;
+    transform: none;
+  }
+}
+
 .peiq-statusbar {
   display: flex;
   align-items: center;

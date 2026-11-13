@@ -596,6 +596,12 @@ palette rows, and the palette aligns with the canvas’s left edge below it.
 Below 980 px the workspace becomes one column in this order: toolbar, export, canvas,
 palette, status, settings. The export panel returns to the horizontal wrapping layout.
 
+While an export runs, a 6 px indeterminate bar and a short label appear in the panel.
+All export buttons are disabled, the panel gets `aria-busy="true"`, and the bar becomes a
+static half-opacity line under `prefers-reduced-motion`. Only one export can run at a
+time; a second click is ignored until the first completes or is cancelled by a settings
+or image change.
+
 ### Palette strip and sort bar
 
 The palette card contains a compact bar and the swatches. The sort select controls the
