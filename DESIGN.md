@@ -66,8 +66,9 @@ empty state and Guide sections, because it is editorial, not functional.
   from the other theme; theme switching is instant and leaves no half-light state.
 - **Minimal header.** Brand on the left; only the theme toggle and Help on the right.
   No mode tabs, download buttons, nav links, or account controls in the header. Mode,
-  palette, dither, and QA settings live in the right rail; export is a stage panel below
-  the palette; image actions live in the stage toolbar.
+  palette, dither, and QA settings live in the right rail; export is its own left
+  column on desktop (above the canvas on mobile); image actions live in the stage
+  toolbar.
 
 ---
 
@@ -506,7 +507,7 @@ subtle shadow, no border.
 The right rail is a stack of `<details>` sections styled as the site’s boxes. Each section
 has a 12 px radius and a surface step — no border. Sections are independently
 collapsible; **Palette** starts open, and users may open **Dither** and **Quality** at the
-same time. Export is not part of this settings rail; it has a dedicated stage panel.
+same time. Export is not part of this settings rail; it has a dedicated left column.
 The rail scrolls only when the combined bodies exceed the viewport, so no section blocks
 another.
 
@@ -559,33 +560,41 @@ body instead of making the rail scroll.
 
 ### Export panel
 
-Export lives in its own stage panel below the palette, not inside the settings rail.
-It reads as the primary action area: a bright primary indexed-PNG button, quieter strip,
-reduced-PNG, and HEX buttons, then strip orientation. Validation results appear below
-the buttons and temporarily grow the panel; the canvas takes the remaining height.
+Export is its own column to the left of the canvas on desktop and above the canvas on
+mobile. It reads as the primary action area: a bright primary indexed-PNG button,
+quieter strip, reduced-PNG, and HEX buttons, then strip orientation. The desktop column
+is 180–220 px, so the canvas keeps (and gains) width; the palette spans the export and
+canvas columns below them, giving large palettes more room.
 
 ```css
+.peiq-workspace {
+  display: grid;
+  grid-template-columns: clamp(180px, 14vw, 220px) minmax(0, 1fr) 360px;
+  grid-template-areas:
+    "toolbar toolbar rail"
+    "export canvas rail"
+    "palette palette rail"
+    "status status rail";
+}
 .peiq-export-panel {
+  grid-area: export;
+  align-self: start;
   display: grid;
   gap: var(--peiq-space-2);
-  padding: var(--peiq-space-3) var(--peiq-space-4);
+  padding: var(--peiq-space-3);
   border-radius: var(--peiq-radius-lg);
   background: var(--peiq-surface);
   box-shadow: var(--peiq-shadow-card);
 }
 .peiq-export-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--peiq-space-2);
 }
-.peiq-export-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-}
 ```
+
+Below 980 px the workspace becomes one column in this order: toolbar, export, canvas,
+palette, status, settings. The export panel returns to the horizontal wrapping layout.
 
 ### Palette strip and sort bar
 
@@ -1174,10 +1183,11 @@ screen block.
 **Layout model (PaletteForge-like, cleaned up)**
 
 - **Empty state:** full-width hero with the drop zone; no rail.
-- **Loaded state:** **two columns** — stage (canvas + palette strip + export panel +
-  status) and a 380 px right rail (palette settings, dither, quality). This follows the
-  PaletteForge workflow — preview and output first, settings at hand — without extra
-  header buttons or panels.
+- **Loaded state:** **three columns** – a narrow export column, the stage (canvas +
+  palette strip + status), and a 360/340 px right rail (palette settings, dither,
+  quality). The palette spans the export and canvas columns, so large palettes get the
+  full width below both. Below 980 px the order is toolbar, export, canvas, palette,
+  settings.
 - **Header:** 64 px; brand left; theme toggle + Help right. No subbar, no nav links, no
   download button in the header.
 - Stage actions (change image, zoom, fit, original, error map) live in the stage toolbar.
@@ -1409,11 +1419,12 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 - Expose palette order as data: source, hue, or lightness, both directions; the strip
   export must follow the selected order.
 - Ship both themes with complete token sets; verify parity before release.
-- Keep the loaded layout two-column: stage + right rail, like PaletteForge.
+- Keep the loaded desktop layout three-column: export, stage, settings rail; on mobile
+  stack toolbar, export, canvas, palette, settings.
 - On desktop, keep the page itself fixed between header and footer; only the settings
   rail and a long palette strip may scroll.
-- Put export actions in their own stage panel below the palette, not inside the settings
-  rail; they are the primary output actions.
+- Put export actions in their own left column, not inside the settings rail or under the
+  canvas; the palette then spans the export and canvas columns.
 - Keep the header to brand + theme toggle + Help; settings and export live below it.
 - Switch themes instantly; do not cross-fade colors between themes.
 - Respect `prefers-reduced-motion`; keep every interaction keyboard-operable.
@@ -1449,7 +1460,7 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 |---|---|---|
 | Desktop | ≥ 1220 px | 2 columns: stage `1fr` / rail **380 px**; full header name |
 | Tablet | 980–1219 px | 2 columns: stage `1fr` / rail **340 px** |
-| Mobile | < 980 px | Stacked: stage first, collapsible rail below; canvas sticky |
+| Mobile | < 980 px | Stacked: toolbar, export, canvas, palette, settings; canvas sticky |
 | Small | < 600 px | Single column; 44 px targets; `PEIQ` header mark |
 
 The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale changes and
@@ -1461,7 +1472,8 @@ The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale cha
 
 - Header: full public name ≥ 980 px; `PEIQ` below. Theme toggle and Help stay visible.
 - No mode tabs in the header. The Extract/Map switch lives inside the Palette rail section.
-- The rail is a stack of collapsible sections; below 980 px it stacks below
+- The rail is a stack of collapsible sections; below 980 px the order is toolbar, export,
+  canvas, palette, settings
   the stage. No separate tab bar is needed.
 - The palette strip sits under the canvas and wraps; it scrolls rather than widening the
   stage.

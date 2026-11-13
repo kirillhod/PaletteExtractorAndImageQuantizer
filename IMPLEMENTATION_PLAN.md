@@ -36,7 +36,7 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
-| UI | Stage + compact collapsible rail, stage export panel, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
+| UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
 | Version | `js/core/version.js`; `v0.3.0` tagged; M2 complete |
 | Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
@@ -801,31 +801,35 @@ hashes are reviewed when intentional changes occur.
 ### 8.1 Layout (desktop ≥ 1220 px)
 
 Empty state: full-width hero with the drop zone; no rail.
-Loaded state: two columns — stage + right rail, following the PaletteForge workflow
-without its header clutter.
+Loaded state: three columns on desktop — export, stage, and settings rail — following the
+PaletteForge workflow without its header clutter. The palette spans the export and stage
+columns. On mobile the order is toolbar, export, canvas, palette, settings.
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
 │ [PEIQ]                                      [theme] [help]   │ 64 px
 ├──────────────────────────────────────────┬───────────────────┤
-│ Stage                                    │ Rail (380/340 px) │
-│  toolbar: change · fit · 100% · original │  Palette          │
-│  canvas / before-after                   │   mode, algorithm │
-│  palette strip + usage bar               │  Dither           │
-│  export panel                            │  Quality          │
-│  status line                             │  (scrolls)        │
-└──────────────────────────────────────────┴───────────────────┘
+│ Export (180–220) │ Stage                   │ Rail (360/340 px) │
+│  primary PNG     │  toolbar: change · fit  │  Palette          │
+│  strip / reduced │  canvas / before-after  │   mode, algorithm │
+│  HEX / strip     │  palette strip          │  Dither           │
+│                  │  status line            │  Quality          │
+│                  │                         │  (scrolls)        │
+└──────────────────┴─────────────────────────┴───────────────────┘
 ```
 
 - **Header:** brand on the left; theme toggle and Help on the right. No mode tabs, nav
   links, download buttons, account controls, or secondary subbar.
 - **Empty state:** full-width hero; no rail. After an image loads, the hero collapses into
   the stage and the rail appears.
-- **≥ 1220 px:** stage `1fr` + rail **380 px**. **980–1219 px:** rail **340 px**.
-  **< 980 px:** stacked; stage first, rail sections stay collapsible below; canvas sticky
-  at the top. **< 600 px:** single column, 44 px touch targets.
-- **Stage:** canvas, toolbar, palette strip, export panel, usage bar, and a compact status
-  line. "Change image" lives in the stage toolbar, not the header.
+- **≥ 1220 px:** export `clamp(180–220 px)` + stage `1fr` + rail **360 px**.
+  **980–1219 px:** export **180 px** + stage `1fr` + rail **340 px**.
+  **< 980 px:** stacked; toolbar, export, canvas, palette, settings; canvas sticky at the
+  top. **< 600 px:** single column, 44 px touch targets.
+- **Stage:** toolbar, canvas, palette strip, usage bar, and a compact status line.
+  "Change image" lives in the stage toolbar, not the header.
+- **Export column:** a narrow left column with the primary indexed-PNG action, strip,
+  reduced PNG, HEX, and strip orientation. It does not take width from the canvas.
 - **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
   switch), Dither, Quality. Export is not in the rail.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
@@ -835,9 +839,9 @@ without its header clutter.
 - **Desktop frame:** the page itself does not scroll. Header, stage, and compact footer
   fill the viewport; the stage gives the canvas the remaining height and only the rail
   (or a palette strip with many colors) scrolls.
-- **Export panel:** a separate stage card under the palette with the primary indexed-PNG
-  action and the strip/reduced/HEX actions. It is always visible when an image is loaded
-  and is not buried in the settings rail.
+- **Export panel:** a separate left column with the primary indexed-PNG action and the
+  strip/reduced/HEX actions; above the canvas below 980 px. The palette spans the export
+  and canvas columns, so a large palette gets more width and height.
 - **QA:** summary in the status line; full ΔE/worst-pixel/contrast table in the Quality
   section.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
@@ -849,8 +853,8 @@ without its header clutter.
 
 ### 8.2 Controls
 
-The loaded UI has three control surfaces: the stage toolbar, the export panel under the
-palette, and the right settings rail. Rail sections are independently collapsible;
+The loaded UI has three control surfaces: the stage toolbar, the export column left of the
+canvas (above it on mobile), and the right settings rail. Rail sections are independently collapsible;
 **Palette** starts open and users may open **Dither** and **Quality** together. Desktop
 spacing is compact but keeps an 8 px gap between labels and controls; the rail scrolls
 only when open bodies exceed the viewport. Touch layouts keep 44 px targets.
@@ -888,7 +892,7 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Strength 0–100%; serpentine and edge-stop for error diffusion only.
 - The controls disable themselves when the selected method does not use them.
 
-**Export panel** (stage, below the palette)
+**Export panel** (left of the canvas on desktop, above it on mobile)
 
 - Primary: "Download indexed PNG".
 - Secondary: "Palette strip", "Reduced PNG", "Copy HEX".
@@ -1669,6 +1673,7 @@ A change is done only when:
 | 2026-11-13 | Add `.nojekyll` and stage only runtime files in the Pages workflow | Pages readiness; keeps tests, tools, docs, and `.git` out of the deployed artifact |
 | 2026-11-13 | Move Export to a stage panel; fix the desktop page frame; compact footer with repository link | Export is the primary output action, not a setting; only the rail should scroll; owner asked for a repo link |
 | 2026-11-13 | Add `?` tooltips for non-obvious controls, including serpentine scan and edge stop | Plain-language explanations without permanently growing the rail; 13 hints cover the algorithm settings |
+| 2026-11-13 | Make export a third desktop column, left of the stage; palette spans export+stage; export above canvas on mobile | Export is a primary action, but the palette needs vertical room; the narrow export column and 360 px rail give the canvas more width than the previous in-stage layout |
 
 ---
 
