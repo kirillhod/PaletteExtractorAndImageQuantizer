@@ -1,227 +1,344 @@
 # DESIGN.md
 
-> A precise palette compiler with an editorial shell: charcoal, one warm orange light, big
-> type where it helps, and nothing between the user and the pixels.
+> The Blender design language applied to a precision tool: charcoal UI, one blue
+> interaction accent, an orange brand mark, Inter, and editorial type that never gets in
+> the way of the pixels.
 
 **Product:** PaletteExtractorAndImageQuantizer (short mark **PEIQ**)
-**Reference:** [blender.org](https://www.blender.org/) — design-language inspiration, not a clone
-**Scope:** single-page browser tool: app shell, empty state, working panels, Help drawer
-**Constraints:** zero dependencies, no build step, no external/CDN fonts or images, offline-first, GPL-3.0
-**Interaction tier:** **L1 — precise static**, plus one optional editorial reveal pattern
-**Dependencies:** CSS only + a small vanilla `IntersectionObserver`; no GSAP, no Lenis, no WebGL
+**Reference:** [blender.org](https://www.blender.org/) — specifically the saved
+`5.3 — Blender` release page and its `style.css` (`bthree` theme).
+**Scope:** single-page browser tool: app shell, empty state, working panels, Help drawer.
+**Constraints:** zero dependencies, no build step, no runtime external/CDN assets
+(Inter is self-hosted), offline-first, GPL-3.0.
+**Interaction tier:** **L1 — precise static** for the app; the site’s editorial reveal is
+used only in the empty state and Guide.
+**Dependencies:** CSS + a small vanilla `IntersectionObserver`. No GSAP, Lenis, WebGL,
+video backgrounds, or scroll-jacking.
 **Source of truth:** visual values and component CSS live here; behavior lives in
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). If they disagree on a visual value,
 this file wins; if they disagree on behavior, the plan wins.
+
+> **Exactness note.** The site is a light-theme-first WordPress theme with a dark override.
+> PEIQ uses the **dark theme** as its primary surface (better for image work) and keeps
+> the exact dark-theme tokens. The light-theme tokens are included for the optional light
+> mode. The site’s UI accent is **blue** (`hsl(204 100% 50%)`); **orange** (`#ed8f31`) is
+> the brand/logo color. We preserve that split instead of turning everything orange.
 
 ---
 
 ## 1. Visual Theme & Atmosphere
 
-**Style:** Editorial Charcoal / Blender-inspired.
+**Style:** Blender UI / Editorial Dark.
 
-**Keywords:** precise, warm, matte, editorial, technical, calm, high-contrast, tool-first.
+**Keywords:** charcoal, blue accent, orange brand, Inter, precise, editorial, dense,
+technical, calm, matte.
 
-**Tone:** confident and utilitarian — **NOT** corporate SaaS, gamer neon, glassmorphism,
-or playful illustration. It should feel like a workshop, not a product launch.
+**Tone:** confident and utilitarian — **NOT** corporate SaaS, neon gaming, glassmorphism,
+or playful illustration. It is a workshop interface with an editorial voice.
 
-**Feel:** a dark workshop with one orange task light: the image is the workbench, the
-palette is the tool wall, and the theory is a well-printed manual on the side.
+**Feel:** the Blender release page’s dark theme, compressed into a tool: the image is the
+hero, the panels are matte charcoal blocks, the blue accent marks the active path, and the
+orange brand appears only where the product signs its name.
 
-**Interaction Tier:** **L1**. State changes only: hover, focus, active, drawer open/close,
-progress, and a single fade-up reveal for editorial sections. No scroll-jacking, no
-parallax, no pinned scenes, no custom cursor.
+**Interaction tier:** **L1** for the working UI. State changes only: hover, focus, active,
+drawer, progress. The site’s `in-viewport-fade fade-up` reveal is allowed **only** in the
+empty state and Guide sections, because it is editorial, not functional.
 
 **Reference notes**
 
-- Adopt: charcoal surfaces, one orange accent, tight bold headlines, generous editorial
-  whitespace, thin-bordered cards, uppercase section labels, matte surfaces, subtle motion.
-- Do not copy: Blender’s logo, wordmark, artwork, screenshots, CSS/theme files, exact font,
-  or 3D renders. The reference site is a marketing surface; this product is a tool.
+- Exact source: saved `5.3 — Blender.html` + `style.css` from the `bthree` theme.
+- Adopt: `#1c1e22` / `#25282d` / `#30353b` charcoal stack, blue `hsl(204 100% 50%)`
+  interaction accent, orange `#ed8f31` brand, Inter variable font, 6/12 px radii,
+  4/8/16/24/48/96 px spacing, light-300 section headings with 800 `<strong>` words,
+  150 ms state transitions, and the 1 s / 0.5 s / 60 px editorial reveal.
+- Do not copy: Blender’s logo, wordmark, artwork, screenshots, CSS, or theme files.
+  Use the design language, not the assets.
 - The tool is the hero: the empty state shows a live canvas/palette preview or a
-  canvas-generated palette mosaic, never a stock render or a video.
-- The working UI stays dense and scannable. Editorial scale is reserved for the empty
-  state, the Guide drawer, and the footer — not for controls, tables, or data panels.
+  canvas-generated palette mosaic, not a 3D render or video.
+- The working UI is denser than the marketing site: editorial type belongs to the empty
+  state, Guide, and footer; controls stay compact and scannable.
 
 ---
 
 ## 2. Color Palette & Roles
 
-All colors are **CSS variables**. Components must never contain hard-coded hex values.
-The `--peiq-` prefix is required by `AGENTS.md`.
+All colors are CSS variables. Components must never contain hard-coded hex values.
+`--peiq-` is the required prefix. The values below are taken from the site’s dark theme
+and light-theme variables.
+
+### Dark theme (primary)
 
 ```css
 :root {
-  /* Backgrounds */
-  --peiq-bg: #1a1a1a;                 /* page / app shell */
-  --peiq-bg-deep: #111111;            /* wells, inputs, canvas chrome */
-  --peiq-surface: #232323;            /* panels, cards */
-  --peiq-surface-alt: #2b2b2b;        /* alternating surface, hover base */
-  --peiq-surface-hover: #303030;      /* hover surface */
-  --peiq-paper: #f5f5f5;              /* editorial reading surface */
-  --peiq-paper-alt: #ececec;          /* paper zebra / code block */
-  --peiq-paper-ink: #1a1a1a;          /* text on paper */
-  --peiq-paper-muted: #5c5c5c;        /* secondary text on paper */
+  color-scheme: dark;
 
-  /* Borders */
-  --peiq-border: #3a3a3a;             /* default structure */
-  --peiq-border-strong: #4d4d4d;      /* inputs, secondary buttons */
-  --peiq-border-hover: #ea7600;       /* interactive hover */
+  /* Surfaces */
+  --peiq-bg: #1c1e22;                 /* shell, header, canvas chrome */
+  --peiq-bg-secondary: #25282d;       /* page body, inputs, secondary nav */
+  --peiq-bg-tertiary: #202327;        /* wells, dropdowns, canvas checker */
+  --peiq-surface: #30353b;            /* cards, boxes, panels */
+  --peiq-surface-hover: #454c54;      /* button/row hover */
 
   /* Text */
-  --peiq-text: #f2f2f2;               /* headings, primary text */
-  --peiq-text-secondary: #c9c9c9;     /* body */
-  --peiq-text-tertiary: #a3a3a3;      /* labels, metadata */
-  --peiq-text-on-accent: #1a1a1a;     /* text on orange */
-  --peiq-text-on-paper: #1a1a1a;
+  --peiq-text: #c7cbd1;               /* body */
+  --peiq-text-strong: #f9fafa;        /* headings, key values */
+  --peiq-text-secondary: #89939f;     /* secondary labels */
+  --peiq-text-tertiary: #6e7987;      /* metadata, muted */
 
-  /* Accent */
-  --peiq-accent: #ea7600;             /* primary action, active, focus */
-  --peiq-accent-hover: #ff8a1f;       /* hover / links on dark */
-  --peiq-accent-pressed: #c85f00;     /* active press */
-  --peiq-accent-ink: #a84800;         /* links / small text on paper */
-  --peiq-accent-soft: rgba(234, 118, 0, 0.14);
-  --peiq-accent-ring: rgba(234, 118, 0, 0.32);
+  /* Borders */
+  --peiq-border: rgba(199, 203, 209, 0.15);
+  --peiq-border-strong: #40474f;
 
-  /* RGB variants for rgba() */
-  --peiq-bg-rgb: 26, 26, 26;
-  --peiq-surface-rgb: 35, 35, 35;
-  --peiq-paper-rgb: 245, 245, 245;
-  --peiq-accent-rgb: 234, 118, 0;
+  /* Interaction accent — blue, as on blender.org */
+  --peiq-accent: hsl(204, 100%, 50%);
+  --peiq-accent-hover: hsl(204, 100%, 62%);
+  --peiq-accent-pressed: hsl(204, 100%, 42%);
+  --peiq-accent-bg: hsla(204, 100%, 50%, 0.10);
+  --peiq-accent-bg-hover: hsla(204, 100%, 50%, 0.20);
+  --peiq-accent-text: var(--peiq-accent);
+  --peiq-accent-rgb: 0, 153, 255;
+  --peiq-text-on-accent: #0b1220;     /* contrast fix; site uses #fff */
 
-  /* Semantic */
-  --peiq-success: #4ade80;
-  --peiq-error: #ff5c5c;
-  --peiq-warning: #f0b429;
-  --peiq-info: #7cc4ff;
-  --peiq-focus: #ff8a1f;
+  /* Brand — orange, as the Blender mark */
+  --peiq-brand: #ed8f31;
+  --peiq-brand-rgb: 237, 143, 49;
+  --peiq-brand-soft: rgba(237, 143, 49, 0.16);
+  --peiq-brand-ink: #b35c00;          /* on light surfaces */
 
-  /* Semantic RGB variants */
-  --peiq-success-rgb: 74, 222, 128;
-  --peiq-error-rgb: 255, 92, 92;
-  --peiq-warning-rgb: 240, 180, 41;
-  --peiq-info-rgb: 124, 196, 255;
-  --peiq-paper-border: rgba(0, 0, 0, 0.12);
+  /* Buttons (site dark theme) */
+  --peiq-btn-color: #bec6d0;
+  --peiq-btn-bg: #40474f;
+  --peiq-btn-bg-hover: #454c54;
+  --peiq-btn-accent-bg: linear-gradient(350deg, #6183ff, #47aaf5);
+  --peiq-btn-accent-bg-hover: linear-gradient(350deg, #708fff, #5ab3f6);
+  --peiq-btn-accent-shadow:
+    2px 4px 4px rgba(0, 82, 255, 0.102),
+    1px 8px 24px rgba(0, 82, 255, 0.102),
+    2px 8px 48px rgba(0, 82, 255, 0.549);
 
-  /* Canvas */
-  --peiq-checker-a: #202020;
-  --peiq-checker-b: #262626;
+  /* Inputs (site dark theme) */
+  --peiq-input-bg: #25282d;
+  --peiq-input-bg-hover: #202327;
+  --peiq-input-border: var(--peiq-input-bg);
 
-  /* Shadows */
-  --peiq-shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.40);
-  --peiq-shadow-panel: 0 8px 24px rgba(0, 0, 0, 0.28);
-  --peiq-shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.45);
-  --peiq-shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.45);
+  /* Code */
+  --peiq-code: #d6b6d8;
+  --peiq-code-bg: rgba(208, 38, 217, 0.08);
 
-  /* Geometry */
-  --peiq-radius: 10px;
-  --peiq-radius-sm: 6px;
+  /* Semantic (site dark theme) */
+  --peiq-success: #5c9325;
+  --peiq-success-bg: #404f30;
+  --peiq-success-text: #99b77b;
+  --peiq-warning: #e4a511;
+  --peiq-warning-bg: rgba(234, 185, 72, 0.40);
+  --peiq-warning-text: #f4dca4;
+  --peiq-danger: #ee5353;
+  --peiq-danger-bg: #4d2e2e;
+  --peiq-danger-text: #e96363;
+  --peiq-info: #51aefb;
+  --peiq-info-bg: rgba(76, 153, 240, 0.20);
+  --peiq-info-text: #4c99f0;
+  --peiq-focus: var(--peiq-accent);
+
+  /* Canvas checkerboard */
+  --peiq-checker-a: #202327;
+  --peiq-checker-b: #25282d;
+
+  /* Shadows (site values) */
+  --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --peiq-shadow-card-lg: rgba(5, 5, 6, 0.20) 0 8px 24px;
+  --peiq-shadow-popover: 0 16px 40px rgba(5, 5, 6, 0.32);
+  --peiq-shadow-drawer: -24px 0 64px rgba(5, 5, 6, 0.32);
+
+  /* Geometry (site: .6rem / 1.2rem at a 10px root) */
+  --peiq-radius: 6px;
+  --peiq-radius-lg: 12px;
   --peiq-radius-pill: 999px;
+
+  /* Spacing (site: --spacer = 1.6rem at a 10px root) */
+  --peiq-space-1: 4px;
+  --peiq-space-2: 8px;
+  --peiq-space-3: 16px;
+  --peiq-space-4: 24px;
+  --peiq-space-5: 48px;
+  --peiq-space-6: 96px;
+  --peiq-space-7: 192px;
+}
+```
+
+### Light theme (optional, exact site variables)
+
+```css
+[data-theme="light"] {
+  color-scheme: light;
+
+  --peiq-bg: hsl(210, 4%, 95%);
+  --peiq-bg-secondary: hsl(210, 4%, 92%);
+  --peiq-bg-tertiary: hsl(210, 4%, 89%);
+  --peiq-surface: hsl(210, 4%, 98%);
+  --peiq-surface-hover: hsl(210, 4%, 99%);
+
+  --peiq-text: hsl(230, 4%, 31%);
+  --peiq-text-strong: hsl(230, 4%, 27%);
+  --peiq-text-secondary: hsl(230, 4%, 57%);
+  --peiq-text-tertiary: hsl(230, 4%, 71%);
+
+  --peiq-border: hsl(210, 4%, 89%);
+  --peiq-border-strong: #d3d9df;
+
+  --peiq-btn-color: #677a8e;
+  --peiq-btn-bg: #eaedf0;
+  --peiq-btn-bg-hover: #f3f5f6;
+  --peiq-input-bg: #eaedf0;
+  --peiq-input-bg-hover: #f3f5f6;
+  --peiq-input-border: #d3d9df;
+
+  --peiq-code: #903d94;
+  --peiq-code-bg: rgba(121, 0, 128, 0.04);
+
+  --peiq-success: #6bb125;
+  --peiq-success-bg: #dbf4c2;
+  --peiq-success-text: #4d8118;
+  --peiq-warning: #e4a511;
+  --peiq-warning-bg: #faeed1;
+  --peiq-warning-text: #896510;
+  --peiq-danger: #ee5353;
+  --peiq-danger-bg: #fce4e4;
+  --peiq-danger-text: #df5353;
+  --peiq-info: #13bde7;
+  --peiq-info-bg: #d9f5fc;
+  --peiq-info-text: #10a2c6;
+
+  --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --peiq-shadow-card-lg: rgba(149, 157, 165, 0.20) 0 8px 24px;
+
+  --peiq-checker-a: #e9ecef;
+  --peiq-checker-b: #f8f9fa;
+
+  --peiq-text-on-accent: #0b1220;
+  --peiq-brand-ink: #a84800;
 }
 ```
 
 **Color rules**
 
-- Every color in a component comes from a variable above. No raw hex in
-  `components.css`, `layout.css`, `learn.css`, or JS.
-- Orange is an accent, never body text. On dark, links use `--peiq-accent-hover`. On
-  paper, links and small text use `--peiq-accent-ink`; `--peiq-accent` is only for large
-  text or icons on paper.
-- Primary buttons use `--peiq-accent` with `--peiq-text-on-accent`. Do **not** use white
-  text on orange: contrast is insufficient for normal text.
-- Status colors are semantic only: success, warning, error, info. Never use them as
-  decoration.
-- Borders carry structure; shadows are rare (see §6).
-- Opacity tints use `rgba(var(--peiq-accent-rgb), α)`, not a new hex.
-- One accent per view. Do not introduce a second brand hue.
+- **Blue is interaction.** Primary buttons, links, active tabs, focus rings, selected
+  swatches, and progress use `--peiq-accent`.
+- **Orange is brand.** Use `--peiq-brand` only for the wordmark/mark, a brand eyebrow, or
+  one editorial highlight. Never use it for primary buttons or body links.
+- Body text is `--peiq-text` on `--peiq-bg`; headings and key values are
+  `--peiq-text-strong`.
+- Cards use `--peiq-surface` with no border; structure comes from the surface step and
+  shadow. Borders are for inputs, dividers, and the header.
+- The site uses white text on the blue gradient; PEIQ uses
+  `--peiq-text-on-accent` for 4.5:1 contrast. This is a deliberate accessibility fix.
+- One accent per view. Do not import the release page’s per-feature pastel colors
+  (pink/purple/green) into the tool; keep blue + orange brand.
+- Use `rgba(var(--peiq-accent-rgb), α)` for tints if needed; do not invent new hex values.
+  (Add `--peiq-accent-rgb: 0, 153, 255` if a component needs it.)
+- Semantic colors are exact site tokens; they are for status only, never decoration.
 
-**Key contrast pairs (sRGB, approximate)**
+**Key contrast pairs (dark theme, approximate)**
 
 | Pair | Ratio | Use |
 |---|---:|---|
-| `--peiq-text` on `--peiq-bg` | ≈ 15:1 | body/headings |
-| `--peiq-text-tertiary` on `--peiq-bg` | ≈ 7:1 | labels, metadata |
-| `--peiq-accent` on `--peiq-bg` | ≈ 5.3:1 | links, icons, focus |
-| `--peiq-text-on-accent` on `--peiq-accent` | ≈ 5.3:1 | primary button |
-| `--peiq-accent-ink` on `--peiq-paper` | ≈ 5.4:1 | links on paper |
-| `--peiq-accent` on `--peiq-paper` | ≈ 2.7:1 | **not** for small text; icons/large only |
-| `--peiq-text-on-paper` on `--peiq-paper` | ≈ 15:1 | Guide body |
+| `--peiq-text` on `--peiq-bg` | ≈ 8.8:1 | body |
+| `--peiq-text-strong` on `--peiq-bg` | ≈ 15:1 | headings |
+| `--peiq-text-secondary` on `--peiq-bg` | ≈ 5.4:1 | secondary labels |
+| `--peiq-text-tertiary` on `--peiq-bg` | ≈ 3.7:1 | metadata only |
+| `--peiq-accent` on `--peiq-bg` | ≈ 5.8:1 | links/icons |
+| `--peiq-text-on-accent` on `#47aaf5` | ≈ 7:1 | primary button |
+| `#ffffff` on `#47aaf5` | ≈ 2.9:1 | **not** used |
+| `--peiq-text` on `--peiq-surface` | ≈ 7.2:1 | card body |
+| `--peiq-brand` on `--peiq-bg` | ≈ 6.5:1 | brand mark |
 
 ---
 
 ## 3. Typography Rules
 
-**No external font import.** The project is offline-first and dependency-free; a Google
-Fonts `@import` is forbidden. The default is an intentional system stack. If the visual
-review requires closer Blender-like typography, ship **one** self-hosted variable Inter
-(OFL) under `assets/fonts/` with its license, and only then enable the commented face.
+The site uses **Inter Variable** (`Inter-VariableFont_slnt,wght.ttf`) with a long
+system/emoji fallback. PEIQ self-hosts the Latin variable subset
+(`assets/fonts/InterVariable-latin.woff2`, ~48 KB) plus `assets/fonts/OFL.txt`, and keeps
+the exact fallback. No Google Fonts, no CDN, no external request.
 
 ```css
-:root {
-  --peiq-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --peiq-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
-}
-
-/*
-Optional, only with assets/fonts/InterVariable.woff2 + OFL.txt:
 @font-face {
-  font-family: "PEIQ Inter";
-  src: url("../assets/fonts/InterVariable.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("../assets/fonts/InterVariable-latin.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
-:root { --peiq-font-ui: "PEIQ Inter", -apple-system, ...; }
-*/
+
+:root {
+  --peiq-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Oxygen, Ubuntu, Cantarell, "Open Sans", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --peiq-font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+    "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro", "Fira Mono",
+    "Droid Sans Mono", "Courier New", monospace;
+}
 ```
+
+> The site sets `html { font-size: 62.5% }` and expresses sizes in rem. PEIQ uses a
+> 16 px root with equivalent rem values (e.g. site `1.8rem` → `1.125rem`) to avoid the
+> 62.5% accessibility hack. The rendered sizes are the same.
 
 | Role | Font | Size | Weight | Line Height | Letter Spacing |
 |---|---|---|---|---|---|
-| Display / empty-state H1 | UI | `clamp(2.5rem, 6vw, 5rem)` | 800 | 1.02 | `-0.03em` |
-| Section H2 (editorial) | UI | `clamp(1.75rem, 3.5vw, 2.75rem)` | 800 | 1.08 | `-0.02em` |
-| App page title | UI | `1.5rem` (24 px) | 700 | 1.20 | `-0.01em` |
-| H3 / panel title | UI | `1.125rem` (18 px) | 700 | 1.25 | `-0.01em` |
-| Body (controls) | UI | `0.9375rem` (15 px) | 400 | 1.55 | 0 |
-| Body (Guide) | UI | `1rem` (16 px) | 400 | 1.65 | 0 |
-| Small / metadata | UI | `0.8125rem` (13 px) | 400 | 1.45 | 0 |
-| Label / eyebrow | UI | `0.6875rem` (11 px) | 700 | 1.20 | `0.08em`, uppercase |
+| Hero / empty-state H1 | UI | `clamp(2.25rem, 5vw, 3.25rem)` (36–52 px; release-page override) | 800 | 1.00 | 0 |
+| Section H2 (editorial) | UI | `1.5rem` → `1.75rem` ≥ 900 px | 300 (strong: 800) | 1.00 | 0 |
+| App page title / H1 | UI | `1.75rem` (28 px) → `2rem` (32 px) ≥ 900 px | 600 | 1.00 | 0 |
+| H3 / panel title | UI | `1.125rem` (18 px) | 600 | 1.00 | 0 |
+| H4 | UI | `1.125rem` (18 px) → `1.3125rem` (21 px) ≥ 900 px | 600 | 1.00 | 0 |
+| H5 | UI | `1rem` (16 px) → `1.125rem` (18 px) ≥ 900 px | 600 | 1.00 | 0 |
+| Body (editorial) | UI | `0.875rem` → `1rem` ≥ 900 px → `1.125rem` ≥ 1220 px | 400 | 1.43 | 0 |
+| Body (app controls) | UI | `0.875rem` (14 px) | 400 | 1.43 | 0 |
+| Small / metadata | UI | `0.75rem` (12 px) → `0.875rem` (14 px) ≥ 900 px | 400 | 1.43 | 0 |
+| Label / eyebrow | UI | `0.75rem` (12 px) | 600 | 1.00 | 0.04em, uppercase |
+| Badge | UI | `0.8em` | 400 | 1.00 | 0 |
 | Mono / hex / index | Mono | `0.8125rem` (13 px) | 400 | 1.40 | 0 |
-| Button | UI | `0.875rem` (14 px) | 600 | 1.00 | 0 |
+| Button | UI | `0.875rem` (14 px) → `1rem` ≥ 900 px | 500 | 1.50rem / 2rem | 0 |
+
+> The release page sets `body.type-release { --fs-hero-title: 5.2rem }` (52 px). PEIQ uses
+> that override for the empty state and clamps it down to 36 px on small screens. The
+> general site hero scale (3.6/5.5/7.2 rem) is intentionally not used: it would push the
+> tool below the fold.
 
 **Typography rules**
 
-- Headings use weight 700–800 and tight tracking. Never fake bold/italic with shadows.
-- Editorial display type is only for the empty state, Guide headings, and footer; app
-  controls use the compact sizes above.
-- Body line length in the Guide: **60–75ch**. Controls never exceed one line where a
-  shorter label works.
-- Uppercase only for labels/eyebrows, never for body copy.
-- Numbers in QA/timings use `font-variant-numeric: tabular-nums`. Hex values use mono.
-- No gradient text, no text-shadow, no decorative outlines. This is an L1 editorial
-  system; hierarchy comes from size, weight, and color.
+- The site’s signature: section headings are **weight 300** with **`<strong>` at weight
+  800**. Use it in the empty state and Guide: e.g. “Map to your **palette**”.
+- Hero H1 is weight 800, line-height 1. No letter-spacing beyond the font’s own metrics.
+- Headings use `text-wrap: balance`; paragraphs use `text-wrap: pretty`.
+- Margins: headings `margin-bottom: 0.5rem`; paragraphs `margin-bottom: 1rem`.
+- App controls use 14 px body for density; editorial surfaces use the site’s 16/18 px
+  scale. Do not use 18 px in dense control panels.
+- Uppercase only for labels/eyebrows. No uppercase body.
+- Numbers in QA/timings use `font-variant-numeric: tabular-nums`; hex uses mono.
+- No gradient text, no text-shadow, no decorative outlines. The site’s hero text-shadow
+  exists only because it sits on a photo; PEIQ has no photo hero.
 - **NEVER use:** Comic Sans, Papyrus, Brush Script, decorative display fonts, script
   fonts, or a serif for UI controls.
-- Do not load a second display font. One family is enough.
 
 **Text decoration decisions**
 
 | Element | Gradient | Shadow | Decision |
 |---|---|---|---|
-| Empty-state H1 | No | No | Solid `--peiq-text`; optional one accent word or eyebrow |
-| Section H2 | No | No | Solid; eyebrow above carries color |
-| H3 | No | No | Solid |
+| Hero / empty-state H1 | No | No | Solid `--peiq-text-strong` |
+| Section H2 | No | No | Weight 300, `<strong>` 800 |
+| H3 / panel title | No | No | Solid |
 | Body | No | No | Plain |
-| Links | No | No | Color + underline offset; no glow |
-| Eyebrow | No | No | Orange uppercase + optional 2 px bottom border |
+| Links | No | No | Blue + underline offset |
+| Eyebrow / brand | No | No | Orange uppercase brand label |
 
 ---
 
 ## 4. Component Stylings
 
 All components use the variables from §2. States are mandatory: default, hover, active,
-focus-visible, disabled. Dynamic colors (palette swatches) are the only allowed inline
-style: set `--swatch` on the element; never write a hex into JS.
+focus-visible, disabled. The only allowed inline style is a dynamic swatch color via
+`--swatch`.
 
 ### Global focus
 
@@ -232,109 +349,158 @@ style: set `--swatch` on the element; never write a hex into JS.
 }
 ```
 
+The site uses a 4 px accent outline on accent buttons. PEIQ uses 2 px for dense controls
+and 4 px on primary buttons; both are visible on charcoal and light surfaces.
+
 ### Buttons
 
 ```css
 .peiq-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--peiq-border-strong);
-  border-radius: var(--peiq-radius-sm);
-  background: transparent;
-  color: var(--peiq-text);
-  font: 600 0.875rem/1 var(--peiq-font-ui);
+  display: inline-block;
+  min-height: 32px;
+  padding: 0.25rem 1rem;
+  border: 0;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-btn-bg);
+  color: var(--peiq-btn-color);
+  font: 500 0.875rem/1.5rem var(--peiq-font-ui);
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
   transition:
-    background-color 120ms var(--peiq-ease),
-    border-color 120ms var(--peiq-ease),
-    color 120ms var(--peiq-ease),
-    transform 120ms var(--peiq-ease);
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    transform 80ms ease-out;
 }
-.peiq-btn:hover {
-  border-color: var(--peiq-accent);
-  color: var(--peiq-accent-hover);
+@media (min-width: 900px) {
+  .peiq-btn { font-size: 1rem; line-height: 2rem; }
 }
-.peiq-btn:active { transform: translateY(1px); }
+.peiq-btn:hover { background: var(--peiq-btn-bg-hover); }
+.peiq-btn:active { transform: scale(0.95); }
 .peiq-btn:focus-visible {
-  outline: 2px solid var(--peiq-focus);
-  outline-offset: 2px;
+  outline: 4px solid var(--peiq-accent);
+  outline-offset: 0;
 }
 .peiq-btn:disabled,
 .peiq-btn[aria-disabled="true"] {
-  opacity: 0.45;
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
 }
 
 .peiq-btn--primary {
-  background: var(--peiq-accent);
-  border-color: var(--peiq-accent);
+  background-color: transparent;
+  background-image: var(--peiq-btn-accent-bg);
+  box-shadow: var(--peiq-btn-accent-shadow);
   color: var(--peiq-text-on-accent);
 }
 .peiq-btn--primary:hover {
-  background: var(--peiq-accent-hover);
-  border-color: var(--peiq-accent-hover);
+  background-color: transparent;
+  background-image: var(--peiq-btn-accent-bg-hover);
   color: var(--peiq-text-on-accent);
 }
 .peiq-btn--primary:active {
-  background: var(--peiq-accent-pressed);
-  border-color: var(--peiq-accent-pressed);
+  background-color: transparent;
+  transform: scale(0.95);
 }
 
 .peiq-btn--ghost {
-  border-color: transparent;
-  color: var(--peiq-text-secondary);
-}
-.peiq-btn--ghost:hover {
-  background: var(--peiq-surface-hover);
-  border-color: transparent;
+  background: transparent;
   color: var(--peiq-text);
 }
-
-.peiq-btn--icon {
-  width: 36px;
-  padding: 0;
+.peiq-btn--ghost:hover {
+  background: var(--peiq-accent-bg);
+  color: var(--peiq-accent-hover);
 }
 
-.peiq-btn--danger:hover {
-  border-color: var(--peiq-error);
-  color: var(--peiq-error);
-}
+.peiq-btn--icon { width: 32px; padding: 0; }
+.peiq-btn--danger { color: var(--peiq-danger); }
+.peiq-btn--danger:hover { background: var(--peiq-danger-bg); }
 ```
 
-### Cards
+### Cards and boxes
+
+The site’s `.box` is the reference: surface `#30353b`, radius 12 px, padding 24 px,
+subtle shadow, no border.
 
 ```css
 .peiq-card {
+  padding: var(--peiq-space-4);
+  border: 0;
+  border-radius: var(--peiq-radius-lg);
   background: var(--peiq-surface);
-  border: 1px solid var(--peiq-border);
-  border-radius: var(--peiq-radius);
-  padding: 16px;
+  box-shadow: var(--peiq-shadow-card);
+  color: var(--peiq-text);
 }
 .peiq-card--interactive {
   transition:
-    border-color 120ms var(--peiq-ease),
-    transform 120ms var(--peiq-ease);
+    box-shadow 150ms ease-out,
+    transform 150ms ease-out;
 }
 .peiq-card--interactive:hover {
-  border-color: var(--peiq-accent);
+  box-shadow: var(--peiq-shadow-card-lg);
   transform: translateY(-2px);
 }
-.peiq-card:focus-within { border-color: var(--peiq-accent); }
-.peiq-card--paper {
-  background: var(--peiq-paper);
-  color: var(--peiq-paper-ink);
-  border-color: transparent;
+.peiq-card:focus-within {
+  outline: 2px solid var(--peiq-accent);
+  outline-offset: 2px;
 }
 .peiq-card--flat { box-shadow: none; }
-.peiq-card--elevated { box-shadow: var(--peiq-shadow-panel); }
+.peiq-card--elevated { box-shadow: var(--peiq-shadow-card-lg); }
 ```
 
-### Header / navigation
+### Empty state / hero
+
+The site’s `.hero` is 480–560 px tall (30–35 spacers), sits under the 64 px navbar, and
+uses white text. PEIQ uses the same metrics **only when no image is loaded**; after load,
+the hero collapses into a compact drop bar so the tool stays above the fold. No photo
+background: use a canvas-generated palette mosaic or the CSS gradients below.
+
+```css
+.peiq-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100dvh - 112px);
+  min-height: 480px;
+  max-height: 560px;
+  padding: var(--peiq-space-5) var(--peiq-space-3);
+  text-align: center;
+  color: var(--peiq-text-strong);
+  background:
+    radial-gradient(1200px 600px at 50% 0%, var(--peiq-brand-soft), transparent 60%),
+    radial-gradient(900px 500px at 20% 100%, var(--peiq-accent-bg), transparent 60%),
+    var(--peiq-bg);
+  border-bottom: 1px solid var(--peiq-border-strong);
+}
+.peiq-hero__title {
+  margin: 0 0 var(--peiq-space-2);
+  font: 800 clamp(2.25rem, 5vw, 3.25rem) / 1 var(--peiq-font-ui);
+  text-wrap: balance;
+}
+.peiq-hero__subtitle {
+  max-width: 62rem;
+  margin: 0 auto var(--peiq-space-4);
+  color: var(--peiq-text);
+  font-size: 1.3125rem;
+  line-height: 1.33;
+}
+@media (min-width: 900px) {
+  .peiq-hero__subtitle { font-size: 1.5rem; line-height: 1.17; }
+}
+.peiq-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-3);
+  justify-content: center;
+}
+```
+
+### Header and navigation
+
+The site has a 64 px primary navbar and a secondary nav with its own surface. PEIQ maps
+that to a 64 px header + 48 px mode/status subbar.
 
 ```css
 .peiq-header {
@@ -343,38 +509,45 @@ style: set `--swatch` on the element; never write a hex into JS.
   z-index: 40;
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 64px;
-  padding: 0 clamp(16px, 3vw, 32px);
-  background: rgba(var(--peiq-bg-rgb), 0.92);
-  border-bottom: 1px solid var(--peiq-border);
-  transition: box-shadow 120ms var(--peiq-ease);
+  gap: var(--peiq-space-3);
+  height: 64px;
+  padding: 0 var(--peiq-space-3);
+  background: var(--peiq-bg);
+  border-bottom: 1px solid var(--peiq-border-strong);
 }
-.peiq-header--scrolled { box-shadow: var(--peiq-shadow-subtle); }
+.peiq-header--scrolled { box-shadow: var(--peiq-shadow-card); }
 
-.peiq-nav { display: flex; align-items: center; gap: 4px; }
+.peiq-subbar {
+  display: flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+  min-height: 48px;
+  padding: 0 var(--peiq-space-3);
+  background: var(--peiq-bg-tertiary);
+  border-bottom: 1px solid var(--peiq-border-strong);
+}
+
+.peiq-nav { display: flex; align-items: center; gap: 0; }
 .peiq-nav__link {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 0 10px;
-  border-radius: var(--peiq-radius-sm);
+  height: 100%;
+  padding: 0 var(--peiq-space-3);
   color: var(--peiq-text-secondary);
-  font: 600 0.8125rem/1 var(--peiq-font-ui);
+  font: 500 0.875rem/1 var(--peiq-font-ui);
   text-decoration: none;
-  transition: color 120ms var(--peiq-ease), background-color 120ms var(--peiq-ease);
+  transition: color 150ms ease-out, background-color 150ms ease-out;
 }
 .peiq-nav__link:hover {
-  color: var(--peiq-text);
-  background: var(--peiq-surface-hover);
+  color: var(--peiq-accent);
 }
 .peiq-nav__link[aria-current="page"] {
-  color: var(--peiq-accent-hover);
-  background: var(--peiq-accent-soft);
+  color: var(--peiq-text-strong);
+  background: var(--peiq-accent-bg);
 }
 .peiq-nav__link:focus-visible {
   outline: 2px solid var(--peiq-focus);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 ```
 
@@ -382,80 +555,101 @@ style: set `--swatch` on the element; never write a hex into JS.
 
 ```css
 .peiq-link {
-  color: var(--peiq-accent-hover);
+  color: var(--peiq-accent);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  transition: color 120ms var(--peiq-ease);
+  transition: color 150ms ease-out;
 }
-.peiq-link:hover { color: var(--peiq-text); }
+.peiq-link:hover { color: var(--peiq-accent-hover); }
 .peiq-link:focus-visible {
   outline: 2px solid var(--peiq-focus);
   outline-offset: 2px;
 }
-.peiq-link--paper { color: var(--peiq-accent-ink); }
-.peiq-link--paper:hover { color: var(--peiq-paper-ink); }
+.peiq-link--brand { color: var(--peiq-brand); }
+.peiq-link--brand:hover { color: var(--peiq-brand); filter: brightness(1.1); }
 ```
 
-### Tags / badges
+### Badges
 
 ```css
 .peiq-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 22px;
-  padding: 0 8px;
-  border: 1px solid var(--peiq-border);
-  border-radius: var(--peiq-radius-pill);
-  color: var(--peiq-text-secondary);
-  font: 700 0.6875rem/1 var(--peiq-font-ui);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  justify-content: center;
+  max-width: 100%;
+  padding: 0.35em 0.5em;
+  border: 1px solid var(--peiq-bg-secondary);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-bg-secondary);
+  color: var(--peiq-text);
+  font: 400 0.8em/1 var(--peiq-font-ui);
+  white-space: nowrap;
 }
 .peiq-badge--accent {
-  color: var(--peiq-accent-hover);
-  border-color: rgba(var(--peiq-accent-rgb), 0.45);
-  background: var(--peiq-accent-soft);
+  color: var(--peiq-accent-text);
+  background: var(--peiq-accent-bg);
+  border-color: var(--peiq-accent-bg-hover);
 }
-.peiq-badge--success { color: var(--peiq-success); border-color: rgba(var(--peiq-success-rgb), 0.35); }
-.peiq-badge--warning { color: var(--peiq-warning); border-color: rgba(var(--peiq-warning-rgb), 0.35); }
-.peiq-badge--error { color: var(--peiq-error); border-color: rgba(var(--peiq-error-rgb), 0.35); }
+.peiq-badge--success {
+  color: var(--peiq-success-text);
+  background: var(--peiq-success-bg);
+  border-color: var(--peiq-success-bg);
+}
+.peiq-badge--warning {
+  color: var(--peiq-warning-text);
+  background: var(--peiq-warning-bg);
+  border-color: var(--peiq-warning-bg);
+}
+.peiq-badge--danger {
+  color: var(--peiq-danger-text);
+  background: var(--peiq-danger-bg);
+  border-color: var(--peiq-danger-bg);
+}
 ```
 
-### Form controls
+### Inputs and selects
+
+The site’s form control: 2 px border in the input background, radius 6 px, subtle focus
+ring. PEIQ keeps that and uses readable text (the site’s base style hard-codes a dark text
+color that is wrong in dark mode).
 
 ```css
-.peiq-field { display: grid; gap: 6px; }
+.peiq-field { display: grid; gap: var(--peiq-space-2); }
 
 .peiq-label {
   color: var(--peiq-text-tertiary);
-  font: 700 0.6875rem/1.2 var(--peiq-font-ui);
-  letter-spacing: 0.08em;
+  font: 600 0.75rem/1 var(--peiq-font-ui);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .peiq-input,
 .peiq-select {
-  min-height: 36px;
-  padding: 0 10px;
-  background: var(--peiq-bg-deep);
+  width: 100%;
+  min-height: 40px;
+  padding: 0.375rem 0.75rem;
+  border: 2px solid var(--peiq-input-border);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-input-bg);
   color: var(--peiq-text);
-  border: 1px solid var(--peiq-border);
-  border-radius: var(--peiq-radius-sm);
-  font: 400 0.875rem/1.4 var(--peiq-font-ui);
+  font: 400 0.875rem/1.5 var(--peiq-font-ui);
+  transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
 }
 .peiq-input:hover,
-.peiq-select:hover { border-color: var(--peiq-border-strong); }
+.peiq-select:hover {
+  border-color: var(--peiq-input-bg-hover);
+  background: var(--peiq-input-bg-hover);
+}
 .peiq-input:focus-visible,
 .peiq-select:focus-visible {
-  outline: 2px solid var(--peiq-focus);
-  outline-offset: 1px;
+  outline: 0;
   border-color: var(--peiq-accent);
+  box-shadow: 0 0 0 2px var(--peiq-accent-bg-hover);
 }
 .peiq-input:disabled,
 .peiq-select:disabled {
-  opacity: 0.45;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -468,44 +662,40 @@ style: set `--swatch` on the element; never write a hex into JS.
   outline: 2px solid var(--peiq-focus);
   outline-offset: 4px;
 }
-.peiq-range:disabled { opacity: 0.45; cursor: not-allowed; }
-
 .peiq-check {
   width: 18px;
   height: 18px;
   accent-color: var(--peiq-accent);
 }
-.peiq-check:focus-visible {
-  outline: 2px solid var(--peiq-focus);
-  outline-offset: 2px;
-}
 ```
 
-### Tabs
+### Tabs / pills
+
+The site’s active pill is a solid accent fill with white text. PEIQ uses the same shape and
+blue fill, with dark text for contrast.
 
 ```css
 .peiq-tabs {
-  display: flex;
+  display: inline-flex;
   gap: 2px;
   padding: 4px;
-  background: var(--peiq-bg-deep);
-  border: 1px solid var(--peiq-border);
-  border-radius: var(--peiq-radius-sm);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-bg-tertiary);
 }
 .peiq-tab {
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 var(--peiq-space-3);
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--peiq-radius);
   background: transparent;
   color: var(--peiq-text-secondary);
-  font: 600 0.8125rem/1 var(--peiq-font-ui);
+  font: 500 0.875rem/1 var(--peiq-font-ui);
   cursor: pointer;
-  transition: color 120ms var(--peiq-ease), background-color 120ms var(--peiq-ease);
+  transition: color 150ms ease-out, background-color 150ms ease-out;
 }
 .peiq-tab:hover {
-  color: var(--peiq-text);
-  background: var(--peiq-surface-hover);
+  color: var(--peiq-text-strong);
+  background: var(--peiq-accent-bg);
 }
 .peiq-tab[aria-selected="true"] {
   color: var(--peiq-text-on-accent);
@@ -515,7 +705,7 @@ style: set `--swatch` on the element; never write a hex into JS.
   outline: 2px solid var(--peiq-focus);
   outline-offset: 2px;
 }
-.peiq-tab:disabled { opacity: 0.45; cursor: not-allowed; }
+.peiq-tab:disabled { opacity: 0.55; cursor: not-allowed; }
 ```
 
 ### Palette swatches
@@ -526,17 +716,17 @@ style: set `--swatch` on the element; never write a hex into JS.
   width: 32px;
   height: 32px;
   border: 1px solid var(--peiq-border-strong);
-  border-radius: var(--peiq-radius-sm);
-  background: var(--swatch, var(--peiq-surface-alt));
+  border-radius: var(--peiq-radius);
+  background: var(--swatch, var(--peiq-surface-hover));
   cursor: pointer;
   transition:
-    transform 120ms var(--peiq-ease),
-    box-shadow 120ms var(--peiq-ease),
-    border-color 120ms var(--peiq-ease);
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out,
+    border-color 150ms ease-out;
 }
 .peiq-swatch:hover {
   transform: scale(1.06);
-  border-color: var(--peiq-text);
+  border-color: var(--peiq-text-strong);
 }
 .peiq-swatch:active { transform: scale(0.98); }
 .peiq-swatch:focus-visible {
@@ -549,14 +739,16 @@ style: set `--swatch` on the element; never write a hex into JS.
     0 0 0 2px var(--peiq-bg),
     0 0 0 4px var(--peiq-accent);
 }
-.peiq-swatch:disabled { opacity: 0.45; cursor: not-allowed; }
+.peiq-swatch:disabled { opacity: 0.55; cursor: not-allowed; }
 ```
 
-> Dynamic swatch color: set `element.style.setProperty('--swatch', '#rrggbb')` from the
-> palette entry. This is the only permitted inline style. Never write a color literal into
-> a component stylesheet.
+> Dynamic swatch color: `element.style.setProperty('--swatch', hex)`. This is the only
+> permitted inline style. Never write a color literal into a component stylesheet.
 
 ### Drawer and popover
+
+The site’s dark theme boxes are matte and shadowed; the Help drawer follows that, not a
+light “paper” sheet.
 
 ```css
 .peiq-drawer {
@@ -565,62 +757,62 @@ style: set `--swatch` on the element; never write a hex into JS.
   z-index: 60;
   width: min(360px, 92vw);
   overflow: auto;
-  background: var(--peiq-paper);
-  color: var(--peiq-paper-ink);
-  border-left: 1px solid var(--peiq-paper-border);
+  background: var(--peiq-bg);
+  color: var(--peiq-text);
+  border-left: 1px solid var(--peiq-border-strong);
   box-shadow: var(--peiq-shadow-drawer);
   transform: translateX(100%);
-  transition: transform 200ms var(--peiq-ease);
+  transition: transform 250ms ease-out;
 }
 .peiq-drawer[data-open="true"] { transform: translateX(0); }
-.peiq-drawer a { color: var(--peiq-accent-ink); }
+.peiq-drawer a { color: var(--peiq-accent); }
 
 .peiq-popover {
   z-index: 50;
   max-width: 320px;
-  padding: 12px;
+  padding: var(--peiq-space-3);
   background: var(--peiq-surface);
   color: var(--peiq-text);
   border: 1px solid var(--peiq-border-strong);
-  border-radius: var(--peiq-radius);
+  border-radius: var(--peiq-radius-lg);
   box-shadow: var(--peiq-shadow-popover);
-  font: 400 0.8125rem/1.5 var(--peiq-font-ui);
+  font: 400 0.875rem/1.5 var(--peiq-font-ui);
 }
 ```
 
-### Status, QA stats, toasts
+### QA stats, status, toasts
 
 ```css
 .peiq-stat { display: grid; gap: 2px; }
 .peiq-stat__value {
-  color: var(--peiq-text);
-  font: 700 1.25rem/1.1 var(--peiq-font-ui);
+  color: var(--peiq-text-strong);
+  font: 600 1.25rem/1.1 var(--peiq-font-ui);
   font-variant-numeric: tabular-nums;
 }
 .peiq-stat__label {
   color: var(--peiq-text-tertiary);
-  font: 700 0.6875rem/1.2 var(--peiq-font-ui);
-  letter-spacing: 0.08em;
+  font: 600 0.75rem/1 var(--peiq-font-ui);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.peiq-stat--warning .peiq-stat__value { color: var(--peiq-warning); }
-.peiq-stat--error .peiq-stat__value { color: var(--peiq-error); }
+.peiq-stat--warning .peiq-stat__value { color: var(--peiq-warning-text); }
+.peiq-stat--error .peiq-stat__value { color: var(--peiq-danger-text); }
 
 .peiq-toast {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--peiq-space-2);
+  padding: var(--peiq-space-2) var(--peiq-space-3);
   background: var(--peiq-surface);
   color: var(--peiq-text);
   border: 1px solid var(--peiq-border-strong);
-  border-radius: var(--peiq-radius-sm);
-  box-shadow: var(--peiq-shadow-panel);
-  font: 400 0.8125rem/1.4 var(--peiq-font-ui);
+  border-radius: var(--peiq-radius);
+  box-shadow: var(--peiq-shadow-card-lg);
+  font: 400 0.875rem/1.43 var(--peiq-font-ui);
 }
-.peiq-toast--success { border-color: rgba(var(--peiq-success-rgb), 0.45); }
-.peiq-toast--warning { border-color: rgba(var(--peiq-warning-rgb), 0.45); }
-.peiq-toast--error { border-color: rgba(var(--peiq-error-rgb), 0.45); }
+.peiq-toast--success { border-color: var(--peiq-success); }
+.peiq-toast--warning { border-color: var(--peiq-warning); }
+.peiq-toast--error { border-color: var(--peiq-danger); }
 ```
 
 ### Table
@@ -629,22 +821,23 @@ style: set `--swatch` on the element; never write a hex into JS.
 .peiq-table {
   width: 100%;
   border-collapse: collapse;
-  font: 400 0.8125rem/1.4 var(--peiq-font-ui);
+  background: var(--peiq-surface);
+  font: 400 0.875rem/1.43 var(--peiq-font-ui);
 }
 .peiq-table th {
-  padding: 8px;
+  padding: var(--peiq-space-2);
   color: var(--peiq-text-tertiary);
-  border-bottom: 1px solid var(--peiq-border);
-  font: 700 0.6875rem/1.2 var(--peiq-font-ui);
-  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--peiq-bg-secondary);
+  font: 600 0.75rem/1 var(--peiq-font-ui);
+  letter-spacing: 0.04em;
   text-align: left;
   text-transform: uppercase;
 }
 .peiq-table td {
-  padding: 8px;
-  border-bottom: 1px solid var(--peiq-border);
+  padding: var(--peiq-space-2);
+  border-bottom: 1px solid var(--peiq-bg-secondary);
 }
-.peiq-table tbody tr:hover td { background: var(--peiq-surface-hover); }
+.peiq-table tbody tr:hover td { background: var(--peiq-bg); }
 ```
 
 ### Canvas frame
@@ -654,8 +847,8 @@ style: set `--swatch` on the element; never write a hex into JS.
   position: relative;
   min-height: 320px;
   overflow: hidden;
-  border: 1px solid var(--peiq-border);
-  border-radius: var(--peiq-radius);
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius-lg);
   background-color: var(--peiq-checker-a);
   background-image: repeating-conic-gradient(
     var(--peiq-checker-b) 0% 25%,
@@ -675,13 +868,14 @@ style: set `--swatch` on the element; never write a hex into JS.
 
 ```css
 .peiq-footer {
-  padding: 32px clamp(16px, 3vw, 32px);
-  border-top: 1px solid var(--peiq-border);
+  padding: var(--peiq-space-5) var(--peiq-space-3);
+  border-top: 1px solid var(--peiq-border-strong);
+  background: var(--peiq-bg);
   color: var(--peiq-text-tertiary);
-  font: 400 0.8125rem/1.5 var(--peiq-font-ui);
+  font: 400 0.875rem/1.43 var(--peiq-font-ui);
 }
 .peiq-footer a { color: var(--peiq-text-secondary); }
-.peiq-footer a:hover { color: var(--peiq-accent-hover); }
+.peiq-footer a:hover { color: var(--peiq-accent); }
 ```
 
 ### Keyboard hint
@@ -689,8 +883,8 @@ style: set `--swatch` on the element; never write a hex into JS.
 ```css
 .peiq-kbd {
   display: inline-block;
-  padding: 4px 6px;
-  background: var(--peiq-bg-deep);
+  padding: 2px 6px;
+  background: var(--peiq-bg-tertiary);
   color: var(--peiq-text-secondary);
   border: 1px solid var(--peiq-border-strong);
   border-bottom-width: 2px;
@@ -705,131 +899,141 @@ style: set `--swatch` on the element; never write a hex into JS.
 
 **Container**
 
-- App shell max width: **1600 px**.
-- Page padding: `clamp(16px, 3vw, 32px)`.
-- Editorial reading width: **72ch**; never full-width paragraphs.
-- Header height: **64 px** desktop, **56 px** mobile.
-- App grid: `320px / minmax(0, 1fr) / 360px` at ≥1280 px.
+- Max width: **1600 px** (the site’s largest container).
+- Page padding: **16 px** mobile, **24 px** ≥ 980 px.
+- Editorial reading width: **840 px** for Guide sections; **62rem (620 px)** for hero
+  subtitles.
+- Header: **64 px**; subbar: **48 px**.
+- App grid: `320px / minmax(0, 1fr) / 360px` at ≥ 1380 px.
 
 ```css
 .peiq-shell {
   width: min(100%, 1600px);
   margin-inline: auto;
-  padding-inline: clamp(16px, 3vw, 32px);
+  padding-inline: 16px;
+}
+@media (min-width: 980px) {
+  .peiq-shell { padding-inline: 24px; }
 }
 
 .peiq-app {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr) 360px;
-  gap: 16px;
+  gap: var(--peiq-space-3);
   align-items: start;
-  min-height: calc(100dvh - 64px);
+  min-height: calc(100dvh - 112px); /* header + subbar */
 }
-
 .peiq-panel {
-  min-width: 0;              /* critical: prevents grid overflow */
+  min-width: 0;
   display: grid;
-  gap: 16px;
+  gap: var(--peiq-space-3);
   align-content: start;
 }
 .peiq-panel--scroll {
-  max-height: calc(100dvh - 96px);
+  max-height: calc(100dvh - 144px);
   overflow: auto;
   padding-right: 4px;
 }
-.peiq-reading { max-width: 72ch; }
+.peiq-reading { max-width: 840px; }
 ```
 
-**Spacing scale**
+**Spacing scale (exact site values)**
 
-`4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px`
+| Token | Value |
+|---|---:|
+| `--peiq-space-1` | 4 px |
+| `--peiq-space-2` | 8 px |
+| `--peiq-space-3` | 16 px |
+| `--peiq-space-4` | 24 px |
+| `--peiq-space-5` | 48 px |
+| `--peiq-space-6` | 96 px |
+| `--peiq-space-7` | 192 px |
 
 | Context | Value |
 |---|---|
 | App panel gap | 16 px |
-| Card padding | 16 px |
-| Editorial card padding | 24–32 px |
-| Section padding (desktop) | 96 px |
-| Section padding (tablet) | 64 px |
-| Section padding (mobile) | 48 px |
-| Control vertical rhythm | 8–12 px |
+| Card padding | 24 px |
+| Editorial section padding | 96 px desktop / 48 px tablet / 24 px mobile |
+| Control vertical rhythm | 8–16 px |
+| Button padding | 4 px 16 px |
 
 **Grid**
 
-- Editorial sections use a 12-column grid with 24 px gaps; cards may span 3/4/6/12.
-- App panels are single-column stacks; do not nest complex grids inside the left panel.
+- Editorial sections use a 12-column grid with 24 px gaps; cards span 3/4/6/12.
+- App panels are single-column stacks; never nest complex grids in the left panel.
 - The palette list scrolls independently; max 256 rows, no virtualization.
-- The canvas takes remaining width and must not force horizontal overflow.
+- The canvas takes remaining width; grid children use `min-width: 0`.
 
 ---
 
 ## 6. Depth & Elevation
 
-Borders first, shadows second. Matte surfaces; no glassmorphism.
+The site’s depth is mostly surface steps + subtle shadows, not borders on everything.
 
 | Level | Treatment | Use |
 |---|---|---|
-| Flat | No shadow; `1px` border | Panels, cards, inputs, tables |
-| Subtle | `0 1px 2px rgba(0,0,0,.40)` | Sticky header after scroll, small raised rows |
-| Panel | `0 8px 24px rgba(0,0,0,.28)` | Floating status/toast, compact popover |
-| Popover | `0 16px 40px rgba(0,0,0,.45)` | Info popovers, menus |
-| Drawer | `-24px 0 64px rgba(0,0,0,.45)` | Help drawer |
-| Focus | `2px` orange ring, `2px` offset | All interactive elements |
+| Flat | No shadow; surface step | App panels, tables, inline groups |
+| Standard | `0 2px 4px rgba(0,0,0,.05)` | Cards, boxes |
+| Large | `rgba(5,5,6,.20) 0 8px 24px` | Elevated cards, toasts, popovers |
+| Popover | `0 16px 40px rgba(5,5,6,.32)` | Info popovers, menus |
+| Drawer | `-24px 0 64px rgba(5,5,6,.32)` | Help drawer |
+| Accent button | Site’s blue triple shadow | Primary CTA only |
+| Focus | 2 px blue ring; 4 px on primary buttons | All interactive elements |
 
 Rules:
 
-- Do not put a shadow on every card; that makes the UI noisy.
-- Hover feedback is a border color change plus an optional 2 px lift — not a glow.
-- Paper surfaces use a hairline border or a very subtle shadow, never a dark glow.
-- Shadows are never the only affordance; hover/focus/active must also change color or border.
+- Cards use `--peiq-surface` with **no border**; do not add a 1 px outline to every box.
+- Hover feedback is a surface/background change or a shadow step; not a neon glow.
+- Borders are reserved for inputs, dividers, header, and canvas edges.
+- Do not put the large shadow on every card; it is for elevated/floating surfaces.
 
 ---
 
 ## 7. Animation & Interaction
 
 **Motion philosophy:** state changes, not decoration. Animate opacity, transform, color,
-and border; never animate layout. The canvas is the only “spectacle”.
+and border. Never animate layout. The canvas is the only spectacle.
 
-**Tier:** **L1**. No GSAP/ScrollTrigger/Lenis. No parallax, pinning, scroll-jacking,
-custom cursor, or WebGL.
+**Tier:** **L1** for the app. Editorial reveal is allowed only in the empty state and
+Guide.
+
+**Exact site timings**
 
 ```css
 :root {
-  --peiq-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --peiq-dur-fast: 120ms;
-  --peiq-dur: 180ms;
-  --peiq-dur-slow: 240ms;
+  --peiq-ease: ease-out;
+  --peiq-dur-fast: 80ms;    /* site --transition-speed-fast */
+  --peiq-dur: 150ms;        /* site --transition-speed */
+  --peiq-dur-slow: 250ms;   /* site --transition-speed-slow */
 }
 ```
 
-### Entrance animation
+### Entrance and reveal
+
+The site uses `in-viewport-fade fade-up`:
 
 ```css
-@keyframes peiq-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
-
 .peiq-reveal {
   opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity var(--peiq-dur) var(--peiq-ease),
-    transform var(--peiq-dur) var(--peiq-ease);
+  transform: translateY(60px);
+  transition: opacity 1s, transform 0.5s;
 }
 .peiq-reveal.is-visible {
   opacity: 1;
-  transform: none;
+  transform: translateY(0);
 }
-
-/* App shell: one short fade on first paint, no stagger. */
-.peiq-app { animation: peiq-fade-up var(--peiq-dur-slow) var(--peiq-ease) both; }
 ```
 
-### Scroll behavior
+Use it only on the empty-state sections and Guide blocks. Never on the working panels,
+the canvas, or the palette list. The app shell may fade in once:
 
-Only editorial content (empty state, Guide sections) may reveal. App panels never animate
-on scroll. Use a native `IntersectionObserver`; unobserve after the first reveal.
+```css
+@keyframes peiq-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.peiq-app { animation: peiq-fade-in 250ms ease-out both; }
+```
 
 ```js
 const io = new IntersectionObserver((entries) => {
@@ -848,27 +1052,25 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 
 ### Hover and focus
 
-- Buttons: border/color 120 ms; primary background 120 ms; active translateY(1px).
-- Cards: border orange + translateY(-2px) in 120 ms.
-- Links: color 120 ms; underline offset from CSS.
-- Swatches: scale 1.06 on hover, 0.98 on active.
-- Tabs: background/color 120 ms; selected is a solid orange fill.
-- Drawer: transform 200 ms; no backdrop blur; content remains readable.
+- Buttons: background 150 ms; active `scale(0.95)`; focus-visible 4 px blue.
+- Cards: shadow step + 2 px lift in 150 ms.
+- Links: color 150 ms; underline offset 3 px.
+- Swatches: scale 1.06 hover, 0.98 active; selected ring.
+- Tabs: color/background 150 ms; selected solid blue.
+- Drawer: transform 250 ms; no backdrop blur.
+- Inputs: border/background 150 ms; focus ring via box-shadow.
 
 ### Processing state
 
-- Use a 2 px progress bar with `transform: scaleX()` or `width` transition on a fixed
-  track; no full-screen spinner.
-- Keep the last result visible; overlay a subtle dark scrim and a status line.
-- Cancel is always reachable; progress updates are throttled to ~10 Hz.
+- Fixed 2 px progress track with `transform: scaleX()`; no full-screen spinner.
+- Keep the last result visible; overlay a subtle scrim and a status line.
+- Throttle progress updates to ~10 Hz; cancel stays reachable.
 
 ### Reduced motion
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -880,12 +1082,10 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 
 ### Performance rules
 
-- Animate only `transform` and `opacity`; color/border transitions are cheap but keep them
-  under 200 ms.
-- No `filter: blur()` on moving elements. No large `backdrop-filter` areas; if ever used,
-  cap at 14 px and a small surface.
-- `pointermove` listeners, if added later, must be rAF-throttled.
-- The canvas is not animated by CSS; it is painted imperatively.
+- Animate only `transform` and `opacity`; color/border transitions are cheap but ≤ 250 ms.
+- No `filter: blur()` on moving elements; no large `backdrop-filter` areas.
+- No video backgrounds, parallax, pinning, or scroll-jacking in the tool.
+- `pointermove` listeners, if ever added, must be rAF-throttled.
 
 ---
 
@@ -893,75 +1093,79 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 
 ### Do
 
+- Use **blue** for interaction, **orange** only for the brand mark and one editorial
+  highlight.
+- Use Inter; fall back to the exact system stack if the self-hosted file is unavailable.
+- Use the site’s charcoal stack: `#1c1e22` shell, `#25282d` body, `#30353b` boxes.
+- Use 6 px radii for controls, 12 px for cards/boxes.
+- Use 4/8/16/24/48/96 spacing; 24 px card padding.
+- Use weight 300 section headings with weight 800 `<strong>` words.
+- Use `text-wrap: balance` on headings and `pretty` on paragraphs.
 - Keep the tool above the fold; editorial scale belongs to the empty state and Guide.
-- Use **one** orange accent for primary action, active state, focus, and links.
-- Build hierarchy with borders, spacing, weight, and muted text — not shadows.
-- Use compact type in controls (13–15 px) and editorial type in reading surfaces.
 - Use tabular numbers for metrics and mono for hex/index values.
-- Use `--peiq-accent-ink` for small text on paper; use dark text on orange buttons.
-- Use inline SVG for icons; keep them 16/20 px and stroke-based.
-- Respect `prefers-reduced-motion` and keep all interactions keyboard-operable.
-- Let the live canvas or a generated palette mosaic be the visual hook.
-- Keep the design matte: flat surfaces, hairline borders, restrained shadows.
+- Verify light-theme tokens when the light theme ships.
+- Respect `prefers-reduced-motion`; keep every interaction keyboard-operable.
 
 ### Don't
 
 - ❌ Copy Blender’s logo, wordmark, artwork, screenshots, CSS, or theme files.
 - ❌ Use external images, videos, icon packs, Google Fonts, or any CDN asset.
+- ❌ Turn the whole UI orange; orange is the brand mark, not the interaction color.
+- ❌ Use white text on the bright blue gradient; use `--peiq-text-on-accent`.
+- ❌ Use the release page’s per-feature pastel colors (pink/purple/green) in the tool.
 - ❌ Put a marketing hero above the tool or push the canvas below the fold.
-- ❌ Use orange for body text or small text on light paper.
-- ❌ Use white text on orange buttons; use `--peiq-text-on-accent`.
-- ❌ Use glassmorphism, gradient text, neon glows, heavy shadows, or noise textures.
+- ❌ Use glassmorphism, gradient text, neon glows, text shadows, or heavy shadows.
 - ❌ Use scroll-jacking, parallax, pinned sections, GSAP/Lenis, or a custom cursor.
 - ❌ Animate `width`, `height`, `top`, or `left`; animate transforms instead.
 - ❌ Use `filter: blur()` on moving elements or large `backdrop-filter` surfaces.
 - ❌ Use emoji as UI icons.
 - ❌ Hard-code hex values in components or JS; use CSS variables.
-- ❌ Make every card a different size/shadow just for visual interest.
-- ❌ Ship a first-run tour, modal onboarding, or permanently visible paragraphs.
+- ❌ Add a border to every card; the site uses surface steps and shadow.
 - ❌ Use color alone to communicate state; pair it with text or an icon.
 
 ---
 
 ## 9. Responsive Behavior
 
-**Breakpoints**
+**Breakpoints (site values)**
 
-| Name | Width | Key changes |
+| Name | Width | App behavior |
 |---|---|---|
-| Desktop | ≥ 1280 px | 3-column app: controls / canvas / palette+QA. Full header. |
-| Tablet | 960–1279 px | 2 columns: controls / canvas; palette + QA become a tab below. Side panel 280 px. |
-| Mobile | < 960 px | Stacked; canvas sticky at top; tabs: Controls / Palette / QA / Export. Help drawer full-height. |
-| Small mobile | < 640 px | Single column; 44 px touch targets; compact header with `PEIQ` mark. |
+| Desktop | ≥ 1380 px | 3 columns: 320 / 1fr / 360; full header |
+| Laptop | 1220–1379 px | 3 columns: 280 / 1fr / 320 |
+| Tablet | 980–1219 px | 2 columns: 280 / 1fr; palette + QA become a tab below |
+| Mobile | < 980 px | Stacked; sticky canvas; tabs: Controls / Palette / QA / Export |
+| Small | < 600 px | Single column; 44 px targets; `PEIQ` header mark |
 
-**Touch targets:** minimum **44×44 px** on mobile; 32–36 px is acceptable on desktop for
-dense controls.
+The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale changes and
+1680 px as a wide-container cap.
+
+**Touch targets:** minimum **44 × 44 px** on mobile; 32–36 px on desktop for dense
+controls.
 
 **Collapsing strategy**
 
-- Header: full public name ≥ 960 px; `PEIQ` below. Mode tabs become icon+label or a
-  segmented control; Help stays visible.
-- Left panel: scrolls independently; sections become collapsible `<details>` below 640 px.
-- Palette panel: becomes a tab; the palette list keeps its own scroll.
-- QA: table rows stack into label/value pairs below 640 px.
-- Help drawer: full-width sheet below 960 px; close button in the header.
-- Canvas: sticky at the top on mobile; never taller than `55dvh` unless the user zooms.
+- Header: full public name ≥ 980 px; `PEIQ` below. Help stays visible.
+- Mode tabs move into the 48 px subbar; Export becomes an icon+label button.
+- Left panel scrolls independently; sections collapse into `<details>` below 640 px.
+- Palette panel becomes a tab; the palette list keeps its own scroll.
+- QA table rows stack into label/value pairs below 640 px.
+- Help drawer: full-width sheet below 980 px; close button in the header.
+- Canvas: sticky at the top on mobile; never taller than `55dvh` unless zoomed.
 
 ```css
-@media (max-width: 1279px) {
+@media (max-width: 1379px) {
   .peiq-app { grid-template-columns: 280px minmax(0, 1fr); }
   .peiq-panel--right { grid-column: 1 / -1; }
 }
-
-@media (max-width: 959px) {
-  .peiq-header { min-height: 56px; }
+@media (max-width: 979px) {
+  .peiq-header { height: 56px; }
   .peiq-app { grid-template-columns: 1fr; }
   .peiq-panel--scroll { max-height: none; overflow: visible; }
   .peiq-drawer { width: 100%; }
   .peiq-reading { max-width: none; }
 }
-
-@media (max-width: 639px) {
+@media (max-width: 599px) {
   .peiq-shell { padding-inline: 16px; }
   .peiq-btn { min-height: 44px; }
   .peiq-input,
@@ -977,43 +1181,82 @@ img, canvas, video { max-width: 100%; }
 
 **Accessibility**
 
-- Every interactive element has `hover` and `focus-visible` states.
-- Focus rings are visible on dark and paper surfaces.
-- Contrast: body ≥ 4.5:1; large text/components ≥ 3:1.
-- Do not remove native focus outlines without replacing them.
+- Every interactive element has hover and `focus-visible` states.
+- Focus rings are visible on dark and light surfaces.
+- Contrast: body ≥ 4.5:1; large text/components ≥ 3:1. `--peiq-text-tertiary` is for
+  metadata only.
+- Never remove native focus without a visible replacement.
 - Touch targets ≥ 44 px on mobile.
-- `prefers-reduced-motion` is a complete fallback, not a partial one.
-- The Help drawer is a labelled dialog; focus moves in on open and returns to the trigger
-  on close; `Esc` closes it.
+- `prefers-reduced-motion` is a complete fallback.
+- The Help drawer is a labelled dialog; focus moves in on open and returns on close;
+  `Esc` closes it.
 
 ---
 
-## Appendix A — Reference audit and intentional deviations
+## Appendix A — Reference audit and exact-token mapping
 
-**Access note:** automated access to [blender.org](https://www.blender.org/) returned a
-Cloudflare challenge (HTTP 403, “Just a moment…”), so no CSS tokens, section count, or
-motion audit could be extracted. This document is an **intentional interpretation of the
-public design language**, not a token-for-token reproduction.
+**Source.** The saved `5.3 — Blender` page and its `style.css` (`bthree` theme) were
+inspected locally. The following values were extracted, not guessed:
 
-**Aligned**
+| Site token / rule | Value | PEIQ use |
+|---|---|---|
+| `--color-bg` | `#1c1e22` | `--peiq-bg` |
+| `--color-bg-secondary` | `#25282d` | `--peiq-bg-secondary` |
+| `--color-bg-tertiary` | `#202327` | `--peiq-bg-tertiary` |
+| `--color-bg-primary` | `#30353b` | `--peiq-surface` |
+| `--color-text` | `#c7cbd1` | `--peiq-text` |
+| `--color-text-primary` | `#f9fafa` | `--peiq-text-strong` |
+| `--color-text-secondary` | `#89939f` | `--peiq-text-secondary` |
+| `--color-text-tertiary` | `#6e7987` | `--peiq-text-tertiary` |
+| `--border-color` | `rgba(199,203,209,.15)` | `--peiq-border` |
+| `--color-accent-h` | `204` | blue interaction accent |
+| `--color-accent-s/l` | `100% / 50%` | `hsl(204 100% 50%)` |
+| `--btn-color` | `#bec6d0` | `--peiq-btn-color` |
+| `--btn-color-bg` | `#40474f` | `--peiq-btn-bg` |
+| `--btn-color-bg-hover` | `#454c54` | `--peiq-btn-bg-hover` |
+| `--btn-accent-bg-img` | `linear-gradient(350deg,#6183ff,#47aaf5)` | primary button |
+| `--btn-accent-bg-img-hover` | `linear-gradient(350deg,#708fff,#5ab3f6)` | primary hover |
+| `--btn-accent-box-shadow` | 3-layer blue shadow | primary button |
+| `--input-color-bg` | `#25282d` | `--peiq-input-bg` |
+| `--input-color-bg-hover` | `#202327` | `--peiq-input-bg-hover` |
+| `--code-color` | `#d6b6d8` | `--peiq-code` |
+| `--code-color-bg` | `rgba(208,38,217,.08)` | `--peiq-code-bg` |
+| `--spacer` | `1.6rem` (16 px at 10 px root) | 16 px space scale |
+| `--border-radius` | `.6rem` (6 px) | `--peiq-radius` |
+| `--border-radius-lg` | `1.2rem` (12 px) | `--peiq-radius-lg` |
+| `--transition-speed` | `150ms` | `--peiq-dur` |
+| `--transition-speed-fast` | `80ms` | `--peiq-dur-fast` |
+| `--transition-speed-slow` | `250ms` | `--peiq-dur-slow` |
+| `--font-family-body` | `"Inter", ...` | `--peiq-font-ui` |
+| `--fs-base` | 1.4/1.6/1.8rem at 900/1220 | 14/16/18 px equivalent |
+| `--fs-hero-title` | 3.6/5.5/7.2rem; release override 5.2rem | empty-state clamp 36–52 px |
+| `--fs-h1` | 2.8/3.2rem | 28/32 px |
+| `--fs-h2` | 2.4/2.8rem | 24/28 px |
+| `--fs-h4` | 1.8/2.1rem | 18/21 px |
+| `--fw-light/bold/title` | 300/600/800 | same |
+| `.box` | 24 px padding, 12 px radius, surface | cards |
+| `.btn` | 4 px 16 px, 6 px radius, 500 | buttons |
+| `.in-viewport-fade` | opacity 1s, transform .5s, translateY 60px | editorial reveal |
+| `.hero` | min 480 px, max 560 px, white text | empty-state hero only |
+| `.hero-subtitle` | `--fs-lg`, max 62rem | hero subtitle |
+| `theme-color` | `#ed8f31` | `--peiq-brand` |
 
-- Charcoal surfaces + a single warm orange accent.
-- Tight, bold editorial headlines and uppercase section labels.
-- Thin-bordered cards, generous editorial whitespace, matte surfaces.
-- Subtle state-driven motion rather than spectacle.
+**Intentional deviations**
 
-**Intentionally different**
-
-| Area | Blender site | PEIQ | Why |
+| Area | Site | PEIQ | Why |
 |---|---|---|---|
-| Purpose | Marketing/showcase | Working tool | The tool must stay above the fold |
-| Typography | Custom/brand font | System stack; optional self-hosted Inter | Zero external fonts/CDN |
-| Artwork | 3D renders, screenshots, video | Live canvas, palette mosaic, SVG, own screenshots | No brand assets; no heavy media |
-| Motion | L2/L3 marketing motion | L1 state motion + one reveal | Performance and focus |
-| Density | Airy marketing sections | Dense controls; editorial only in empty/Guide | Usability |
-| Brand | Blender logo/wordmark | PEIQ name/wordmark | Trademark; no copying |
-| Fonts/images | External assets | Local only | Offline-first, zero dependencies |
+| Theme default | Light-first with dark override | Dark primary, light optional | Image work; dark is easier on the eyes |
+| Accent use | Blue UI + orange brand | Same | Exact brand logic |
+| Button text | White on blue gradient | Dark text on blue gradient | WCAG AA; site is ≈ 2.9:1 |
+| Root font size | `62.5%` (10 px) | 16 px with equivalent rem | Avoid the 62.5% accessibility hack |
+| Content body | 18 px at wide screens | 14 px controls; 16/18 px editorial | Tool density |
+| Feature colors | Pink/purple/green per section | Blue + orange only | Tool coherence |
+| Motion | Reveal + parallax + video | L1 + editorial reveal only | Performance and focus |
+| Artwork | 3D renders, screenshots, video | Live canvas, palette mosaic, SVG | No brand assets; offline |
+| Cards | Surface + shadow, no border | Same | Exact |
+| Fonts | Inter variable | Self-hosted Inter + OFL | Offline-first, zero CDN |
 
-**Why this is the right adaptation:** the product is judged by the accuracy of its output,
-not by the drama of its landing page. The editorial shell gives it warmth and identity;
-the working surface stays precise, fast, and readable.
+**Why this is exact enough:** the color stack, accent hue, brand orange, type scale,
+weights, spacing, radii, shadows, button gradient, transition speeds, and editorial reveal
+all come from the site’s CSS. What changes is the *application*: the tool stays dense,
+dark, and fast instead of becoming a long-form marketing page.

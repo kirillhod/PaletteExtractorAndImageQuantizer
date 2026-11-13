@@ -134,7 +134,7 @@ to v1.0.x without changing the contracts.
 | Runtime dependencies | **Zero.** `package.json` MUST have no `dependencies` or `devDependencies`. |
 | Build step | **None.** Native ES modules served as-is; no bundler, transpiler, minifier, CSS preprocessor. |
 | Hosting | GitHub Pages, static, HTTPS. All paths relative (`./js/...`) so project pages work under `/<repo>/`. |
-| Processing | 100% client-side. No uploads, no telemetry, no CDN, no external/CDN fonts, no network calls after load. A self-hosted OFL font asset is allowed per `DESIGN.md` §3. |
+| Processing | 100% client-side. No uploads, no telemetry, no CDN, no external/CDN fonts, no network calls after load. Self-hosted Inter (OFL) is the declared font; see `DESIGN.md` §3. |
 | Tooling | Node 22 built-ins only: `node --test`, `node:http`. |
 | Types | JSDoc + `// @ts-check`; no TypeScript compilation. |
 | License | GPL-3.0-only. Original code only; no copied GPL-incompatible snippets. |
@@ -187,7 +187,7 @@ Feature fallbacks:
                       IMPLEMENTATION_PLAN.md, AGENTS.md, DESIGN.md
 /css/                 tokens, base, layout, components, canvas, learn, responsive
 /js/                  main.js, ui/, content/, workers/, core/
-/assets/              blue-noise mask, icons, optional palette data, optional OFL font (`DESIGN.md` §3)
+/assets/              blue-noise mask, icons, optional palette data, self-hosted Inter (OFL) + license
 /test/                node --test suites and fixtures helpers
 /tools/               dev-server.mjs, gen-blue-noise.mjs
 /.github/workflows/   ci.yml, pages.yml
@@ -769,7 +769,7 @@ hashes are reviewed when intentional changes occur.
 
 ## 8. UI / UX specification
 
-### 8.1 Layout (desktop ≥ 1280 px)
+### 8.1 Layout (desktop ≥ 1380 px)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -786,10 +786,10 @@ hashes are reviewed when intentional changes occur.
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-- 960–1279 px: two columns; palette panel becomes a tab below controls.
-- < 960 px: stacked; canvas sticky at the top; tabs: Controls / Palette / QA / Export.
+- 980–1379 px: two columns; palette panel becomes a tab below controls.
+- < 980 px: stacked; canvas sticky at the top; tabs: Controls / Palette / QA / Export.
 - < 640 px: single column; controls are collapsible sections.
-- The header shows the full public name at ≥960 px; below that, the short mark `PEIQ` with
+- The header shows the full public name at ≥980 px; below that, the short mark `PEIQ` with
   an `aria-label`/`title` carrying the full name. The document title uses the full name.
 - The `Help` button is always visible, including the empty state.
 - Visual language, tokens, component styles, motion, and breakpoints: see
@@ -999,8 +999,8 @@ site. Learning is opt-in, contextual, and dismissible.
 - Display timings per stage in the status bar and manifest.
 - Learning content is static in the bundle: no fetch, no runtime parsing beyond module
   load. Hints/drawer must not trigger canvas relayout or a re-render of the result.
-- Page weight target: < 500 KB uncompressed HTML/CSS/JS, plus optional font < 120 KB.
-  No video backgrounds or large hero images; the Blender-inspired look is CSS/SVG/canvas.
+- Page weight target: < 500 KB uncompressed HTML/CSS/JS, plus a self-hosted Inter subset
+  ≤ 200 KB. No video backgrounds or large hero images; the Blender look is CSS/SVG/canvas.
 - Cap work, not wall-clock: if a job exceeds its budget, reduce iterations or resolution
   only with an explicit UI note — never silently.
 
@@ -1100,7 +1100,7 @@ site. Learning is opt-in, contextual, and dismissible.
     “Read more” opens the matching guide topic.
 14. Help drawer at 1280 px and 360 px: tabs work, canvas does not relayout, no network
     requests, external links open only on click.
-15. Visual review: dark shell + paper Guide, orange accent contrast, focus rings,
+15. Visual review: dark shell + Guide, blue accent contrast, orange brand, focus rings,
     reduced motion, no layout shift, no copied Blender assets; check against `DESIGN.md`.
 
 ---
@@ -1419,7 +1419,9 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | Path | Responsibility |
 |---|---|
 | `assets/blue-noise-64.bin` | 64×64 blue-noise mask (checksum in `assets/README.md`) |
-| `assets/README.md` | Provenance and regeneration command |
+| `assets/fonts/InterVariable-latin.woff2` | Self-hosted Inter variable Latin subset (~48 KB) |
+| `assets/fonts/OFL.txt` | Inter SIL Open Font License |
+| `assets/README.md` | Provenance, font source/license, regeneration command |
 | `tools/dev-server.mjs` ✅ | Zero-dep static server |
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
 | `.github/workflows/ci.yml` | `node --test` on push/PR |
@@ -1545,9 +1547,9 @@ A change is done only when:
 | 2026-11-13 | English UI and docs | Public open-source tool; no i18n in v1 |
 | 2026-11-13 | Public name = repository name `PaletteExtractorAndImageQuantizer`; short mark `PEIQ`; identifiers `peiq-` / `peiq/*` / `peiq.*` | Owner decision; no separate brand name |
 | 2026-11-13 | In-product learning layer (contextual hints + Help drawer), closed by default | Owner requirement: theory accessible without blocking the workflow |
-| 2026-11-13 | Visual direction: Blender-inspired editorial dark/orange; style only, no brand assets | Owner preference; see `DESIGN.md` §1 and §8 |
+| 2026-11-13 | Visual direction: exact Blender dark theme (`#1c1e22` / `#30353b`), blue accent `hsl(204 100% 50%)`, orange brand `#ed8f31`, Inter | Tokens extracted from the saved 5.3 page CSS; see `DESIGN.md` §2 and Appendix A |
 | 2026-11-13 | Design system extracted to `DESIGN.md`; plan keeps behavior only | Single design source; easier reuse and audit |
-| 2026-11-13 | System font stack; optional self-hosted Inter (OFL), no CDN | Closer typography without a dependency; fallback stays readable |
+| 2026-11-13 | Self-hosted Inter (OFL), no CDN | Exact site font; fallback stack remains readable |
 
 ---
 
