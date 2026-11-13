@@ -46,6 +46,21 @@ Test it:
 npm test   # 85 tests, zero dependencies
 ```
 
+## GitHub Pages
+
+The repository is the static site; there is no build step. `.nojekyll` is committed, and
+`.github/workflows/pages.yml` stages only `index.html`, `css/`, `js/`, `assets/`, and
+`LICENSE` before deploying through GitHub Actions.
+
+1. Make the repository public if you are on the free plan.
+2. Open **Settings → Pages → Build and deployment** and set **Source** to
+   **GitHub Actions**.
+3. Run the **pages** workflow, or push to `main`.
+4. Open `https://<user>.github.io/PaletteExtractorAndImageQuantizer/`.
+
+The app uses relative paths, so the project-page subpath works without configuration.
+No secret, token, or environment variable is needed for deployment.
+
 Not in M2 yet: ΔE00 QA/error maps, palette editor with locks, all palette-format exports,
 batch, animated frames, and the full theory guide. These are M3–M4 in the plan.
 

@@ -1507,7 +1507,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `tools/dev-server.mjs` ✅ | Zero-dep static server |
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
 | `.github/workflows/ci.yml` | `node --test` on push/PR |
-| `.github/workflows/pages.yml` | Deploy root to GitHub Pages on `main` |
+| `.github/workflows/pages.yml` | Stage the static site and deploy it to GitHub Pages on `main` |
 
 ---
 
@@ -1655,6 +1655,7 @@ A change is done only when:
 | 2026-11-13 | Restore independent rail sections and raise label/body spacing; add a numeric color-count field | Owner needs Palette and Dither open together; tight gaps made the first label touch the summary and the colors label touch Method |
 | 2026-11-13 | Help renders canonical references and credits; print-only papers are cited without a PDF | Owner wants visible attribution; avoids redistributing copyrighted scans |
 | 2026-11-13 | Licensing/attribution rules moved into plan §3.6 | Makes the copyright boundary explicit for future assets and code |
+| 2026-11-13 | Add `.nojekyll` and stage only runtime files in the Pages workflow | Pages readiness; keeps tests, tools, docs, and `.git` out of the deployed artifact |
 
 ---
 
