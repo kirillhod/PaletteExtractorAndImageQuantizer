@@ -254,8 +254,8 @@ and the change is committed locally with a descriptive body (plan §16).
 ## 12. Current state and next task
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  color core ✅ (9/9 tests); README minimal; no UI/core pipeline yet.
-- Next: `types.js`, `version.js`, `rng.js`, `hash.js`, `test/helpers.js`, then M1
+  color + version core ✅ (11/11 tests); `v0.1.0` tagged; no UI/core pipeline yet.
+- Next: `types.js`, `rng.js`, `hash.js`, `test/helpers.js`, then M1
   (histogram → median cut → PNG encoder/decoder → worker → preview → strip).
 - Do not assume UI files exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
