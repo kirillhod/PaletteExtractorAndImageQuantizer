@@ -16,8 +16,11 @@ reports. Dark and light themes, no uploads, no dependencies, no build step.
 - Dither with Floyd–Steinberg, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2×2/4×4/8×8,
   or blue noise; control strength, serpentine, and edge stop.
 - Set a transparent index and alpha threshold for sprites.
-- Export a **4/8-bit indexed PNG** with `PLTE`/`tRNS`, a validated `N×1`/`1×N` strip, or
-  a reduced RGBA PNG. Every export is decoded and checked before the Save link appears.
+- Export from the panel under the palette: a **4/8-bit indexed PNG** with `PLTE`/`tRNS`,
+  a validated `N×1`/`1×N` strip, or a reduced RGBA PNG. Every export is decoded and
+  checked before the Save link appears.
+- Hover or tap the `?` next to algorithm settings for short explanations, including
+  serpentine scan and edge stop.
 - Copy HEX values and switch dark/light/auto themes; the preference persists.
 
 Run it:

@@ -75,7 +75,10 @@
 
         <div class="peiq-palette-panel">
           <div class="peiq-palette-bar">
-            <span class="peiq-label">Palette</span>
+            <div class="peiq-palette-label">
+              <span class="peiq-label">Palette</span>
+              <button class="peiq-help" type="button" data-tooltip="Reorders the swatches, the HEX list, and the exported strip. Exported indices follow the displayed order.">?</button>
+            </div>
             <label class="peiq-palette-sort" for="palette-sort">
               <span class="peiq-label">Sort</span>
               <select class="peiq-select peiq-select--compact" id="palette-sort" disabled>
@@ -90,6 +93,27 @@
           </div>
           <div class="peiq-palette-strip" id="palette-strip" aria-label="Extracted palette"></div>
         </div>
+
+        <div class="peiq-export-panel" aria-labelledby="export-heading">
+          <div class="peiq-export-bar">
+            <span class="peiq-label" id="export-heading">Export</span>
+            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" disabled>Download indexed PNG</button>
+            <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" disabled>Palette strip</button>
+            <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" disabled>Reduced PNG</button>
+            <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="copy-hex" type="button" disabled>Copy HEX</button>
+            <div class="peiq-export-option">
+              <label class="peiq-label" for="strip-orientation">Strip</label>
+              <select class="peiq-select peiq-select--compact" id="strip-orientation">
+                <option value="Nx1">N×1 (horizontal)</option>
+                <option value="1xN">1×N (vertical)</option>
+              </select>
+              <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips.">?</button>
+            </div>
+          </div>
+          <div class="peiq-download-result" id="download-result" hidden></div>
+          <p class="peiq-hint">Every export is decoded and validated before the Save link appears.</p>
+        </div>
+
         <div class="peiq-statusbar" id="statusbar"></div>
       </div>
 
@@ -98,7 +122,10 @@
           <summary>Palette</summary>
           <div class="peiq-rail-section__body">
             <div class="peiq-field">
-              <span class="peiq-label">Mode</span>
+              <div class="peiq-label-row">
+                <span class="peiq-label">Mode</span>
+                <button class="peiq-help" type="button" data-tooltip="Extract builds a palette from this image. Map applies a fixed palette instead.">?</button>
+              </div>
               <div class="peiq-tabs" role="tablist" aria-label="Palette mode">
                 <button class="peiq-tab" id="mode-extract" type="button" role="tab" aria-selected="true">Extract</button>
                 <button class="peiq-tab" id="mode-map" type="button" role="tab" aria-selected="false">Map</button>
@@ -107,7 +134,10 @@
 
             <div class="peiq-field-stack" id="extract-controls">
               <div class="peiq-field">
-                <label class="peiq-label" for="method">Method</label>
+                <div class="peiq-label-row">
+                  <label class="peiq-label" for="method">Method</label>
+                  <button class="peiq-help" type="button" data-tooltip="Popularity keeps the most frequent colors. Median cut and Wu split color space; K-means++ refines iteratively for the best quality.">?</button>
+                </div>
                 <select class="peiq-select" id="method">
                   <option value="median-cut">Median cut</option>
                   <option value="popularity">Popularity</option>
@@ -117,7 +147,10 @@
                 </select>
               </div>
               <div class="peiq-field">
-                <label class="peiq-label" for="colors">Colors</label>
+                <div class="peiq-label-row">
+                  <label class="peiq-label" for="colors">Colors</label>
+                  <button class="peiq-help" type="button" data-tooltip="Palette size from 2 to 256. Use the slider for a quick scan or type an exact number.">?</button>
+                </div>
                 <div class="peiq-range-row">
                   <input class="peiq-range" id="colors" type="range" min="2" max="256" step="1" value="16">
                   <label class="sr-only" for="colors-number">Color count</label>
@@ -125,7 +158,10 @@
                 </div>
               </div>
               <div class="peiq-field">
-                <label class="peiq-label" for="space">Working space</label>
+                <div class="peiq-label-row">
+                  <label class="peiq-label" for="space">Working space</label>
+                  <button class="peiq-help" type="button" data-tooltip="Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0–255 RGB.">?</button>
+                </div>
                 <select class="peiq-select" id="space">
                   <option value="oklab">Oklab (recommended)</option>
                   <option value="srgb">sRGB</option>
@@ -135,7 +171,10 @@
 
             <div class="peiq-field-stack" id="map-controls" hidden>
               <div class="peiq-field">
-                <label class="peiq-label" for="palette-select">Target palette</label>
+                <div class="peiq-label-row">
+                  <label class="peiq-label" for="palette-select">Target palette</label>
+                  <button class="peiq-help" type="button" data-tooltip="A built-in or imported fixed palette. Map mode reuses it instead of extracting colors.">?</button>
+                </div>
                 <select class="peiq-select" id="palette-select"></select>
               </div>
               <div class="peiq-field">
@@ -146,13 +185,19 @@
             </div>
 
             <div class="peiq-field">
-              <label class="peiq-label" for="transparent-index">Transparent index</label>
+              <div class="peiq-label-row">
+                <label class="peiq-label" for="transparent-index">Transparent index</label>
+                <button class="peiq-help" type="button" data-tooltip="Which palette entry becomes fully transparent in indexed and strip exports. Map mode defaults to index 0.">?</button>
+              </div>
               <select class="peiq-select" id="transparent-index" disabled>
                 <option value="-1">None</option>
               </select>
             </div>
             <div class="peiq-field">
-              <label class="peiq-label" for="alpha-threshold">Alpha threshold <span id="alpha-threshold-value">128</span></label>
+              <div class="peiq-label-row">
+                <label class="peiq-label" for="alpha-threshold">Alpha threshold <span id="alpha-threshold-value">128</span></label>
+                <button class="peiq-help" type="button" data-tooltip="Pixels with alpha below this value use the transparent index. Indexed PNGs have binary transparency; RGBA exports keep the original alpha.">?</button>
+              </div>
               <input class="peiq-range" id="alpha-threshold" type="range" min="1" max="254" value="128">
             </div>
             <p class="peiq-hint">Preview uses a downscaled copy. Export always uses the full image.</p>
@@ -163,7 +208,10 @@
           <summary>Dither</summary>
           <div class="peiq-rail-section__body">
             <div class="peiq-field">
-              <label class="peiq-label" for="dither-method">Method</label>
+              <div class="peiq-label-row">
+                <label class="peiq-label" for="dither-method">Method</label>
+                <button class="peiq-help" type="button" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise mix two nearby colors with a pattern.">?</button>
+              </div>
               <select class="peiq-select" id="dither-method">
                 <option value="none">None</option>
                 <option value="floyd-steinberg">Floyd–Steinberg</option>
@@ -179,39 +227,29 @@
               </select>
             </div>
             <div class="peiq-field">
-              <label class="peiq-label" for="dither-strength">Strength <span id="dither-strength-value">80%</span></label>
+              <div class="peiq-label-row">
+                <label class="peiq-label" for="dither-strength">Strength <span id="dither-strength-value">80%</span></label>
+                <button class="peiq-help" type="button" data-tooltip="How much quantization error is passed to neighboring pixels. 0% is nearest-color mapping; 100% is full diffusion.">?</button>
+              </div>
               <input class="peiq-range" id="dither-strength" type="range" min="0" max="100" value="80">
             </div>
             <div class="peiq-field peiq-check-field">
-              <label class="peiq-check-label" for="dither-serpentine">
-                <input class="peiq-check" id="dither-serpentine" type="checkbox" checked>
-                Serpentine scan
-              </label>
+              <div class="peiq-check-row">
+                <label class="peiq-check-label" for="dither-serpentine">
+                  <input class="peiq-check" id="dither-serpentine" type="checkbox" checked>
+                  Serpentine scan
+                </label>
+                <button class="peiq-help" type="button" data-tooltip="Alternates the scan direction on each row so error diffusion does not leave vertical streaks. Error diffusion only.">?</button>
+              </div>
             </div>
             <div class="peiq-field">
-              <label class="peiq-label" for="edge-stop">Edge stop <span id="edge-stop-value">50%</span></label>
+              <div class="peiq-label-row">
+                <label class="peiq-label" for="edge-stop">Edge stop <span id="edge-stop-value">50%</span></label>
+                <button class="peiq-help" type="button" data-tooltip="Reduces error diffusion across strong edges, keeping outlines crisp. Error diffusion only.">?</button>
+              </div>
               <input class="peiq-range" id="edge-stop" type="range" min="0" max="100" value="50">
             </div>
             <p class="peiq-hint">Serpentine and edge stop apply to error diffusion only.</p>
-          </div>
-        </details>
-
-        <details class="peiq-rail-section">
-          <summary>Export</summary>
-          <div class="peiq-rail-section__body">
-            <div class="peiq-field">
-              <label class="peiq-label" for="strip-orientation">Strip orientation</label>
-              <select class="peiq-select" id="strip-orientation">
-                <option value="Nx1">N×1 (horizontal)</option>
-                <option value="1xN">1×N (vertical)</option>
-              </select>
-            </div>
-            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" disabled>Download indexed PNG</button>
-            <button class="peiq-btn" id="export-strip" type="button" disabled>Download palette strip</button>
-            <button class="peiq-btn" id="export-reduced" type="button" disabled>Download reduced PNG</button>
-            <button class="peiq-btn peiq-btn--ghost" id="copy-hex" type="button" disabled>Copy HEX list</button>
-            <div class="peiq-download-result" id="download-result" hidden></div>
-            <p class="peiq-hint">Every export is decoded and validated before the Save link appears.</p>
           </div>
         </details>
 
@@ -226,7 +264,11 @@
   </main>
 
   <footer class="peiq-footer">
-    <p>Runs locally. No uploads, no accounts, no tracking. <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a></p>
+    <p>Runs locally. No uploads, no accounts, no tracking.</p>
+    <nav class="peiq-footer__links" aria-label="Project links">
+      <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a>
+      <a href="https://github.com/kirillhod/PaletteExtractorAndImageQuantizer" target="_blank" rel="noopener noreferrer">GitHub repository</a>
+    </nav>
   </footer>
 
   <aside class="peiq-drawer" id="help-drawer" data-open="false" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="help-title">

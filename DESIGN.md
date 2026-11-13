@@ -66,8 +66,8 @@ empty state and Guide sections, because it is editorial, not functional.
   from the other theme; theme switching is instant and leaves no half-light state.
 - **Minimal header.** Brand on the left; only the theme toggle and Help on the right.
   No mode tabs, download buttons, nav links, or account controls in the header. Mode,
-  palette, dither, export, and QA live in the right rail; the image actions live in the
-  stage toolbar.
+  palette, dither, and QA settings live in the right rail; export is a stage panel below
+  the palette; image actions live in the stage toolbar.
 
 ---
 
@@ -505,14 +505,24 @@ subtle shadow, no border.
 
 The right rail is a stack of `<details>` sections styled as the site’s boxes. Each section
 has a 12 px radius and a surface step — no border. Sections are independently
-collapsible; **Palette** starts open, and users may open **Dither** and **Export** at the
-same time. The rail scrolls only when the combined bodies exceed the viewport, so no
-section blocks another.
+collapsible; **Palette** starts open, and users may open **Dither** and **Quality** at the
+same time. Export is not part of this settings rail; it has a dedicated stage panel.
+The rail scrolls only when the combined bodies exceed the viewport, so no section blocks
+another.
 
 On ≥ 980 px the rail uses compact density: 8 px between sections, 10/16 px summary
 padding, 8 px body top inset, 12 px between fields, 8 px between a label and its control,
 34 px selects, 30 px buttons, 28 px tabs. The color count is a range plus a 68 px number
 field in the same row. At ≤ 599 px the 44 px touch targets from `responsive.css` win.
+
+Small `?` buttons use the tooltip component: an 18 px circle next to a label, a plain
+language explanation in a fixed bubble appended to `<body>`, hover/focus on desktop,
+tap on touch, and `Esc` or an outside tap to close. The bubble is never clipped by the
+scrolling rail.
+
+Sections keep `overflow: hidden` for their rounded card, so the desktop rail MUST use
+`grid-auto-rows: max-content`; otherwise grid rows shrink and clip an open section’s
+body instead of making the rail scroll.
 
 ```css
 .peiq-rail-section {
@@ -527,9 +537,9 @@ field in the same row. At ≤ 599 px the 44 px touch targets from `responsive.cs
   align-items: center;
   justify-content: space-between;
   gap: var(--peiq-space-2);
-  padding: var(--peiq-space-3) var(--peiq-space-4);
+  padding: 10px var(--peiq-space-4);
   color: var(--peiq-text-strong);
-  font: 600 1rem/1 var(--peiq-font-ui);
+  font: 600 0.9375rem/1.25 var(--peiq-font-ui);
   cursor: pointer;
   list-style: none;
   user-select: none;
@@ -542,8 +552,38 @@ field in the same row. At ≤ 599 px the 44 px touch targets from `responsive.cs
 }
 .peiq-rail-section__body {
   display: grid;
-  gap: var(--peiq-space-3);
-  padding: 0 var(--peiq-space-4) var(--peiq-space-4);
+  gap: 12px;
+  padding: 8px var(--peiq-space-4) var(--peiq-space-4);
+}
+```
+
+### Export panel
+
+Export lives in its own stage panel below the palette, not inside the settings rail.
+It reads as the primary action area: a bright primary indexed-PNG button, quieter strip,
+reduced-PNG, and HEX buttons, then strip orientation. Validation results appear below
+the buttons and temporarily grow the panel; the canvas takes the remaining height.
+
+```css
+.peiq-export-panel {
+  display: grid;
+  gap: var(--peiq-space-2);
+  padding: var(--peiq-space-3) var(--peiq-space-4);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  box-shadow: var(--peiq-shadow-card);
+}
+.peiq-export-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2);
+}
+.peiq-export-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
 }
 ```
 
@@ -1090,14 +1130,24 @@ It reports dimensions, unique colors, stage/progress, timings, and the QA summar
 
 ### Footer
 
+The footer is a compact single row: privacy statement on the left, GPL and GitHub
+repository links on the right. It is 33 px tall at 1280 px and never takes a whole
+screen block.
+
 ```css
 .peiq-footer {
-  padding: var(--peiq-space-5) var(--peiq-space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 8px 24px;
   border-top: 1px solid var(--peiq-border-strong);
   background: var(--peiq-bg);
   color: var(--peiq-text-tertiary);
-  font: 400 0.875rem/1.43 var(--peiq-font-ui);
+  font: 400 0.75rem/1.35 var(--peiq-font-ui);
 }
+.peiq-footer__links { display: flex; flex-wrap: wrap; gap: 16px; }
 .peiq-footer a { color: var(--peiq-text-secondary); }
 .peiq-footer a:hover { color: var(--peiq-link); }
 ```
@@ -1124,9 +1174,10 @@ It reports dimensions, unique colors, stage/progress, timings, and the QA summar
 **Layout model (PaletteForge-like, cleaned up)**
 
 - **Empty state:** full-width hero with the drop zone; no rail.
-- **Loaded state:** **two columns** — stage (canvas + palette strip + status) and a
-  380 px right rail (palette, dither, export, quality). This follows the PaletteForge
-  workflow — preview first, controls at hand — without extra header buttons or panels.
+- **Loaded state:** **two columns** — stage (canvas + palette strip + export panel +
+  status) and a 380 px right rail (palette settings, dither, quality). This follows the
+  PaletteForge workflow — preview and output first, settings at hand — without extra
+  header buttons or panels.
 - **Header:** 64 px; brand left; theme toggle + Help right. No subbar, no nav links, no
   download button in the header.
 - Stage actions (change image, zoom, fit, original, error map) live in the stage toolbar.
@@ -1359,7 +1410,11 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
   export must follow the selected order.
 - Ship both themes with complete token sets; verify parity before release.
 - Keep the loaded layout two-column: stage + right rail, like PaletteForge.
-- Keep the header to brand + theme toggle + Help; put everything else in the rail.
+- On desktop, keep the page itself fixed between header and footer; only the settings
+  rail and a long palette strip may scroll.
+- Put export actions in their own stage panel below the palette, not inside the settings
+  rail; they are the primary output actions.
+- Keep the header to brand + theme toggle + Help; settings and export live below it.
 - Switch themes instantly; do not cross-fade colors between themes.
 - Respect `prefers-reduced-motion`; keep every interaction keyboard-operable.
 
@@ -1394,7 +1449,7 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 |---|---|---|
 | Desktop | ≥ 1220 px | 2 columns: stage `1fr` / rail **380 px**; full header name |
 | Tablet | 980–1219 px | 2 columns: stage `1fr` / rail **340 px** |
-| Mobile | < 980 px | Stacked: stage first, rail below as an accordion; canvas sticky |
+| Mobile | < 980 px | Stacked: stage first, collapsible rail below; canvas sticky |
 | Small | < 600 px | Single column; 44 px targets; `PEIQ` header mark |
 
 The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale changes and
@@ -1406,7 +1461,7 @@ The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale cha
 
 - Header: full public name ≥ 980 px; `PEIQ` below. Theme toggle and Help stay visible.
 - No mode tabs in the header. The Extract/Map switch lives inside the Palette rail section.
-- The rail is a stack of collapsible sections; below 980 px it becomes an accordion below
+- The rail is a stack of collapsible sections; below 980 px it stacks below
   the stage. No separate tab bar is needed.
 - The palette strip sits under the canvas and wraps; it scrolls rather than widening the
   stage.
@@ -1434,7 +1489,7 @@ The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale cha
   .peiq-select { min-height: 44px; }
   .peiq-swatch { width: 44px; height: 44px; }
   .peiq-tab { min-height: 44px; }
-  .peiq-footer { padding-block: 24px; }
+  .peiq-footer { padding-block: 8px; }
 }
 
 /* No horizontal overflow, ever. */

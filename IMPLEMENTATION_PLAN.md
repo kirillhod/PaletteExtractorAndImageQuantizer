@@ -36,7 +36,7 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
-| UI | Stage + compact collapsible rail, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
+| UI | Stage + compact collapsible rail, stage export panel, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
 | Version | `js/core/version.js`; `v0.3.0` tagged; M2 complete |
 | Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
@@ -812,8 +812,8 @@ without its header clutter.
 │  toolbar: change · fit · 100% · original │  Palette          │
 │  canvas / before-after                   │   mode, algorithm │
 │  palette strip + usage bar               │  Dither           │
-│  status line                             │  Export           │
-│                                          │  Quality          │
+│  export panel                            │  Quality          │
+│  status line                             │  (scrolls)        │
 └──────────────────────────────────────────┴───────────────────┘
 ```
 
@@ -822,16 +822,22 @@ without its header clutter.
 - **Empty state:** full-width hero; no rail. After an image loads, the hero collapses into
   the stage and the rail appears.
 - **≥ 1220 px:** stage `1fr` + rail **380 px**. **980–1219 px:** rail **340 px**.
-  **< 980 px:** stacked; stage first, rail becomes an accordion below; canvas sticky at
-  the top. **< 600 px:** single column, 44 px touch targets.
-- **Stage:** canvas, toolbar, palette strip, usage bar, and a compact status line.
-  "Change image" lives in the stage toolbar, not the header.
-- **Rail:** a stack of collapsible sections — Palette (with the Extract/Map switch),
-  Dither, Export, Quality. No tab bar; no separate mode screen.
+  **< 980 px:** stacked; stage first, rail sections stay collapsible below; canvas sticky
+  at the top. **< 600 px:** single column, 44 px touch targets.
+- **Stage:** canvas, toolbar, palette strip, export panel, usage bar, and a compact status
+  line. "Change image" lives in the stage toolbar, not the header.
+- **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
+  switch), Dither, Quality. Export is not in the rail.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
   above it shows the palette count and a sort select: source, hue dark→light, hue
   light→dark, lightness dark→light, lightness light→dark. The selected order controls
   the swatches, HEX copy, and strip export.
+- **Desktop frame:** the page itself does not scroll. Header, stage, and compact footer
+  fill the viewport; the stage gives the canvas the remaining height and only the rail
+  (or a palette strip with many colors) scrolls.
+- **Export panel:** a separate stage card under the palette with the primary indexed-PNG
+  action and the strip/reduced/HEX actions. It is always visible when an image is loaded
+  and is not buried in the settings rail.
 - **QA:** summary in the status line; full ΔE/worst-pixel/contrast table in the Quality
   section.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
@@ -843,11 +849,15 @@ without its header clutter.
 
 ### 8.2 Controls
 
-The loaded UI has two control surfaces: the stage toolbar and the right rail. Rail
-sections are independently collapsible; **Palette** starts open and users may open
-**Dither** and **Export** together. Desktop spacing is compact but keeps an 8 px gap
-between labels and controls; the rail scrolls only when open bodies exceed the viewport.
-Touch layouts keep 44 px targets.
+The loaded UI has three control surfaces: the stage toolbar, the export panel under the
+palette, and the right settings rail. Rail sections are independently collapsible;
+**Palette** starts open and users may open **Dither** and **Quality** together. Desktop
+spacing is compact but keeps an 8 px gap between labels and controls; the rail scrolls
+only when open bodies exceed the viewport. Touch layouts keep 44 px targets.
+
+Every non-obvious control has an 18 px `?` button. It opens a plain-language tooltip on
+hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is appended to
+`<body>` so the rail never clips it. Tooltip text also becomes the button’s `aria-label`.
 
 **Stage toolbar** (inside the stage, above the canvas)
 
@@ -878,10 +888,10 @@ Touch layouts keep 44 px targets.
 - Strength 0–100%; serpentine and edge-stop for error diffusion only.
 - The controls disable themselves when the selected method does not use them.
 
-**Export rail section**
+**Export panel** (stage, below the palette)
 
 - Primary: "Download indexed PNG".
-- Secondary: "Download palette strip", "Download reduced PNG", "Copy HEX list".
+- Secondary: "Palette strip", "Reduced PNG", "Copy HEX".
 - Indexed export uses the sorted palette and declared transparent index; it is decoded
   and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
@@ -1431,6 +1441,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/qa-view.js` | ΔE stats, worst pixels, compliance, contrast, error-map toggle |
 | `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
+| `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
 | `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |
 | `js/ui/shortcuts.js` | Keyboard map; opens the Help drawer’s Shortcuts tab |
 | `js/ui/url-state.js` | Serialize/restore params in `location.hash` (no image data) |
@@ -1656,6 +1667,8 @@ A change is done only when:
 | 2026-11-13 | Help renders canonical references and credits; print-only papers are cited without a PDF | Owner wants visible attribution; avoids redistributing copyrighted scans |
 | 2026-11-13 | Licensing/attribution rules moved into plan §3.6 | Makes the copyright boundary explicit for future assets and code |
 | 2026-11-13 | Add `.nojekyll` and stage only runtime files in the Pages workflow | Pages readiness; keeps tests, tools, docs, and `.git` out of the deployed artifact |
+| 2026-11-13 | Move Export to a stage panel; fix the desktop page frame; compact footer with repository link | Export is the primary output action, not a setting; only the rail should scroll; owner asked for a repo link |
+| 2026-11-13 | Add `?` tooltips for non-obvious controls, including serpentine scan and edge stop | Plain-language explanations without permanently growing the rail; 13 hints cover the algorithm settings |
 
 ---
 

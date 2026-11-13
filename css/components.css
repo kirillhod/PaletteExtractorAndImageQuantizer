@@ -322,6 +322,69 @@
   text-transform: uppercase;
 }
 
+.peiq-label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+}
+
+.peiq-label-row > .peiq-label {
+  margin-right: auto;
+}
+
+.peiq-check-row {
+  display: flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+}
+
+.peiq-check-row .peiq-check-label {
+  margin-right: auto;
+}
+
+.peiq-help {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--peiq-text-tertiary);
+  font: 700 0.6875rem/1 var(--peiq-font-ui);
+  cursor: help;
+}
+
+.peiq-help:hover {
+  border-color: var(--peiq-accent);
+  color: var(--peiq-text-strong);
+}
+
+.peiq-help:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
+.peiq-tooltip {
+  position: fixed;
+  z-index: 90;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 8px 10px;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-bg-tertiary);
+  color: var(--peiq-text);
+  box-shadow: var(--peiq-shadow-card-lg);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  pointer-events: none;
+}
+
 .peiq-input,
 .peiq-select {
   width: 100%;
@@ -396,7 +459,10 @@
   gap: var(--peiq-space-2);
 }
 
-.peiq-palette-bar > .peiq-label {
+.peiq-palette-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
   margin-right: auto;
 }
 
@@ -418,6 +484,9 @@
   flex-wrap: wrap;
   gap: var(--peiq-space-1);
   min-height: 32px;
+  max-height: 196px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .peiq-swatch {
@@ -447,6 +516,37 @@
 .peiq-swatch:focus-visible {
   outline: 2px solid var(--peiq-focus);
   outline-offset: 2px;
+}
+
+.peiq-export-panel {
+  display: grid;
+  gap: var(--peiq-space-2);
+  padding: var(--peiq-space-3) var(--peiq-space-4);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  box-shadow: var(--peiq-shadow-card);
+}
+
+.peiq-export-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2);
+}
+
+.peiq-export-bar > .peiq-label {
+  margin-right: 4px;
+}
+
+.peiq-export-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.peiq-export-option .peiq-select {
+  min-height: 30px;
 }
 
 .peiq-statusbar {
@@ -683,6 +783,10 @@
     gap: var(--peiq-space-2);
     scrollbar-width: thin;
     overscroll-behavior: contain;
+  }
+
+  .peiq-palette-strip {
+    max-height: 96px;
   }
 
   .peiq-rail-section > summary {
