@@ -75,6 +75,6 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Palette Foundry dev server: http://localhost:${PORT}/`);
+  console.log(`PaletteExtractorAndImageQuantizer dev server: http://localhost:${PORT}/`);
   console.log(`Serving ${ROOT}`);
 });

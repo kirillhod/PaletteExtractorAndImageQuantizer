@@ -1,9 +1,9 @@
 {
-  "name": "palette-foundry",
+  "name": "palette-extractor-and-image-quantizer",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local-first palette compiler: extract, map, dither and export engine-ready indexed assets.",
+  "description": "Browser-local palette compiler: extract, map, dither and export engine-ready indexed assets.",
   "license": "GPL-3.0-only",
   "scripts": {
     "dev": "node tools/dev-server.mjs",
