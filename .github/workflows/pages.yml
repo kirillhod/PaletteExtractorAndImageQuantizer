@@ -26,7 +26,7 @@ jobs:
       - name: Stage the static site
         run: |
           mkdir -p _site
-          cp -R index.html css js assets LICENSE .nojekyll _site/
+          cp -R index.html css js assets LICENSE .nojekyll robots.txt sitemap.xml _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

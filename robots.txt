@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kirillhod.github.io/PaletteExtractorAndImageQuantizer/sitemap.xml
