@@ -5,6 +5,23 @@ const MIN_COLORS = 2;
 const MAX_COLORS = 256;
 
 /**
+ * Normalize the extractor select value. Unknown values fall back to Wu, the default.
+ * @param {string|undefined} value
+ * @returns {'popularity'|'median-cut'|'wu'|'octree'|'kmeans'}
+ */
+export function normalizeMethod(value) {
+  if (
+    value === 'popularity' ||
+    value === 'median-cut' ||
+    value === 'octree' ||
+    value === 'kmeans'
+  ) {
+    return value;
+  }
+  return 'wu';
+}
+
+/**
  * @param {number} value
  * @returns {number}
  */
@@ -27,16 +44,7 @@ export function initControls(handlers) {
   function getParams() {
     const value = Number(colors?.value ?? 16);
     return {
-      method:
-        method?.value === 'popularity'
-          ? 'popularity'
-          : method?.value === 'wu'
-            ? 'wu'
-            : method?.value === 'octree'
-              ? 'octree'
-              : method?.value === 'kmeans'
-                ? 'kmeans'
-                : 'wu',
+      method: normalizeMethod(method?.value),
       colors: clampColorCount(value),
       space: space?.value === 'srgb' ? 'srgb' : 'oklab',
     };

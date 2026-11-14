@@ -51,7 +51,7 @@
         <p class="peiq-hero__drop-title">Drop an image here</p>
         <p class="peiq-hint">or paste with <kbd class="peiq-kbd">Ctrl/Cmd+V</kbd></p>
         <button class="peiq-btn peiq-btn--primary" id="pick-image" type="button">Choose an image</button>
-        <p class="peiq-hint">PNG, JPEG, WebP, GIF, BMP · up to 16.7 MP · processed locally</p>
+        <p class="peiq-hint">PNG, JPEG, WebP, GIF, BMP, AVIF · up to 16.7 MP · processed locally</p>
       </div>
       <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif" hidden>
     </section>
@@ -70,7 +70,7 @@
                 <option value="Nx1">N×1</option>
                 <option value="1xN">1×N</option>
               </select>
-              <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips.">?</button>
+              <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips; a transparent index adds alpha.">?</button>
             </div>
           </div>
           <div class="peiq-export-palette">
@@ -87,7 +87,7 @@
             <p class="peiq-export-progress__label" id="export-progress-label">Preparing export…</p>
           </div>
           <div class="peiq-download-result" id="download-result" hidden></div>
-          <p class="peiq-hint">Decoded and validated before Save.</p>
+          <p class="peiq-hint">Decoded or parsed and checked before Save.</p>
         </div>
 
         <div class="peiq-stage__toolbar">
@@ -107,7 +107,7 @@
         </div>
 
         <div class="peiq-canvas-frame peiq-canvas-frame--pixelated" id="canvas-frame">
-          <canvas id="view-canvas" aria-label="Image preview. Left is the original, right is the reduced palette result."></canvas>
+          <canvas id="view-canvas" aria-label="Image preview. Left is the original, right is the palette result."></canvas>
           <div class="peiq-divider" id="divider" role="slider" tabindex="0" aria-label="Before and after divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
             <span class="peiq-divider__handle"></span>
           </div>
@@ -118,7 +118,7 @@
           <div class="peiq-palette-bar">
             <div class="peiq-palette-label">
               <span class="peiq-label">Palette</span>
-              <button class="peiq-help" type="button" data-tooltip="Reorders the swatches, the HEX list, and the exported strip. Exported indices follow the displayed order. Pixel colors stay the same; only the order and index mapping change. Locked colors keep their position; use the editor arrows in Manual order.">?</button>
+              <button class="peiq-help" type="button" data-tooltip="Reorders swatches, the HEX list, and exported indices; the color set stays the same. Pixels only change when two colors tie exactly. Locked colors keep their slot; use the editor arrows in Manual order.">?</button>
             </div>
             <label class="peiq-palette-sort" for="palette-sort">
               <span class="peiq-label">Sort</span>
@@ -134,7 +134,7 @@
             <span class="peiq-hint" id="palette-count">0 colors</span>
             <button class="peiq-btn peiq-btn--small" id="palette-edit" type="button" aria-pressed="false" disabled>Edit</button>
           </div>
-          <div class="peiq-palette-strip" id="palette-strip" aria-label="Extracted palette"></div>
+          <div class="peiq-palette-strip" id="palette-strip" aria-label="Current palette"></div>
           <div class="peiq-palette-editor" id="palette-editor" hidden>
             <label class="peiq-label" for="palette-hex">HEX</label>
             <input class="peiq-input" id="palette-hex" type="text" autocomplete="off" spellcheck="false" placeholder="#rrggbb" aria-describedby="palette-edit-hint">
@@ -145,7 +145,7 @@
             <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" aria-label="Move color right" title="Move color right" disabled>→</button>
             <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" disabled>Remove</button>
             <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" disabled>Lock</button>
-            <p class="peiq-hint" id="palette-edit-hint">Select a swatch. Pick samples the canvas. ← / → change export order only; add, remove, or edit changes the preview.</p>
+            <p class="peiq-hint" id="palette-edit-hint">Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.</p>
           </div>
         </div>
 
@@ -170,7 +170,7 @@
               <div class="peiq-field">
                 <div class="peiq-label-row">
                   <label class="peiq-label" for="method">Method</label>
-                  <button class="peiq-help" type="button" data-tooltip="Popularity keeps the most frequent colors. Median cut and Wu split color space. K-means++ seeds and iterates cluster centers; it is usually the slowest and smoothest.">?</button>
+                  <button class="peiq-help" type="button" data-tooltip="Popularity keeps the most frequent colors. Octree merges similar leaves for speed. Median cut and Wu split the color space and get a refinement pass. K-means++ seeds and iterates clusters; usually the slowest and smoothest.">?</button>
                 </div>
                 <select class="peiq-select" id="method">
                   <option value="median-cut">Median cut</option>
@@ -221,7 +221,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="transparent-index">Transparent index</label>
-                <button class="peiq-help" type="button" data-tooltip="Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. Map mode defaults to index 0. Choose None to keep every color opaque.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. Map mode starts at index 0; choose None to keep every color opaque.">?</button>
               </div>
               <select class="peiq-select" id="transparent-index" disabled>
                 <option value="-1">None</option>
@@ -230,7 +230,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="alpha-threshold">Alpha threshold <span id="alpha-threshold-value">128</span></label>
-                <button class="peiq-help" type="button" data-tooltip="Pixels below this alpha use the transparent index in indexed and strip output. Indexed PNGs have binary transparency; the reduced RGBA PNG keeps the original alpha.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="Pixels below this alpha become transparent in the preview and indexed PNG when a transparent index is set. Indexed PNGs are binary; the reduced PNG keeps the source alpha.">?</button>
               </div>
               <input class="peiq-range" id="alpha-threshold" type="range" min="1" max="254" value="128">
             </div>
@@ -244,7 +244,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="dither-method">Method</label>
-                <button class="peiq-help" type="button" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise mix two nearby colors with a pattern.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern.">?</button>
               </div>
               <select class="peiq-select" id="dither-method">
                 <option value="none">None</option>
@@ -263,7 +263,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="dither-strength">Strength <span id="dither-strength-value">80%</span></label>
-                <button class="peiq-help" type="button" data-tooltip="Strength of the selected dither. 0% is nearest-color mapping; higher values mix in more of the second-nearest color. Error diffusion passes that error to neighboring pixels.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="Scales the dither. 0% is plain nearest-color mapping; 100% applies the full pattern or error.">?</button>
               </div>
               <input class="peiq-range" id="dither-strength" type="range" min="0" max="100" value="80">
             </div>
@@ -314,7 +314,7 @@
                   <input class="peiq-check" id="qa-error-toggle" type="checkbox">
                   Show error map
                 </label>
-                <button class="peiq-help" type="button" data-tooltip="CIEDE2000 heatmap of the preview. Dark blue is near zero error; yellow and red are the largest differences. Transparent pixels stay transparent.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="CIEDE2000 heatmap of the preview: dark blue is 0, red is 20 or more. Fully transparent pixels in either image are skipped.">?</button>
               </div>
             </div>
             <canvas class="peiq-qa-map" id="qa-error-canvas" aria-label="CIEDE2000 error map" hidden></canvas>
@@ -340,27 +340,25 @@
       <button class="peiq-icon-btn" id="help-close" type="button" aria-label="Close help">×</button>
     </div>
     <div class="peiq-drawer__body">
-      <p>Load an image, choose a color count or a fixed palette, and compare the original with the reduced result. Edit the palette with HEX changes, canvas picks, add/remove, locks, and manual reordering, then export a validated indexed PNG, a palette strip, a reduced PNG, or a palette file.</p>
+      <p>Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.</p>
       <div class="peiq-learn-note">
-        <p><strong>v1.1 focus.</strong> Five extractors, fixed palettes (built-in and import), exact/LUT mapping, error diffusion, Bayer and blue-noise dithering, indexed PNG with <code>tRNS</code>, strip/reduced export, palette files in <code>.hex</code>, <code>.gpl</code>, and <code>.json</code>, and a minimal palette editor with locks. ΔE00 QA and URL state are next; presets and the long-form theory guide remain out of scope.</p>
+        <p><strong>v1.2</strong> adds a palette editor with locks and undo, CIEDE2000 quality, shareable URL settings, and a saved local session.</p>
       </div>
       <h2>How it works</h2>
       <ol>
         <li>Build a 5-bit, alpha-weighted color histogram.</li>
-        <li>Extract a palette or load a fixed one. Edit colors and lock entries if needed.</li>
-        <li>Map pixels with exact nearest-color lookup for small color sets, otherwise a 6-bit LUT.</li>
-        <li>Optionally dither with error diffusion, Bayer, or blue noise.</li>
-        <li>Encode the output, decode it back, and compare with the expected pixels.</li>
+        <li>Extract a palette or load a fixed one; edit colors, locks, and order.</li>
+        <li>Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.</li>
+        <li>Dither optionally, then encode, decode, and compare before offering the file.</li>
       </ol>
       <h2>Palette order and the preview</h2>
-      <p>The preview and the Reduced PNG map every pixel to the available palette colors (nearest color, or a dithered mix). Moving a swatch changes the export order and index values, but not the set of colors, so the image looks the same. Adding, removing, or editing a color changes the available colors, so pixels may choose differently. Exact distance ties go to the lowest palette index, which is the only case where reordering can change the result.</p>
-      <p>Indexed PNG keeps the same visible colors after a move, but its <code>PLTE</code> order and index map change. The transparent index follows the color that was chosen, not the slot.</p>
+      <p>The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its <code>PLTE</code> order and index map change; the transparent index follows its color, not the slot.</p>
       <h2>Quality</h2>
-      <p>The Quality section compares the current preview with the source using CIEDE2000. Mean is the average error, p95 shows the high end, and max is the worst pixel. The error map runs from dark blue near zero to red at 20 or more; the worst-pixel list gives coordinates and values. Measurements use the preview and skip fully transparent pixels; contrast checks are not part of this release.</p>
+      <p>The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.</p>
       <h2>Shareable settings</h2>
-      <p>The address bar stores normalized settings in the hash, so reloading or sharing the URL restores the method, colors, dither, sort, and built-in palette. The image itself is never included. Imported palettes, palette edits, locks, and quality results are not serialized.</p>
+      <p>The URL hash stores settings only: mode, extractor, colors, working space, built-in palette, dither, alpha, sort, and transparent index. It never includes the image, palette edits, locks, or quality results.</p>
       <h2>Saved session</h2>
-      <p>The last image, palette edits, locks, order, settings, and undo/redo history stay in this browser's IndexedDB. The URL hash remains a portable settings config; a URL with different settings takes precedence over the saved settings.</p>
+      <p>The last image, settings, palette entries, locks, order, selection, edit mode, and undo/redo history stay in this browser's IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use <strong>Forget saved session</strong> to remove it.</p>
       <button class="peiq-btn peiq-btn--small" id="session-clear" type="button">Forget saved session</button>
       <p class="peiq-hint" id="session-status"></p>
       <h2>Shortcuts</h2>
@@ -376,10 +374,10 @@
           <tr><td><kbd>O</kbd></td><td>Toggle original</td></tr>
           <tr><td><kbd>E</kbd></td><td>Toggle error map</td></tr>
           <tr><td><kbd>T</kbd></td><td>Cycle theme</td></tr>
-          <tr><td><kbd>Ctrl/Cmd+Z</kbd></td><td>Undo palette edit</td></tr>
-          <tr><td><kbd>Ctrl/Cmd+Shift+Z</kbd></td><td>Redo palette edit</td></tr>
+          <tr><td><kbd>Ctrl/Cmd+Z</kbd></td><td>Undo palette edit (editing)</td></tr>
+          <tr><td><kbd>Ctrl/Cmd+Shift+Z</kbd> or <kbd>Ctrl/Cmd+Y</kbd></td><td>Redo palette edit (editing)</td></tr>
           <tr><td><kbd>?</kbd></td><td>Toggle this drawer</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Close this drawer</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Close tooltip or help; cancel picking</td></tr>
         </tbody>
       </table>
 

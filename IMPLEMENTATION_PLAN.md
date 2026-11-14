@@ -37,7 +37,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 119 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, references |
+| Tests | 120 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, references |
 | Version | `js/core/version.js`; `v1.2.0` tagged; M6 complete |
 | Next | M7: later / not planned for v1.x |
 
@@ -981,13 +981,13 @@ All colors, typography, component styles, depth, motion, and breakpoints are def
 |---|---|
 | `F` | Fit canvas |
 | `1` | 100% zoom |
-| `[` / `]` | Zoom out/in |
 | `O` | Toggle original |
 | `E` | Toggle error map |
 | `T` | Cycle theme: auto → light → dark |
-| `Ctrl/Cmd+S` | Download indexed PNG |
-| `?` | Toggle Help drawer (Guide / Shortcuts) |
-| `Esc` | Close popover/drawer / cancel drag |
+| `Ctrl/Cmd+Z` | Undo palette edit while editing |
+| `Ctrl/Cmd+Shift+Z`, `Ctrl/Cmd+Y` | Redo palette edit while editing |
+| `?` | Toggle Help drawer |
+| `Esc` | Close help, popover, or picking mode |
 
 Shortcuts are disabled while an input/textarea/select has focus.
 
@@ -1021,8 +1021,9 @@ site. Learning is opt-in, contextual, and dismissible.
 - A small outlined `?` icon sits next to non-obvious controls: algorithm, colors, space,
   refine, seed, dither method, strength, serpentine, edge stop, order, transparent index,
   alpha threshold, ΔE00 stats, and export options.
-- Hover/focus (desktop) or tap (touch) opens a popover: 2–4 short sentences plus a
-  “Read more” link. Maximum width 320 px; positioned next to the trigger.
+- Hover/focus (desktop) or tap (touch) opens a popover: 2–4 short sentences of plain
+  text. The Help drawer carries the references; tooltips do not navigate. Maximum width
+  320 px; positioned next to the trigger.
 - `Esc`, outside-click, or a second click closes it; focus returns to the trigger.
 - Hints never cover the canvas, never block a control, and never auto-open.
 
@@ -1787,6 +1788,8 @@ A change is done only when:
 | 2026-11-14 | Release 1.1.0: M5 complete | Palette editor, locks, manual order, eyedropper, quality report, and URL state tested; 116 tests |
 | 2026-11-14 | Add IndexedDB session persistence with image, settings, palette, locks, selection, and undo/redo history | Last-image continuity without counting against the small localStorage quota; URL hash stays the portable config and takes precedence when different |
 | 2026-11-14 | Release 1.2.0: M6 complete | Session restore, URL precedence, forget action, and 119 tests verified |
+| 2026-11-14 | Fix the extractor select mapping so Median cut reaches the median-cut implementation | The UI mapper omitted the median-cut case and silently ran Wu for that choice; `test/controls.test.js` locks the mapping |
+| 2026-11-14 | Refresh tooltips and Help for v1.2 and the current shortcuts | The drawer still described QA and URL state as upcoming; hints now cover octree, alpha preview behavior, dither scaling, error-map clamping, and `Ctrl/Cmd+Y`, and the text is shorter |
 
 ---
 

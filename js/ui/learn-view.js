@@ -22,6 +22,7 @@ export function initLearn() {
     drawer.setAttribute('data-open', String(open));
     drawer.setAttribute('aria-hidden', String(!open));
     helpButton.setAttribute('aria-expanded', String(open));
+    helpButton.setAttribute('aria-label', open ? 'Close help' : 'Open help');
     if (open) {
       lastFocus = /** @type {HTMLElement|null} */ (document.activeElement);
       drawer.removeAttribute('inert');

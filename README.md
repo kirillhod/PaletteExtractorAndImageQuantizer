@@ -6,9 +6,10 @@ Extract colors, map an image to a fixed palette, dither the result, and export
 engine-ready indexed PNGs, palette strips, and palette files. Everything runs on your
 device: no uploads, no accounts, no dependencies, no build step.
 
-![PEIQ workspace with a sunset image, a 24-color palette, and the export panel](assets/screenshots/workspace-dark.png)
+![PEIQ workspace with a hydrangea photo, a 24-color palette, and the export panel](assets/screenshots/workspace-dark.png)
 
-*Extract up to 256 colors, compare before and after, and export a validated indexed PNG.*
+*Extract up to 256 colors from a photo, compare before and after, and export a validated
+indexed PNG.*
 
 ## What you can do
 
@@ -16,17 +17,19 @@ device: no uploads, no accounts, no dependencies, no build step.
 
 Choose the colors that define your image.
 
-- Five extractors: **popularity**, **median cut**, **Wu**, **octree**, and **K-means++**.
+- Five extractors (Wu by default): **popularity**, **median cut**, **Wu**, **octree**,
+  and **K-means++**.
 - From **2 to 256 colors**, with a slider or an exact number.
 - Work in **Oklab** for perceptual results or **sRGB** for legacy pipelines.
 - Median cut and Wu get a Lloyd refinement pass for cleaner clusters.
 - Sort the result by source order, hue, or lightness — both directions.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
   their place when sorting, move colors left/right in Manual order, pick colors straight
-  from the canvas, and undo or redo edits with `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z`.
+  from the canvas, and undo or redo edits with `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, or
+  `Ctrl/Cmd+Y` while editing.
   Reordering changes the exported index order; the preview and Reduced PNG stay the same
-  because the color set is unchanged. Adding, removing, or editing a color changes the
-  mapping. A move cannot cross a locked entry.
+  because the color set is unchanged, apart from exact ties. Adding, removing, or editing
+  a color changes the mapping. A move cannot cross a locked entry.
 - See the original and the reduced image side by side with a draggable divider.
 
 ### Map to a fixed palette
@@ -48,9 +51,10 @@ Constrain artwork to the palette your engine or hardware expects.
 - Adjust strength, serpentine scan, and edge stop.
 - Hover or tap the `?` next to any setting for a short explanation.
 
-![Mapping the sunset image to PICO-8 with Floyd–Steinberg dithering](assets/screenshots/map-dither-dark.png)
+![Mapping the hydrangea photo to the Game Boy DMG palette with Floyd–Steinberg dithering](assets/screenshots/map-dither-dark.png)
 
-*Map to a built-in palette and tune error diffusion until the result looks right.*
+*Map a photo to a four-color built-in palette and tune error diffusion until the result
+looks right.*
 
 ### Check quality
 
@@ -77,9 +81,10 @@ Save link appears. A mismatch blocks the download.
 - Before/after divider, fit, 100% zoom, `+`/`−` buttons, pinch-to-zoom on touch, and
   original toggle.
 - Helpful tooltips and a Help drawer with a reference list.
-- Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help.
-- Settings live in the URL hash: a reload restores the method, colors, dither, sort, and
-  built-in palette. The image itself is never stored or uploaded.
+- Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help,
+  and `Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z` / `Ctrl/Cmd+Y` for undo and redo while editing.
+- Settings live in the URL hash: a reload restores the mode, extractor, colors, working
+  space, dither, alpha, sort, and built-in palette. The image itself is never included in the URL.
 - The last image, palette edits, locks, and undo/redo history come back after a reload
   from local IndexedDB. Use **Forget saved session** in Help to remove them.
 - Everything stays responsive down to phone width.
@@ -89,7 +94,7 @@ Save link appears. A mismatch blocks the download.
 1. **Drop an image** or paste it from the clipboard.
 2. **Extract** a palette or pick a fixed one.
 3. **Dither** if you want to trade sharp dots for smoother gradients.
-4. **Export** an indexed PNG, a palette strip, or a reduced image.
+4. **Export** an indexed PNG, a palette strip, a reduced image, or a palette file.
 
 The preview uses a downscaled copy for speed. Export always processes the original image
 at full resolution.
@@ -110,7 +115,8 @@ You can also import any palette with up to 256 colors.
 
 Images are decoded and processed entirely in your browser. Nothing is uploaded, and the
 page makes no network requests after loading. No analytics, accounts, cookies, or
-third-party scripts.
+third-party scripts. The theme preference and optional saved session stay in local
+storage; **Forget saved session** in Help removes the session.
 
 ## Browser support
 

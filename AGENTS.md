@@ -264,7 +264,7 @@ and the change is committed locally with a descriptive body (plan §16).
 
 - Plan: ✅ `1.2.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
   M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; M3 ✅ `v0.4.0`; M4 ✅ `v1.0.0`;
-  M5 ✅ `v1.1.0`; M6 ✅ `v1.2.0` (119 tests).
+  M5 ✅ `v1.1.0`; M6 ✅ `v1.2.0` (120 tests).
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, canvas picking,

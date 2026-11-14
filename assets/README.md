@@ -16,8 +16,8 @@
 ## Screenshots
 
 `screenshots/workspace-dark.png` and `screenshots/map-dither-dark.png` are captures of
-the running app using an original canvas-drawn sunset demo image. No third-party artwork,
-screenshots, or stock images are included.
+the running app using a hydrangea photo supplied by the project owner for documentation.
+No third-party artwork, screenshots, or stock images are included.
 
 ## Blue noise
 
