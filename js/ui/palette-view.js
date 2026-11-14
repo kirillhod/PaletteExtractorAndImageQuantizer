@@ -35,6 +35,7 @@ export function renderPalette(palette, host, options = {}) {
       },
     });
     button.style.setProperty('--swatch', entry.hex);
+    if (locked) button.append(createLockBadge());
     button.addEventListener('click', () => {
       if (onActivate) {
         onActivate(entry);
@@ -46,4 +47,32 @@ export function renderPalette(palette, host, options = {}) {
     });
     host.append(button);
   }
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** @returns {SVGSVGElement} */
+function createLockBadge() {
+  const badge = document.createElementNS(SVG_NS, 'svg');
+  badge.setAttribute('viewBox', '0 0 24 24');
+  badge.setAttribute('class', 'peiq-swatch__lock');
+  badge.setAttribute('aria-hidden', 'true');
+
+  const shackle = document.createElementNS(SVG_NS, 'path');
+  shackle.setAttribute('d', 'M8 11V8a4 4 0 0 1 8 0v3');
+  shackle.setAttribute('fill', 'none');
+  shackle.setAttribute('stroke', 'currentColor');
+  shackle.setAttribute('stroke-width', '3');
+  shackle.setAttribute('stroke-linecap', 'round');
+
+  const body = document.createElementNS(SVG_NS, 'rect');
+  body.setAttribute('x', '5');
+  body.setAttribute('y', '10');
+  body.setAttribute('width', '14');
+  body.setAttribute('height', '10');
+  body.setAttribute('rx', '2');
+  body.setAttribute('fill', 'currentColor');
+
+  badge.append(shackle, body);
+  return badge;
 }

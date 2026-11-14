@@ -740,7 +740,7 @@ Presets set controls; they do not lock them.
   The strip export and HEX list use this order.
 - Sort keys:
   - `source`: ID ascending, restoring extraction order after any other sort.
-  - `manual`: keep the current array order; the editor’s ← / → buttons move an unlocked
+  - `manual`: keep the current array order; the editor’s Left/Right buttons move an unlocked
     entry one slot and switch the sort to Manual. A locked entry keeps its slot, so a move
     that would cross it is refused.
   - `lightness-asc` / `lightness-desc`: Oklab L, then hue, then C descending, then ID.
@@ -911,11 +911,11 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark; swatches, HEX list, and strip export follow it.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds **Pick / Apply / Add / ← / → / Remove / Lock / Undo / Redo**. **Pick** arms a
+  adds **Pick / Apply / Add / Left / Right / Remove / Lock / Undo / Redo**. **Pick** arms a
   canvas eyedropper with a floating color/HEX preview under the pointer: the next click
   samples the visible preview (the reduced side when the click is right of the divider),
   applies it to the selected entry, or fills the HEX field for **Add**. `Esc` cancels.
-  **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
+  **Left / Right** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Locked entries keep
   their slot, and a move that would cross one is blocked. Locks pin an entry to its current
@@ -1756,7 +1756,7 @@ A change is done only when:
 | 2026-11-14 | Default extractor is Wu with K=16 | Balanced quality across photos and pixel art; every other method stays selectable |
 | 2026-11-14 | Locks pin entries to their current slot; locked colors cannot be removed; HEX edits keep the lock | Minimal v1.1 rule that preserves palette identity and deterministic indices without drag reordering |
 | 2026-11-14 | Canvas eyedropper samples the visible preview and shows a floating color/HEX chip | Works in every supported browser without a platform API; sampling the reduced side lets users pull mapped colors back into the palette |
-| 2026-11-14 | Manual palette order uses ← / → buttons instead of drag-and-drop | Keyboard, touch, and screen-reader friendly; locked slots and neighbors block moves deterministically |
+| 2026-11-14 | Manual palette order uses Left/Right buttons instead of drag-and-drop | Keyboard, touch, and screen-reader friendly; locked slots and neighbors block moves deterministically |
 | 2026-11-14 | Preview renders the transparent index as transparent for nearest-color mapping; Map mode can also select None | Matches the tRNS export; the reduced side clears the original beneath it so the checkerboard shows through |
 | 2026-11-14 | Palette editor keeps a 50-step undo/redo history | Covers colors, order, locks, selection, sort, and transparent index; Ctrl/Cmd+Z stays native inside text fields |
 

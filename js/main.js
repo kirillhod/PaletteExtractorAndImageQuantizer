@@ -64,7 +64,7 @@ const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
 const PALETTE_EDIT_HINT =
-  'Select a swatch to edit it. Pick samples the canvas. ← / → move it; Ctrl+Z undoes.';
+  'Select a swatch to edit it. Pick samples the canvas. Left/Right move it; Ctrl+Z undoes.';
 const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));

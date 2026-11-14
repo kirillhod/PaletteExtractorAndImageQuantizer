@@ -523,19 +523,17 @@
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 1px solid var(--peiq-border-strong);
+  border: 0;
   border-radius: var(--peiq-radius);
   background: var(--swatch, var(--peiq-surface-hover));
   cursor: pointer;
   transition:
     transform var(--peiq-dur) var(--peiq-ease),
-    box-shadow var(--peiq-dur) var(--peiq-ease),
-    border-color var(--peiq-dur) var(--peiq-ease);
+    box-shadow var(--peiq-dur) var(--peiq-ease);
 }
 
 .peiq-swatch:hover {
   transform: scale(1.08);
-  border-color: var(--peiq-text-strong);
 }
 
 .peiq-swatch:active {
@@ -553,10 +551,18 @@
     0 0 0 4px var(--peiq-accent);
 }
 
-.peiq-swatch.is-locked {
-  border-style: dashed;
-  border-width: 2px;
-  border-color: var(--peiq-text-strong);
+.peiq-swatch__lock {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 13px;
+  height: 13px;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--peiq-bg);
+  color: var(--peiq-text-strong);
+  box-shadow: 0 0 0 1px var(--peiq-border-strong);
+  pointer-events: none;
 }
 
 .peiq-canvas-frame.is-picking,
