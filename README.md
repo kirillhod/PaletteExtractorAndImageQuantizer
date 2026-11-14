@@ -59,7 +59,8 @@ link appears. If something does not match, the download is blocked.
 ### Work comfortably
 
 - Dark, light, and automatic themes.
-- Before/after divider, fit, 100% zoom, and original toggle.
+- Before/after divider, fit, 100% zoom, `+`/`−` buttons, pinch-to-zoom on touch, and
+  original toggle.
 - Helpful tooltips and a Help drawer with a reference list.
 - Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `T` theme, `?` Help.
 - Everything stays responsive down to phone width.

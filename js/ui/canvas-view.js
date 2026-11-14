@@ -29,9 +29,14 @@ export function createCanvasView(options) {
   let showOriginal = false;
   let autoFit = true;
   let raf = 0;
-  let drag = /** @type {'pan'|'divider'|null} */ (null);
+  let drag = /** @type {'pan'|'divider'|'pinch'|null} */ (null);
   let lastX = 0;
   let lastY = 0;
+  /** @type {Map<number, { x:number, y:number }>} */
+  const pointers = new Map();
+  let pinchDistance = 0;
+  let pinchMidX = 0;
+  let pinchMidY = 0;
 
   /**
    * @param {ImageLike|null} image
@@ -163,12 +168,51 @@ export function createCanvasView(options) {
     scheduleRender();
   }
 
+  function setPanFromPointer() {
+    const point = pointers.values().next().value;
+    if (!point) return;
+    drag = 'pan';
+    lastX = point.x;
+    lastY = point.y;
+  }
+
+  function updatePinch() {
+    if (pointers.size < 2) return;
+    const [a, b] = [...pointers.values()];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 1) return;
+
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    if (pinchDistance > 0) {
+      const factor = distance / pinchDistance;
+      if (Math.abs(factor - 1) > 0.001) zoomBy(factor, midX, midY);
+      const moveX = midX - pinchMidX;
+      const moveY = midY - pinchMidY;
+      if (moveX !== 0 || moveY !== 0) pan(moveX, moveY);
+    }
+    pinchDistance = distance;
+    pinchMidX = midX;
+    pinchMidY = midY;
+  }
+
   function onPointerMove(event) {
     if (drag === 'divider') {
       const rect = frame.getBoundingClientRect();
       setDivider((event.clientX - rect.left) / rect.width);
       return;
     }
+
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (drag === 'pinch') {
+      updatePinch();
+      return;
+    }
+
     if (drag === 'pan') {
       pan(event.clientX - lastX, event.clientY - lastY);
       lastX = event.clientX;
@@ -178,6 +222,20 @@ export function createCanvasView(options) {
 
   function stopDrag() {
     drag = null;
+  }
+
+  function endCanvasPointer(event) {
+    pointers.delete(event.pointerId);
+    if (pointers.size === 1) {
+      pinchDistance = 0;
+      setPanFromPointer();
+    } else if (pointers.size === 0) {
+      pinchDistance = 0;
+      drag = null;
+    } else {
+      pinchDistance = 0;
+      updatePinch();
+    }
   }
 
   handle?.addEventListener('pointerdown', (event) => {
@@ -191,15 +249,21 @@ export function createCanvasView(options) {
   handle?.addEventListener('pointercancel', stopDrag);
 
   canvas.addEventListener('pointerdown', (event) => {
-    if (event.button !== 0 && event.button !== 1) return;
-    drag = 'pan';
-    lastX = event.clientX;
-    lastY = event.clientY;
+    if (event.pointerType === 'mouse' && event.button !== 0 && event.button !== 1) return;
+    event.preventDefault();
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     canvas.setPointerCapture(event.pointerId);
+    if (pointers.size === 1) {
+      setPanFromPointer();
+    } else if (pointers.size === 2) {
+      drag = 'pinch';
+      pinchDistance = 0;
+      updatePinch();
+    }
   });
   canvas.addEventListener('pointermove', onPointerMove);
-  canvas.addEventListener('pointerup', stopDrag);
-  canvas.addEventListener('pointercancel', stopDrag);
+  canvas.addEventListener('pointerup', endCanvasPointer);
+  canvas.addEventListener('pointercancel', endCanvasPointer);
 
   frame.addEventListener(
     'wheel',
@@ -258,6 +322,8 @@ export function createCanvasView(options) {
     },
     fit,
     zoom100,
+    zoomIn: () => zoomBy(1.25),
+    zoomOut: () => zoomBy(1 / 1.25),
     setDivider,
   };
 }

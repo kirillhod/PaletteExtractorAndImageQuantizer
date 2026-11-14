@@ -73,6 +73,21 @@
     padding-block: var(--peiq-space-3);
   }
 
+  .peiq-stage__toolbar {
+    gap: 6px;
+  }
+
+  .peiq-stage__toolbar .peiq-icon-btn {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    font-size: 1rem;
+  }
+
+  .peiq-stage__spacer {
+    display: none;
+  }
+
   .peiq-btn {
     min-height: 44px;
   }
