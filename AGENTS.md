@@ -268,7 +268,7 @@ and the change is committed locally with a descriptive body (plan §16).
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, canvas picking,
-  add/remove, locks, and Left/Right manual order, themes, fixed desktop frame with a
+  add/remove, locks, and ←/→ manual order, themes, fixed desktop frame with a
   scrollable rail, left export column, contextual tooltips, Help drawer with references
   and credits, LAN dev-server URLs.
 - Next: M5 — ΔE00 summary/error map and URL state, then `1.1.0`.

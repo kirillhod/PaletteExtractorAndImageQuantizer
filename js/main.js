@@ -57,14 +57,12 @@ const paletteMoveRight = /** @type {HTMLButtonElement|null} */ (document.getElem
 const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
-const paletteUndo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-undo'));
-const paletteRedo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-redo'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
 const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
 const PALETTE_EDIT_HINT =
-  'Select a swatch to edit it. Pick samples the canvas. Left/Right move it; Ctrl+Z undoes.';
+  'Select a swatch to edit it. Pick samples the canvas. ← / → move it; Ctrl+Z undoes.';
 const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
@@ -351,12 +349,6 @@ function updatePaletteEditor() {
     paletteLock.disabled = !selected || app.exportBusy;
     paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
     paletteLock.textContent = selected?.locked ? 'Unlock' : 'Lock';
-  }
-  if (paletteUndo) {
-    paletteUndo.disabled = !active || app.exportBusy || paletteHistory.past.length === 0;
-  }
-  if (paletteRedo) {
-    paletteRedo.disabled = !active || app.exportBusy || paletteHistory.future.length === 0;
   }
 }
 
@@ -1105,8 +1097,6 @@ palettePick?.addEventListener('click', () => {
   if (pickingColor) stopPickMode();
   else startPickMode();
 });
-paletteUndo?.addEventListener('click', undoPaletteEdit);
-paletteRedo?.addEventListener('click', redoPaletteEdit);
 document.addEventListener('keydown', (event) => {
   if (!paletteEditMode || app.exportBusy) return;
   if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
