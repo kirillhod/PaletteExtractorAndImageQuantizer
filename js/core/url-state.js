@@ -70,25 +70,24 @@ export function encodeUrlState(state) {
   /** @type {[string,string][]} */
   const pairs = [['v', String(URL_VERSION)]];
 
-  const add = (key, value) => {
-    const fallback = URL_DEFAULTS[/** @type {keyof UrlState} */ (key)];
+  const add = (key, value, fallback) => {
     if (String(value) !== String(fallback)) pairs.push([key, String(value)]);
   };
 
-  add('mode', normalized.mode);
-  add('method', normalized.method);
-  add('colors', normalized.colors);
-  add('space', normalized.space);
-  add('palette', normalized.palette);
-  add('dither', normalized.dither);
-  add('strength', normalized.strength);
+  add('mode', normalized.mode, URL_DEFAULTS.mode);
+  add('method', normalized.method, URL_DEFAULTS.method);
+  add('colors', normalized.colors, URL_DEFAULTS.colors);
+  add('space', normalized.space, URL_DEFAULTS.space);
+  add('palette', normalized.palette, URL_DEFAULTS.palette);
+  add('dither', normalized.dither, URL_DEFAULTS.dither);
+  add('strength', normalized.strength, URL_DEFAULTS.strength);
   if (normalized.serpentine !== URL_DEFAULTS.serpentine) {
     pairs.push(['serpentine', normalized.serpentine ? '1' : '0']);
   }
-  add('edge', normalized.edgeStop);
-  add('alpha', normalized.alphaThreshold);
-  add('transparent', normalized.transparentIndex);
-  add('sort', normalized.sortOrder);
+  add('edge', normalized.edgeStop, URL_DEFAULTS.edgeStop);
+  add('alpha', normalized.alphaThreshold, URL_DEFAULTS.alphaThreshold);
+  add('transparent', normalized.transparentIndex, URL_DEFAULTS.transparentIndex);
+  add('sort', normalized.sortOrder, URL_DEFAULTS.sortOrder);
 
   return pairs.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
 }

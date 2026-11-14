@@ -5,6 +5,12 @@ import { formatGplPalette, parseGplPalette } from './core/formats/gpl.js';
 import { formatPaletteJson, parsePaletteJson } from './core/formats/json.js';
 import { decodeUrlState, encodeUrlState } from './core/url-state.js';
 import {
+  SESSION_VERSION,
+  cloneHistory,
+  clonePalette,
+  isValidSessionRecord,
+} from './core/session-state.js';
+import {
   addPaletteEntry,
   createPalette,
   movePaletteEntry,
@@ -33,6 +39,7 @@ import { initShortcuts } from './ui/shortcuts.js';
 import { setStatus, setStatusMessage, toast } from './ui/status.js';
 import { initTheme } from './ui/theme.js';
 import { initTooltips } from './ui/tooltips.js';
+import { clearSession, loadSession, saveSession } from './ui/session-store.js';
 
 const MAX_PIXELS = 16_777_216;
 const PREVIEW_EDGE = 1024;
@@ -67,6 +74,8 @@ const qaErrorField = document.getElementById('qa-error-field');
 const qaErrorToggle = /** @type {HTMLInputElement|null} */ (document.getElementById('qa-error-toggle'));
 const qaErrorCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('qa-error-canvas'));
 const qaWorst = document.getElementById('qa-worst');
+const sessionClear = /** @type {HTMLButtonElement|null} */ (document.getElementById('session-clear'));
+const sessionStatus = document.getElementById('session-status');
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
 const pickPreview = document.getElementById('palette-pick-preview');
@@ -138,6 +147,11 @@ let applyingUrlState = false;
 /** @type {number|null} */
 let pendingTransparentIndex = null;
 let pendingTransparentRemap = false;
+/** @type {File|Blob|null} */
+let lastFile = null;
+let restoringSession = false;
+let sessionPersistence = true;
+let sessionSaveWarned = false;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -213,6 +227,11 @@ function onWorkerMessage(event) {
     if (pendingTransparentRemap) {
       pendingTransparentRemap = false;
       processPreview();
+      return;
+    }
+    if (restoringSession) {
+      restoringSession = false;
+      scheduleSessionSave();
     }
     return;
   }
@@ -270,6 +289,7 @@ function onWorkerMessage(event) {
       if (qaStatus) qaStatus.textContent = 'Measurement failed. Try again.';
       updateQualityAvailability();
     } else {
+      if (restoringSession) restoringSession = false;
       updateExportState();
     }
   }
@@ -454,6 +474,7 @@ function renderCurrentPalette() {
 
   const current = Number(transparentIndex?.value ?? -1);
   populateTransparentIndex(app.palette, current);
+  if (app.hasResult && lastFile) scheduleSessionSave();
 }
 
 /** @param {{ id:number, hex:string }} entry */
@@ -752,6 +773,7 @@ function togglePaletteLock() {
     const next = setPaletteLock(app.palette, selected.id, !selected.locked);
     const before = paletteSnapshot();
     app.palette = next;
+    markPaletteEdited();
     renderCurrentPalette();
     pushPaletteHistory(before);
     toast(selected.locked ? `Unlocked ${selected.hex}` : `Locked ${selected.hex}`, 'success');
@@ -874,6 +896,7 @@ function syncUrlState() {
   if (`${location.pathname}${location.search}${location.hash}` !== next) {
     window.history.replaceState(null, '', next);
   }
+  scheduleSessionSave();
 }
 
 function applyUrlState(state) {
@@ -906,6 +929,65 @@ function applyUrlState(state) {
     updateDitherControls();
   } finally {
     applyingUrlState = false;
+  }
+}
+
+function buildSessionRecord() {
+  if (!lastFile) return null;
+  return {
+    version: SESSION_VERSION,
+    image: {
+      blob: lastFile,
+      name: lastFile instanceof File ? lastFile.name : 'image',
+      type: lastFile.type || 'application/octet-stream',
+      size: lastFile.size,
+    },
+    state: {
+      settings: buildUrlState(),
+      paletteValue: paletteSelect?.value ?? 'pico-8',
+      paletteName: fixedName || importedName || '',
+      palette: clonePalette(app.palette),
+      paletteEdited: app.paletteEdited,
+      sortOrder,
+      selectedId: selectedPaletteId,
+      transparentId: currentTransparentId(),
+      editing: paletteEditMode,
+      history: cloneHistory(paletteHistory),
+    },
+  };
+}
+
+async function saveCurrentSession() {
+  if (restoringSession || !sessionPersistence || !lastFile || !app.hasResult) return;
+  const record = buildSessionRecord();
+  if (!record) return;
+  try {
+    await saveSession(record);
+    if (sessionStatus) sessionStatus.textContent = 'Saved locally.';
+  } catch (error) {
+    if (!sessionSaveWarned) {
+      sessionSaveWarned = true;
+      toast(
+        `Could not save the session locally: ${error instanceof Error ? error.message : String(error)}`,
+        'error',
+      );
+    }
+    sessionPersistence = false;
+  }
+}
+
+async function forgetSavedSession() {
+  try {
+    await clearSession();
+    lastFile = null;
+    sessionPersistence = false;
+    if (sessionStatus) sessionStatus.textContent = 'Saved session cleared.';
+    toast('Saved session cleared.', 'success');
+  } catch (error) {
+    toast(
+      `Could not clear the saved session: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    );
   }
 }
 
@@ -1023,8 +1105,13 @@ function processPreview() {
   setStatusMessage('Processing preview…');
 }
 
-async function loadFile(file) {
+/**
+ * @param {File} file
+ * @param {any} [restore]
+ */
+async function loadFile(file, restore = null) {
   try {
+    if (!restore) sessionPersistence = true;
     cancelExport();
     setStatusMessage('Decoding image…');
     const bitmap = await decodeBitmap(file);
@@ -1059,12 +1146,56 @@ async function loadFile(file) {
     app.palette = [];
     app.hasResult = false;
     resetPaletteEdits();
+    if (restore) {
+      app.palette = clonePalette(Array.isArray(restore.palette) ? restore.palette : []);
+      app.paletteEdited = Boolean(restore.paletteEdited) || mode === 'map';
+      sortOrder = restore.sortOrder || 'source';
+      if (sortSelect) sortSelect.value = sortOrder;
+      const history = cloneHistory(restore.history ?? { past: [], future: [] });
+      paletteHistory.past = history.past;
+      paletteHistory.future = history.future;
+      selectedPaletteId = restore.selectedId ?? null;
+      paletteEditMode = Boolean(restore.editing);
+      if (mode === 'map') {
+        fixedColors = app.palette.map((entry) => ({ ...entry.color }));
+      }
+      if (restore.paletteValue && paletteSelect) {
+        let option = /** @type {HTMLOptionElement|null} */ (
+          [...paletteSelect.options].find((candidate) => candidate.value === restore.paletteValue) ?? null
+        );
+        if (!option && restore.paletteValue === 'imported') {
+          option = document.createElement('option');
+          option.value = 'imported';
+          paletteSelect.append(option);
+        }
+        if (option) {
+          if (restore.paletteValue === 'imported') {
+            option.textContent = `Restored: ${restore.paletteName || 'palette'} · ${app.palette.length}`;
+          }
+          paletteSelect.value = restore.paletteValue;
+        }
+      }
+      if (paletteStatus) {
+        paletteStatus.textContent = `${restore.paletteName || 'Restored session'} · ${app.palette.length} colors`;
+      }
+    }
+    lastFile = file;
     clearDownloadLinks();
 
     if (hero) hero.hidden = true;
     if (workspace) workspace.hidden = false;
     canvasView.setOriginal(preview);
     renderCurrentPalette();
+    if (restore && restore.transparentId !== null && restore.transparentId !== undefined) {
+      const position = app.palette.findIndex((entry) => entry.id === restore.transparentId);
+      if (transparentIndex) {
+        transparentIndex.value = position >= 0 ? String(position) : '-1';
+      }
+      pendingTransparentIndex = null;
+    } else if (restore) {
+      if (transparentIndex) transparentIndex.value = '-1';
+      pendingTransparentIndex = null;
+    }
     setExportEnabled(false);
     if (canvasEmpty) {
       canvasEmpty.hidden = false;
@@ -1076,6 +1207,13 @@ async function loadFile(file) {
     ]);
     processPreview();
   } catch (error) {
+    if (restore) {
+      restoringSession = false;
+      sessionPersistence = false;
+      clearSession().catch(() => {
+        setStatusMessage('Saved session could not be cleared');
+      });
+    }
     const message = error instanceof Error ? error.message : String(error);
     toast(message, 'error');
     setStatusMessage('Could not read image');
@@ -1377,13 +1515,53 @@ paletteHex?.addEventListener('keydown', (event) => {
 
 const scheduleProcess = debounce(processPreview, 150);
 const syncUrlStateDebounced = debounce(syncUrlState, 150);
+const scheduleSessionSave = debounce(saveCurrentSession, 500);
 
 populateBuiltinPalettes();
 updateDitherLabels();
 updateDitherControls();
 updatePaletteEditor();
 
-applyUrlState(decodeUrlState(location.hash));
+async function initializeSessionAndUrl() {
+  const hashState = decodeUrlState(location.hash);
+  let record = null;
+  try {
+    record = await loadSession();
+  } catch (error) {
+    sessionPersistence = false;
+    toast(
+      `Saved session is unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    );
+  }
+  if (!record) {
+    applyUrlState(hashState);
+    return;
+  }
+  if (!isValidSessionRecord(record)) {
+    clearSession().catch((error) => {
+      toast(
+        `Could not reset the saved session: ${error instanceof Error ? error.message : String(error)}`,
+        'error',
+      );
+    });
+    applyUrlState(hashState);
+    return;
+  }
+
+  const sessionSettings = record.state.settings;
+  const hashMatches =
+    !location.hash || encodeUrlState(hashState) === encodeUrlState(sessionSettings);
+  applyUrlState(hashMatches ? sessionSettings : hashState);
+  restoringSession = true;
+  const file = new File([record.image.blob], record.image.name, {
+    type: record.image.type || 'application/octet-stream',
+  });
+  await loadFile(file, hashMatches ? record.state : null);
+}
+
+initializeSessionAndUrl();
+sessionClear?.addEventListener('click', forgetSavedSession);
 window.addEventListener('hashchange', () => {
   if (applyingUrlState) return;
   applyUrlState(decodeUrlState(location.hash));

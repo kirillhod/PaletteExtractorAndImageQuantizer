@@ -10,7 +10,7 @@ import {
 
 test('default settings round-trip through the URL', () => {
   const encoded = encodeUrlState(URL_DEFAULTS);
-  assert.match(encoded, /^v=1/);
+  assert.equal(encoded, 'v=1');
   assert.deepEqual(decodeUrlState(`#${encoded}`), URL_DEFAULTS);
   assert.deepEqual(decodeUrlState(''), URL_DEFAULTS);
 });

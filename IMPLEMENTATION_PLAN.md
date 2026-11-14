@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.1.0
-**Product version at completion:** 1.1.0
+**Plan version:** 1.2.0
+**Product version at completion:** 1.2.0
 **Status:** Approved for implementation
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -37,9 +37,9 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 116 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, references |
-| Version | `js/core/version.js`; `v1.1.0` tagged; M5 complete |
-| Next | M6: post-1.x backlog (roles, contrast, presets, extra formats, batch/CLI, and the rest) |
+| Tests | 119 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, references |
+| Version | `js/core/version.js`; `v1.2.0` tagged; M6 complete |
+| Next | M7: later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -1082,6 +1082,17 @@ site. Learning is opt-in, contextual, and dismissible.
   hash restores the controls. A pending transparent index is applied after the palette
   exists.
 
+### 8.10 Session persistence
+
+- IndexedDB stores the last image as an encoded Blob, plus settings, palette entries,
+  locks, order, selected entry, edit mode, transparent color id, and the undo/redo history.
+- On load, a saved session reopens the editor directly. The URL hash remains a portable
+  settings config: if it differs from the saved settings, it wins and the palette is
+  re-extracted from the image instead of restoring local edits.
+- **Forget saved session** in Help clears the stored image and state; a failed decode,
+  invalid record, unavailable storage, or quota error falls back without trapping the user.
+- Imported palette contents and QA results are not part of the session.
+
 ## 9. Performance
 
 ### 9.1 Budgets (desktop, worker, 1024² unless stated)
@@ -1555,6 +1566,8 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/palettes/builtin.js` | Built-in palette data | `palettes.test.js` |
 | `js/core/palettes/import.js` | Format detection + dispatch | `palettes.test.js` |
 | `js/core/metrics/index.js` | `computeQuality`: per-pixel ΔE00 stats, p95, top 20, error map | `metrics.test.js` |
+| `js/ui/session-store.js` | IndexedDB read/write/clear for the last image + session state | — |
+| `js/core/session-state.js` | Palette/history cloning and saved-record validation | `session-state.test.js` |
 | `js/core/url-state.js` | Versioned hash encode/decode for settings; no image data | `url-state.test.js` |
 | `js/core/pipeline.js` | `runPipeline(job)` stage composition | `pipeline.test.js`, `determinism.test.js` |
 | `js/core/log.js` | Optional debug logger; disabled in production | — |
@@ -1645,7 +1658,17 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
       put image data in the URL.
 - **Exit:** `1.1.0` tagged; editor, locks, QA summary, and URL restore tested.
 
-### M6 — Later / not planned for v1.x
+### M6 — v1.2: session continuity (complete)
+
+- [x] Store the last image as a Blob in IndexedDB and reopen the editor on load.
+- [x] Persist settings, palette colors/order/locks, selection, edit mode, and undo/redo
+      history.
+- [x] URL settings take precedence when the hash differs from the saved session.
+- [x] Provide **Forget saved session** in Help and fall back to the hero on empty, invalid,
+      or unavailable storage.
+- **Exit:** `1.2.0` tagged; reload restores the image, palette, locks, and undo history.
+
+### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
 `.ase`/DTCG exports, batch/ZIP, CLI/WASM, animation, NES banks, Yliluoma, exact mapping
@@ -1762,6 +1785,8 @@ A change is done only when:
 | 2026-11-14 | QA measures the preview per pixel with CIEDE2000; p95 uses 0.1 buckets, worst list is top 20, error map clamps at 20 ΔE00 | Keeps measurement responsive and aligned with the preview; contrast and full QA reports stay out of v1.1 |
 | 2026-11-14 | URL state stores normalized v1 settings in the hash; defaults omitted; imported palettes, edits, and QA results excluded | Shareable and reproducible without image data or a backend |
 | 2026-11-14 | Release 1.1.0: M5 complete | Palette editor, locks, manual order, eyedropper, quality report, and URL state tested; 116 tests |
+| 2026-11-14 | Add IndexedDB session persistence with image, settings, palette, locks, selection, and undo/redo history | Last-image continuity without counting against the small localStorage quota; URL hash stays the portable config and takes precedence when different |
+| 2026-11-14 | Release 1.2.0: M6 complete | Session restore, URL precedence, forget action, and 119 tests verified |
 
 ---
 

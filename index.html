@@ -359,6 +359,10 @@
       <p>The Quality section compares the current preview with the source using CIEDE2000. Mean is the average error, p95 shows the high end, and max is the worst pixel. The error map runs from dark blue near zero to red at 20 or more; the worst-pixel list gives coordinates and values. Measurements use the preview and skip fully transparent pixels; contrast checks are not part of this release.</p>
       <h2>Shareable settings</h2>
       <p>The address bar stores normalized settings in the hash, so reloading or sharing the URL restores the method, colors, dither, sort, and built-in palette. The image itself is never included. Imported palettes, palette edits, locks, and quality results are not serialized.</p>
+      <h2>Saved session</h2>
+      <p>The last image, palette edits, locks, order, settings, and undo/redo history stay in this browser's IndexedDB. The URL hash remains a portable settings config; a URL with different settings takes precedence over the saved settings.</p>
+      <button class="peiq-btn peiq-btn--small" id="session-clear" type="button">Forget saved session</button>
+      <p class="peiq-hint" id="session-status"></p>
       <h2>Shortcuts</h2>
       <table class="peiq-shortcuts">
         <thead>

@@ -80,6 +80,8 @@ Save link appears. A mismatch blocks the download.
 - Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help.
 - Settings live in the URL hash: a reload restores the method, colors, dither, sort, and
   built-in palette. The image itself is never stored or uploaded.
+- The last image, palette edits, locks, and undo/redo history come back after a reload
+  from local IndexedDB. Use **Forget saved session** in Help to remove them.
 - Everything stays responsive down to phone width.
 
 ## How it works

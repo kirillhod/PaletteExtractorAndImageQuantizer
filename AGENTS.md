@@ -262,17 +262,17 @@ and the change is committed locally with a descriptive body (plan §16).
 
 ## 12. Current state and next task
 
-- Plan: ✅ `1.1.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
+- Plan: ✅ `1.2.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
   M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; M3 ✅ `v0.4.0`; M4 ✅ `v1.0.0`;
-  M5 ✅ `v1.1.0` (116 tests).
+  M5 ✅ `v1.1.0`; M6 ✅ `v1.2.0` (119 tests).
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, canvas picking,
   add/remove, locks, and ←/→ manual order, CIEDE2000 quality stats/error map/worst pixels,
-  versioned URL settings, themes, fixed desktop frame with a scrollable rail, left export
-  column, contextual tooltips, Help drawer with references and credits, LAN dev-server
-  URLs.
-- Next: post-1.x backlog; no committed milestone.
+  versioned URL settings, IndexedDB session restore (image, palette, locks, undo/redo),
+  themes, fixed desktop frame with a scrollable rail, left export column, contextual
+  tooltips, Help drawer with references and credits, LAN dev-server URLs.
+- Next: M7 — later / not planned for v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 
