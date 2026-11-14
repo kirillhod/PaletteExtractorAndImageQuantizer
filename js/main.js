@@ -296,8 +296,7 @@ function renderCurrentPalette() {
   updatePaletteEditor();
 
   const current = Number(transparentIndex?.value ?? -1);
-  const preferred = mode === 'map' && current < 0 ? 0 : current;
-  populateTransparentIndex(app.palette, preferred);
+  populateTransparentIndex(app.palette, current);
 }
 
 /** @param {{ id:number, hex:string }} entry */
@@ -626,6 +625,9 @@ function setMode(next) {
     app.palette = [];
   }
   renderCurrentPalette();
+  if (next === 'map' && transparentIndex && transparentIndex.value === '-1') {
+    transparentIndex.value = '0';
+  }
   if (app.preview) processPreview();
 }
 

@@ -40,6 +40,22 @@ test('semi-transparent pixels keep their alpha', () => {
   assert.deepEqual([...mapped.data], [255, 0, 0, 128]);
 });
 
+test('opaque pixels mapped to the transparent index become transparent in the preview', () => {
+  const image = makeImage(3, 1, (x) =>
+    x === 0
+      ? { r: 255, g: 0, b: 0 }
+      : x === 1
+        ? { r: 0, g: 255, b: 0 }
+        : { r: 0, g: 0, b: 255 },
+  );
+  const mapped = mapPixels(image, palette, { transparentIndex: 1 });
+  assert.deepEqual([...mapped.data], [
+    255, 0, 0, 255,
+    0, 0, 0, 0,
+    0, 0, 255, 255,
+  ]);
+});
+
 test('the 6-bit LUT has 262144 entries and is deterministic', () => {
   const a = buildNearestLut(palette, { space: 'oklab', bits: 6 });
   const b = buildNearestLut(palette, { space: 'oklab', bits: 6 });

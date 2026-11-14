@@ -202,6 +202,12 @@ export function mapPixels(image, palette, options = {}) {
 
     const key = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
     const index = exact?.map.get(key) ?? mapper.nearestRgb(data[i], data[i + 1], data[i + 2]);
+    if (transparentIndex >= 0 && index === transparentIndex) {
+      // The reserved index is transparent in the indexed output via tRNS; the
+      // preview must show the same result, including opaque source pixels that map
+      // to that palette entry.
+      continue;
+    }
     const color = colors[index];
     out[i] = color.r;
     out[i + 1] = color.g;

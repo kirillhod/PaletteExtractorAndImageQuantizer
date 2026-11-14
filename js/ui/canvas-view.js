@@ -150,6 +150,9 @@ export function createCanvasView(options) {
       context.beginPath();
       context.rect(split, 0, width - split, height);
       context.clip();
+      // Transparent reduced pixels must reveal the checkerboard, not the original
+      // image underneath. Clear the clipped reduced side before drawing it.
+      context.clearRect(split, 0, width - split, height);
       context.translate(offsetX, offsetY);
       context.scale(scale, scale);
       context.imageSmoothingEnabled = scale < 1;
