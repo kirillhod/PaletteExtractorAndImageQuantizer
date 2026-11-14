@@ -671,7 +671,7 @@ background: use a canvas-generated palette mosaic or the CSS gradients below.
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: calc(100dvh - 112px);
+  height: calc(100svh - 112px);
   min-height: 480px;
   max-height: 560px;
   padding: var(--peiq-space-5) var(--peiq-space-3);
@@ -1224,7 +1224,7 @@ screen block.
   grid-template-columns: minmax(0, 1fr) 380px;
   gap: var(--peiq-space-4);
   align-items: start;
-  min-height: calc(100dvh - 64px);
+  min-height: calc(100svh - 64px);
 }
 @media (min-width: 980px) and (max-width: 1219px) {
   .peiq-workspace { grid-template-columns: minmax(0, 1fr) 340px; }
@@ -1244,7 +1244,7 @@ screen block.
   position: sticky;
   top: 80px;
   min-width: 0;
-  max-height: calc(100dvh - 96px);
+  max-height: calc(100svh - 96px);
   overflow: auto;
   padding-right: 4px;
   display: grid;
@@ -1467,7 +1467,7 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
 |---|---|---|
 | Desktop | ≥ 1220 px | 2 columns: stage `1fr` / rail **380 px**; full header name |
 | Tablet | 980–1219 px | 2 columns: stage `1fr` / rail **340 px** |
-| Mobile | < 980 px | Stacked: toolbar, export, canvas, palette, settings; canvas sticky |
+| Mobile | < 980 px | Stacked: export, toolbar, canvas, palette, settings |
 | Small | < 600 px | Single column; 44 px targets; `PEIQ` header mark |
 
 The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale changes and
@@ -1487,7 +1487,8 @@ The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale cha
 - Status metrics wrap into label/value pairs
   below 640 px.
 - Help drawer: full-width sheet below 980 px; close button in the drawer header.
-- Canvas: sticky at the top on mobile; never taller than `55dvh` unless zoomed.
+- Canvas: sits directly under the toolbar on mobile; use `55svh` rather than `dvh` so
+  the address bar does not resize the canvas while the page scrolls.
 - Theme switching changes colors only; it must not change layout or trigger reflow.
 
 ```css

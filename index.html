@@ -57,16 +57,6 @@
     </section>
 
     <section class="peiq-workspace" id="workspace" hidden>
-      <div class="peiq-stage__toolbar">
-          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="change-image" type="button">Change image</button>
-          <span class="peiq-stage__spacer"></span>
-          <button class="peiq-icon-btn" id="zoom-out" type="button" aria-label="Zoom out">−</button>
-          <button class="peiq-icon-btn" id="fit-view" type="button" aria-label="Fit image to view">Fit</button>
-          <button class="peiq-icon-btn" id="zoom-100" type="button" aria-label="Zoom to 100%">100%</button>
-          <button class="peiq-icon-btn" id="zoom-in" type="button" aria-label="Zoom in">+</button>
-          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" aria-pressed="false">Original</button>
-        </div>
-
         <div class="peiq-export-panel" aria-labelledby="export-heading">
           <div class="peiq-export-bar">
             <span class="peiq-label" id="export-heading">Export</span>
@@ -89,6 +79,22 @@
           </div>
           <div class="peiq-download-result" id="download-result" hidden></div>
           <p class="peiq-hint">Decoded and validated before Save.</p>
+        </div>
+
+        <div class="peiq-stage__toolbar">
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="change-image" type="button" aria-label="Change image">
+            <span class="peiq-toolbar-long">Change image</span>
+            <span class="peiq-toolbar-short" aria-hidden="true">Image</span>
+          </button>
+          <span class="peiq-stage__spacer"></span>
+          <button class="peiq-icon-btn" id="zoom-out" type="button" aria-label="Zoom out">−</button>
+          <button class="peiq-icon-btn" id="fit-view" type="button" aria-label="Fit image to view">Fit</button>
+          <button class="peiq-icon-btn" id="zoom-100" type="button" aria-label="Zoom to 100%">100%</button>
+          <button class="peiq-icon-btn" id="zoom-in" type="button" aria-label="Zoom in">+</button>
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" aria-label="Toggle original" aria-pressed="false">
+            <span class="peiq-toolbar-long" id="toggle-original-label">Original</span>
+            <span class="peiq-toolbar-short" aria-hidden="true" id="toggle-original-short">Orig.</span>
+          </button>
         </div>
 
         <div class="peiq-canvas-frame peiq-canvas-frame--pixelated" id="canvas-frame">

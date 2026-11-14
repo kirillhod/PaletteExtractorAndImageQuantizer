@@ -291,9 +291,17 @@ export function createCanvasView(options) {
     }
   });
 
+  const narrowViewport = window.matchMedia('(max-width: 979px)');
+  let lastFrameWidth = 0;
   const resizeObserver = new ResizeObserver(() => {
-    if (autoFit) fit();
+    const width = frame.clientWidth;
+    if (width < 2) return;
+    // Mobile browser chrome changes the visual viewport height while scrolling. Do not
+    // re-fit the image for height-only changes there; keep the scale stable and redraw.
+    const widthChanged = Math.abs(width - lastFrameWidth) > 1;
+    if (autoFit && (!narrowViewport.matches || widthChanged)) fit();
     else scheduleRender();
+    lastFrameWidth = width;
   });
   resizeObserver.observe(frame);
 
