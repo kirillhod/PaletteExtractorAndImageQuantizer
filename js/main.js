@@ -542,7 +542,7 @@ function toggleOriginalState() {
   const longLabel = document.getElementById('toggle-original-label');
   const shortLabel = document.getElementById('toggle-original-short');
   if (longLabel) longLabel.textContent = next ? 'Reduced' : 'Original';
-  if (shortLabel) shortLabel.textContent = next ? 'Red.' : 'Orig.';
+  if (shortLabel) shortLabel.textContent = next ? 'Reduced' : 'Original';
   canvasView.setShowOriginal(next);
 }
 
