@@ -120,7 +120,7 @@ export const REFERENCE_GROUPS = [
   },
   {
     id: 'color',
-    title: 'Color, metrics, and output',
+    title: 'Color science and output',
     items: [
       {
         id: 'sharma-2005',

@@ -282,17 +282,17 @@
       <button class="peiq-icon-btn" id="help-close" type="button" aria-label="Close help">×</button>
     </div>
     <div class="peiq-drawer__body">
-      <p>Load an image, choose a color count, and compare the original with the reduced result. Export a palette strip for engines and pixel editors, or a reduced PNG for quick use.</p>
+      <p>Load an image, choose a color count or a fixed palette, and compare the original with the reduced result. Export a validated indexed PNG, a palette strip, or a reduced PNG.</p>
       <div class="peiq-learn-note">
-        <p><strong>v1.0 focus.</strong> Five extractors, fixed palettes (built-in and import), exact/LUT mapping, error diffusion, Bayer and blue-noise dithering, indexed PNG with <code>tRNS</code>, strip export, and reduced PNG export. Palette QA and the long-form theory guide are post-1.0.</p>
+        <p><strong>v1.0 focus.</strong> Five extractors, fixed palettes (built-in and import), exact/LUT mapping, error diffusion, Bayer and blue-noise dithering, indexed PNG with <code>tRNS</code>, strip export, and reduced PNG export. Palette editing, QA, presets, and the long-form theory guide are post-1.0.</p>
       </div>
       <h2>How it works</h2>
       <ol>
         <li>Build a 5-bit, alpha-weighted color histogram.</li>
         <li>Extract a palette or load a fixed one.</li>
-        <li>Map pixels with exact nearest-color lookup or a 6-bit LUT.</li>
-        <li>Optionally diffuse or threshold the quantization error.</li>
-        <li>Pack indices, write PNG, decode it back, and compare.</li>
+        <li>Map pixels with exact nearest-color lookup for small color sets, otherwise a 6-bit LUT.</li>
+        <li>Optionally dither with error diffusion, Bayer, or blue noise.</li>
+        <li>Encode the output, decode it back, and compare with the expected pixels.</li>
       </ol>
       <h2>Shortcuts</h2>
       <table class="peiq-shortcuts">
