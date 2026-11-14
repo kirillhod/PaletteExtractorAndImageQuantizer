@@ -32,6 +32,23 @@ test('fully transparent image returns an empty palette and a blank preview', asy
   assert.ok(result.preview.data.every((value) => value === 0));
 });
 
+test('paletteOverride maps with the supplied palette instead of extracting', async () => {
+  const image = quadrantsImage(8);
+  const result = await runPreview({
+    image,
+    params: {
+      ...params,
+      paletteOverride: [
+        { r: 0, g: 0, b: 0 },
+        { r: 255, g: 255, b: 255 },
+      ],
+    },
+  });
+  assert.deepEqual(result.palette.map((entry) => entry.hex), ['#000000', '#ffffff']);
+  assert.equal(result.preview.width, 8);
+  assert.equal(result.preview.height, 8);
+});
+
 test('exportStrip validates a horizontal strip', async () => {
   const palette = createPalette([
     { r: 255, g: 0, b: 0 },

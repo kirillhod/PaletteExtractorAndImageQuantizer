@@ -37,8 +37,8 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 91 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
-| Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete |
+| Tests | 102 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
+| Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete; M5 in progress |
 | Next | M5: v1.1 editing and quality (palette editor + locks, ΔE00 summary/error map, URL state) |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
@@ -714,7 +714,8 @@ for each tap: accumulatedError[next] += error · weight / denominator
 #### 6.6.5 Defaults (presets are post-1.0)
 
 The table below is a design reference for future presets; v1.0.0 ships the individual
-controls only, with no preset picker.
+controls only, with no preset picker. The current UI default is **Wu, K=16, Oklab, no
+dither, source order, no transparent index**.
 
 | Preset | Method | K | Space | Dither | Strength | Order | Transparent index |
 |---|---|---:|---|---|---:|---|---:|
@@ -729,6 +730,12 @@ Presets set controls; they do not lock them.
 ### 6.7 Palette model (`core/palette.js`)
 
 - `createPalette(colors)` assigns stable IDs 1..N and indices 0..N-1 in extraction order.
+- `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, and `setPaletteLock`
+  return new palettes; IDs survive, indices are reassigned, and exact duplicate colors
+  are rejected in the editor.
+- Locks pin an entry to its current display slot. Unlocked entries fill the remaining
+  slots in the requested order, so a locked color never moves. Locked colors cannot be
+  removed; HEX edits keep the lock.
 - `sortPalette(palette, order)` returns a new palette; IDs survive, indices are reassigned.
   The strip export and HEX list use this order.
 - Sort keys:
@@ -893,13 +900,16 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Mode tabs `Extract` and `Map` (inside the section, not the header).
 - Extract: five algorithms (popularity, median cut, Wu, octree, K-means++), colors
   2–256 via a range plus a numeric field (kept in sync; commits clamp and empty falls back
-  to 16), working space, with refinement defaulting on for median cut and Wu.
+  to 16), working space, with refinement defaulting on for median cut and Wu. **Default:
+  Wu, K=16, Oklab.**
 - Map: built-in target palette (PICO-8, Game Boy, C64, ZX Spectrum, EGA), "Load palette
   file…" for `.hex`, `.gpl`, `.pal`, `.json`, and 1×N/N×1 PNG strips, transparent index,
   alpha threshold.
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark; swatches, HEX list, and strip export follow it.
-- Palette editing, locks, add/remove/rename, and custom order are post-1.0.
+- Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
+  adds **Apply / Add / Remove / Lock**. Locks pin an entry to its current slot during
+  sorting and block removal. Rename, roles, and drag reordering remain post-1.1.
 
 **Dither rail section**
 
@@ -1613,9 +1623,9 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 
 ### M5 — v1.1: editing and quality (after 1.0.0)
 
-- [ ] Minimal palette editor: remove, edit HEX, add, and keep a stable manual order.
+- [x] Minimal palette editor: remove, edit HEX, add, and keep a stable manual order.
       No semantic roles in this release.
-- [ ] Locks: locked entries survive sorting/removal and keep their palette identity;
+- [x] Locks: locked entries survive sorting/removal and keep their palette identity;
       removal renumbers deterministically.
 - [ ] ΔE00 summary (mean/p95/max), error map, and worst-pixel list. No contrast matrix.
 - [ ] URL state: serialize normalized parameters in the hash, restore on reload, never
@@ -1730,6 +1740,8 @@ A change is done only when:
 | 2026-11-14 | Release 0.4.0: M3 complete, palette exports, accessibility/Pages/performance pass | Closes the lean v1.0 feature scope before the 1.0.0 release checklist |
 | 2026-11-14 | Fully transparent images: empty palette, export blocked with an explicit warning | An indexed PNG needs at least one `PLTE` entry; this resolves the contradiction between the empty-palette rule and the former “export allowed” wording |
 | 2026-11-14 | Release 1.0.0: M4 complete | Chrome 157, Edge 157, independent GDI+ PNG decode, themes, 360 px, keyboard, and 91 tests verified; Firefox/Safari and Aseprite/Godot were unavailable |
+| 2026-11-14 | Default extractor is Wu with K=16 | Balanced quality across photos and pixel art; every other method stays selectable |
+| 2026-11-14 | Locks pin entries to their current slot; locked colors cannot be removed; HEX edits keep the lock | Minimal v1.1 rule that preserves palette identity and deterministic indices without drag reordering |
 
 ---
 

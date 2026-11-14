@@ -36,7 +36,7 @@ export function initControls(handlers) {
               ? 'octree'
               : method?.value === 'kmeans'
                 ? 'kmeans'
-                : 'median-cut',
+                : 'wu',
       colors: clampColorCount(value),
       space: space?.value === 'srgb' ? 'srgb' : 'oklab',
     };

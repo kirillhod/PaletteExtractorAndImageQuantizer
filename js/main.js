@@ -3,7 +3,15 @@ import { parseHex } from './core/color.js';
 import { formatHexPalette, parseHexPalette } from './core/formats/hex.js';
 import { formatGplPalette, parseGplPalette } from './core/formats/gpl.js';
 import { formatPaletteJson, parsePaletteJson } from './core/formats/json.js';
-import { createPalette, paletteHexList, sortPalette } from './core/palette.js';
+import {
+  addPaletteEntry,
+  createPalette,
+  paletteHexList,
+  removePaletteEntry,
+  setPaletteLock,
+  sortPalette,
+  updatePaletteEntry,
+} from './core/palette.js';
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
@@ -38,6 +46,13 @@ const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
 const paletteStrip = document.getElementById('palette-strip');
 const paletteCount = document.getElementById('palette-count');
 const sortSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-sort'));
+const paletteEdit = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-edit'));
+const paletteEditor = document.getElementById('palette-editor');
+const paletteHex = /** @type {HTMLInputElement|null} */ (document.getElementById('palette-hex'));
+const paletteApply = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-apply'));
+const paletteAdd = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-add'));
+const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
+const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
 const extractControls = document.getElementById('extract-controls');
@@ -76,6 +91,7 @@ const app = {
   reduced: null,
   /** @type {any[]} */
   palette: [],
+  paletteEdited: false,
   hasResult: false,
   previewRequestId: 0,
   exportRequestId: 0,
@@ -87,6 +103,9 @@ let worker = createWorker();
 let sortOrder = 'source';
 /** @type {'extract'|'map'} */
 let mode = 'extract';
+let paletteEditMode = false;
+/** @type {number|null} */
+let selectedPaletteId = null;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -132,7 +151,7 @@ function onWorkerMessage(event) {
 
   if (message.type === 'result') {
     if (message.requestId !== app.previewRequestId) return;
-    app.palette = message.palette;
+    if (!app.paletteEdited) app.palette = message.palette;
     app.reduced = {
       data: new Uint8ClampedArray(message.preview.data),
       width: message.preview.width,
@@ -196,6 +215,7 @@ function onWorkerMessage(event) {
 
 function updateExportState() {
   setExportEnabled(app.hasResult && app.palette.length > 0 && !app.exportBusy);
+  updatePaletteEditor();
 }
 
 /** @param {string} label */
@@ -225,6 +245,7 @@ function beginExport(label) {
   app.exportRequestId = id;
   app.exportBusy = true;
   setExportEnabled(false);
+  updatePaletteEditor();
   clearDownloadLinks();
   setExportProgress(label);
   return id;
@@ -245,13 +266,160 @@ function cancelExport() {
 
 function renderCurrentPalette() {
   app.palette = sortPalette(app.palette, sortOrder);
-  renderPalette(app.palette, paletteStrip);
+  if (
+    selectedPaletteId !== null &&
+    !app.palette.some((entry) => entry.id === selectedPaletteId)
+  ) {
+    selectedPaletteId = null;
+    if (paletteHex) paletteHex.value = '';
+  }
+  renderPalette(app.palette, paletteStrip, {
+    editMode: paletteEditMode,
+    selectedId: selectedPaletteId,
+    onActivate: paletteEditMode ? selectPaletteEntry : null,
+  });
   if (paletteCount) paletteCount.textContent = `${app.palette.length} colors`;
   if (sortSelect) sortSelect.disabled = app.palette.length === 0;
+  updatePaletteEditor();
 
   const current = Number(transparentIndex?.value ?? -1);
   const preferred = mode === 'map' && current < 0 ? 0 : current;
   populateTransparentIndex(app.palette, preferred);
+}
+
+/** @param {{ id:number, hex:string }} entry */
+function selectPaletteEntry(entry) {
+  selectedPaletteId = entry.id;
+  if (paletteHex) paletteHex.value = entry.hex;
+  renderCurrentPalette();
+}
+
+/** @returns {any|null} */
+function selectedPaletteEntry() {
+  return app.palette.find((entry) => entry.id === selectedPaletteId) ?? null;
+}
+
+function updatePaletteEditor() {
+  const selected = selectedPaletteEntry();
+  const active = paletteEditMode && app.hasResult && app.palette.length > 0;
+  if (paletteEdit) {
+    paletteEdit.textContent = paletteEditMode ? 'Done' : 'Edit';
+    paletteEdit.setAttribute('aria-pressed', String(paletteEditMode));
+    paletteEdit.disabled = !app.hasResult || app.palette.length === 0 || app.exportBusy;
+  }
+  if (paletteEditor) paletteEditor.hidden = !active;
+  if (paletteHex) paletteHex.disabled = app.exportBusy;
+  if (paletteApply) paletteApply.disabled = !selected || app.exportBusy;
+  if (paletteAdd) paletteAdd.disabled = !active || app.exportBusy || app.palette.length >= 256;
+  if (paletteRemove) {
+    paletteRemove.disabled =
+      !selected || selected.locked || app.palette.length <= 1 || app.exportBusy;
+  }
+  if (paletteLock) {
+    paletteLock.disabled = !selected || app.exportBusy;
+    paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
+    paletteLock.textContent = selected?.locked ? 'Unlock' : 'Lock';
+  }
+}
+
+/** @param {boolean} active */
+function setPaletteEditMode(active) {
+  paletteEditMode = active;
+  if (!active) {
+    selectedPaletteId = null;
+    if (paletteHex) paletteHex.value = '';
+  }
+  renderCurrentPalette();
+}
+
+function markPaletteEdited() {
+  app.paletteEdited = true;
+  if (mode === 'map') {
+    fixedColors = app.palette.map((entry) => ({ ...entry.color }));
+  }
+}
+
+function resetPaletteEdits() {
+  app.paletteEdited = false;
+  paletteEditMode = false;
+  selectedPaletteId = null;
+  if (paletteHex) paletteHex.value = '';
+  updatePaletteEditor();
+}
+
+/** @returns {string} */
+function paletteHexValue() {
+  return paletteHex?.value.trim() ?? '';
+}
+
+function applyPaletteHex() {
+  const selected = selectedPaletteEntry();
+  if (!selected) return;
+  const value = paletteHexValue();
+  if (!value) {
+    toast('Enter a HEX color first', 'error');
+    return;
+  }
+  try {
+    app.palette = updatePaletteEntry(app.palette, selected.id, value);
+    const updated = app.palette.find((entry) => entry.id === selected.id);
+    if (paletteHex && updated) paletteHex.value = updated.hex;
+    markPaletteEdited();
+    renderCurrentPalette();
+    processPreview();
+    toast('Palette color updated', 'success');
+  } catch (error) {
+    toast(error instanceof Error ? error.message : String(error), 'error');
+  }
+}
+
+function addPaletteColor() {
+  const value = paletteHexValue();
+  if (!value) {
+    toast('Enter a HEX color first', 'error');
+    return;
+  }
+  try {
+    const next = addPaletteEntry(app.palette, value);
+    const entry = next[next.length - 1];
+    app.palette = next;
+    selectedPaletteId = entry.id;
+    if (paletteHex) paletteHex.value = entry.hex;
+    markPaletteEdited();
+    renderCurrentPalette();
+    processPreview();
+    toast(`Added ${entry.hex}`, 'success');
+  } catch (error) {
+    toast(error instanceof Error ? error.message : String(error), 'error');
+  }
+}
+
+function removePaletteColor() {
+  const selected = selectedPaletteEntry();
+  if (!selected) return;
+  try {
+    app.palette = removePaletteEntry(app.palette, selected.id);
+    selectedPaletteId = null;
+    if (paletteHex) paletteHex.value = '';
+    markPaletteEdited();
+    renderCurrentPalette();
+    processPreview();
+    toast(`Removed ${selected.hex}`, 'success');
+  } catch (error) {
+    toast(error instanceof Error ? error.message : String(error), 'error');
+  }
+}
+
+function togglePaletteLock() {
+  const selected = selectedPaletteEntry();
+  if (!selected) return;
+  try {
+    app.palette = setPaletteLock(app.palette, selected.id, !selected.locked);
+    renderCurrentPalette();
+    toast(selected.locked ? `Unlocked ${selected.hex}` : `Locked ${selected.hex}`, 'success');
+  } catch (error) {
+    toast(error instanceof Error ? error.message : String(error), 'error');
+  }
 }
 
 /**
@@ -293,11 +461,21 @@ function getParams() {
   };
 }
 
+function getProcessParams() {
+  return {
+    ...getParams(),
+    ...(app.paletteEdited
+      ? { paletteOverride: app.palette.map((entry) => ({ ...entry.color })) }
+      : {}),
+  };
+}
+
 /**
  * @param {'extract'|'map'} next
  */
 function setMode(next) {
   if (next !== 'extract' && next !== 'map') return;
+  resetPaletteEdits();
   mode = next;
   modeExtract?.setAttribute('aria-selected', String(next === 'extract'));
   modeMap?.setAttribute('aria-selected', String(next === 'map'));
@@ -322,6 +500,7 @@ function setMode(next) {
  * @returns {boolean}
  */
 function loadTargetPalette(value) {
+  resetPaletteEdits();
   /** @type {{ r:number,g:number,b:number,a:number }[]} */
   let colors = [];
   let name = '';
@@ -389,7 +568,7 @@ function processPreview() {
         width: app.preview.width,
         height: app.preview.height,
       },
-      params: getParams(),
+      params: getProcessParams(),
     },
     [copy.buffer],
   );
@@ -434,6 +613,7 @@ async function loadFile(file) {
     app.reduced = null;
     app.palette = [];
     app.hasResult = false;
+    resetPaletteEdits();
     clearDownloadLinks();
 
     if (hero) hero.hidden = true;
@@ -516,7 +696,7 @@ function exportReduced() {
       type: 'export-reduced',
       requestId: id,
       image: { data: copy.buffer, width: app.width, height: app.height },
-      params: getParams(),
+      params: getProcessParams(),
       name: app.name,
     },
     [copy.buffer],
@@ -663,7 +843,12 @@ function toggleOriginalState() {
   canvasView.setShowOriginal(next);
 }
 
-const controls = initControls({ onChange: processPreview });
+const controls = initControls({
+  onChange: () => {
+    if (mode === 'extract') resetPaletteEdits();
+    processPreview();
+  },
+});
 initTooltips();
 
 initDropzone({
@@ -689,11 +874,24 @@ sortSelect?.addEventListener('change', () => {
   clearDownloadLinks();
 });
 
+paletteEdit?.addEventListener('click', () => setPaletteEditMode(!paletteEditMode));
+paletteApply?.addEventListener('click', applyPaletteHex);
+paletteAdd?.addEventListener('click', addPaletteColor);
+paletteRemove?.addEventListener('click', removePaletteColor);
+paletteLock?.addEventListener('click', togglePaletteLock);
+paletteHex?.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  if (selectedPaletteEntry()) applyPaletteHex();
+  else addPaletteColor();
+});
+
 const scheduleProcess = debounce(processPreview, 150);
 
 populateBuiltinPalettes();
 updateDitherLabels();
 updateDitherControls();
+updatePaletteEditor();
 
 modeExtract?.addEventListener('click', () => setMode('extract'));
 modeMap?.addEventListener('click', () => setMode('map'));

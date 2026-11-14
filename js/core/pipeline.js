@@ -17,6 +17,7 @@ import { decodePng } from './png/decode.js';
  * @typedef {ExtractParams & {
  *   mode?: 'extract'|'map',
  *   palette?: { r:number,g:number,b:number,a?:number }[],
+ *   paletteOverride?: { r:number,g:number,b:number,a?:number }[],
  *   dither?: Partial<DitherParams>,
  *   alphaThreshold?: number,
  *   transparentIndex?: number,
@@ -32,9 +33,11 @@ export async function runPreview(job) {
   const hist = buildHistogram(image);
   const t1 = now();
 
-  const colors = params.mode === 'map'
-    ? (params.palette ?? [])
-    : extractPalette(hist, params);
+  const colors = params.paletteOverride?.length
+    ? params.paletteOverride
+    : params.mode === 'map'
+      ? (params.palette ?? [])
+      : extractPalette(hist, params);
   if (colors.length === 0) {
     return {
       palette: [],

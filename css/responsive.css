@@ -118,6 +118,10 @@
     min-height: 44px;
   }
 
+  .peiq-palette-editor .peiq-input {
+    min-height: 44px;
+  }
+
   .peiq-swatch {
     width: 44px;
     height: 44px;

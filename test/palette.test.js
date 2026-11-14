@@ -3,7 +3,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { parseHex, rgb8ToOklab } from '../js/core/color.js';
-import { createPalette, sortPalette } from '../js/core/palette.js';
+import {
+  addPaletteEntry,
+  createPalette,
+  removePaletteEntry,
+  setPaletteLock,
+  sortPalette,
+  updatePaletteEntry,
+} from '../js/core/palette.js';
 
 /**
  * @param {string} hex
@@ -57,4 +64,97 @@ test('hue sorting is deterministic', () => {
   const a = sortPalette(palette, 'hue-asc');
   const b = sortPalette(palette, 'hue-asc');
   assert.deepEqual(a, b);
+});
+
+test('locked entries keep their display slot and identity while others sort', () => {
+  const locked = setPaletteLock(palette, palette[0].id, true);
+  const sorted = sortPalette(locked, 'hue-asc');
+  assert.equal(sorted[0].id, palette[0].id);
+  assert.equal(sorted[0].hex, '#ff0000');
+  assert.deepEqual(sorted.map((entry) => entry.index), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(
+    sorted.map((entry) => entry.id).sort((a, b) => a - b),
+    [1, 2, 3, 4, 5, 6],
+  );
+});
+
+test('unlocked entries fill the remaining slots in requested order', () => {
+  const locked = setPaletteLock(palette, palette[0].id, true);
+  const sorted = sortPalette(locked, 'lightness-asc');
+  const rest = sortPalette(
+    palette.filter((entry) => entry.id !== palette[0].id),
+    'lightness-asc',
+  );
+  assert.equal(sorted[0].id, palette[0].id);
+  assert.deepEqual(
+    sorted.slice(1).map((entry) => entry.hex),
+    rest.map((entry) => entry.hex),
+  );
+});
+
+test('source order restores id order around a locked manual slot', () => {
+  const manual = [palette[2], palette[0], palette[1], palette[3], palette[4], palette[5]];
+  const locked = setPaletteLock(manual, palette[2].id, true);
+  const sorted = sortPalette(locked, 'source');
+  assert.equal(sorted[0].id, palette[2].id);
+  assert.deepEqual(sorted.slice(1).map((entry) => entry.id), [1, 2, 4, 5, 6]);
+});
+
+test('lock toggling round-trips', () => {
+  const locked = setPaletteLock(palette, 4, true);
+  assert.equal(locked[3].locked, true);
+  const unlocked = setPaletteLock(locked, 4, false);
+  assert.equal(unlocked[3].locked, false);
+});
+
+test('adding a color appends with the next stable id', () => {
+  const added = addPaletteEntry(palette, '#123');
+  const entry = added[added.length - 1];
+  assert.equal(added.length, palette.length + 1);
+  assert.equal(entry.id, 7);
+  assert.equal(entry.index, 6);
+  assert.equal(entry.hex, '#112233');
+  assert.equal(entry.locked, false);
+  assert.deepEqual(entry.color, { r: 17, g: 34, b: 51, a: 255 });
+});
+
+test('adding rejects duplicates and more than 256 colors', () => {
+  assert.throws(() => addPaletteEntry(palette, '#ff0000'), /already exists/);
+  const colors = Array.from({ length: 256 }, (_, index) => ({
+    r: index,
+    g: (index * 7) % 256,
+    b: (index * 13) % 256,
+  }));
+  const full = createPalette(colors);
+  assert.throws(() => addPaletteEntry(full, '#abcdef'), /limited to 256/);
+});
+
+test('editing a color keeps id, index, and lock state', () => {
+  const locked = setPaletteLock(palette, 1, true);
+  const updated = updatePaletteEntry(locked, 1, '#123456');
+  assert.equal(updated[0].id, 1);
+  assert.equal(updated[0].index, 0);
+  assert.equal(updated[0].locked, true);
+  assert.equal(updated[0].hex, '#123456');
+  assert.deepEqual(updated[0].color, { r: 18, g: 52, b: 86, a: 255 });
+});
+
+test('editing rejects unknown ids, invalid hex, and duplicates', () => {
+  assert.throws(() => updatePaletteEntry(palette, 99, '#000000'), /not found/);
+  assert.throws(() => updatePaletteEntry(palette, 1, 'not-a-color'), /invalid hex/);
+  assert.throws(() => updatePaletteEntry(palette, 1, '#00ff00'), /already exists/);
+});
+
+test('removing renumbers indices deterministically and keeps ids', () => {
+  const removed = removePaletteEntry(palette, 2);
+  assert.equal(removed.length, palette.length - 1);
+  assert.deepEqual(removed.map((entry) => entry.id), [1, 3, 4, 5, 6]);
+  assert.deepEqual(removed.map((entry) => entry.index), [0, 1, 2, 3, 4]);
+});
+
+test('removing refuses locked colors and the last color', () => {
+  const locked = setPaletteLock(palette, 1, true);
+  assert.throws(() => removePaletteEntry(locked, 1), /locked/);
+  const single = createPalette([{ r: 1, g: 2, b: 3 }]);
+  assert.throws(() => removePaletteEntry(single, 1), /at least one/);
 });

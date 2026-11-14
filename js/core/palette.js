@@ -1,9 +1,12 @@
 // @ts-check
-import { formatHex, rgb8ToOklab } from './color.js';
+import { formatHex, parseHex, rgb8ToOklab } from './color.js';
 import { sha256Hex, stableStringify } from './hash.js';
 
 /** @typedef {import('./types.js').RGB8} RGB8 */
 /** @typedef {import('./types.js').Palette} Palette */
+/** @typedef {import('./types.js').PaletteEntry} PaletteEntry */
+
+const MAX_PALETTE_COLORS = 256;
 
 /**
  * Turn extraction colors into a palette with stable ids and export indices.
@@ -24,8 +27,109 @@ export function createPalette(colors, options = {}) {
 }
 
 /**
+ * Add a color at the end of the palette. The new id is one past the current maximum,
+ * so manual order stays stable across add/remove and `source` sorting.
+ *
+ * @param {Palette} palette
+ * @param {string} hex
+ * @returns {Palette}
+ */
+export function addPaletteEntry(palette, hex) {
+  if (palette.length >= MAX_PALETTE_COLORS) {
+    throw new Error(`palette is limited to ${MAX_PALETTE_COLORS} colors`);
+  }
+  const color = parseHex(hex);
+  assertUniqueColor(palette, color, -1);
+  const id = palette.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
+  return [
+    ...palette,
+    {
+      id,
+      index: palette.length,
+      color,
+      hex: formatHex(color),
+      name: null,
+      role: null,
+      locked: false,
+    },
+  ];
+}
+
+/**
+ * Replace one entry's color. Identity, index, and lock state stay unchanged.
+ *
+ * @param {Palette} palette
+ * @param {number} id
+ * @param {string} hex
+ * @returns {Palette}
+ */
+export function updatePaletteEntry(palette, id, hex) {
+  const position = palette.findIndex((entry) => entry.id === id);
+  if (position < 0) throw new Error('palette entry not found');
+  const color = parseHex(hex);
+  assertUniqueColor(palette, color, position);
+  return palette.map((entry) =>
+    entry.id === id ? { ...entry, color, hex: formatHex(color) } : entry,
+  );
+}
+
+/**
+ * Remove an unlocked entry and renumber export indices deterministically.
+ *
+ * @param {Palette} palette
+ * @param {number} id
+ * @returns {Palette}
+ */
+export function removePaletteEntry(palette, id) {
+  const entry = palette.find((candidate) => candidate.id === id);
+  if (!entry) throw new Error('palette entry not found');
+  if (entry.locked) throw new Error('locked color cannot be removed');
+  if (palette.length <= 1) throw new Error('palette must keep at least one color');
+  return palette
+    .filter((candidate) => candidate.id !== id)
+    .map((candidate, index) => ({ ...candidate, index }));
+}
+
+/**
+ * Set or clear a lock. Unlocked entries participate in sorting; locked entries keep
+ * their current display slot.
+ *
+ * @param {Palette} palette
+ * @param {number} id
+ * @param {boolean} locked
+ * @returns {Palette}
+ */
+export function setPaletteLock(palette, id, locked) {
+  if (!palette.some((entry) => entry.id === id)) {
+    throw new Error('palette entry not found');
+  }
+  return palette.map((entry) => (entry.id === id ? { ...entry, locked } : entry));
+}
+
+/**
+ * @param {Palette} palette
+ * @param {{ r:number,g:number,b:number,a:number }} color
+ * @param {number} skipPosition
+ */
+function assertUniqueColor(palette, color, skipPosition) {
+  const duplicate = palette.some(
+    (entry, position) =>
+      position !== skipPosition &&
+      entry.color.r === color.r &&
+      entry.color.g === color.g &&
+      entry.color.b === color.b &&
+      entry.color.a === color.a,
+  );
+  if (duplicate) throw new Error('color already exists in the palette');
+}
+
+/**
  * Return a new palette in the requested order. IDs survive; indices are reassigned.
  * `source` uses the stable id, so switching back restores extraction order.
+ *
+ * Locks pin entries to their current display slot. Unlocked entries fill the
+ * remaining slots in the requested order, so a locked color never moves and its
+ * palette identity never changes.
  *
  * Orders:
  * - `source`
@@ -38,14 +142,33 @@ export function createPalette(colors, options = {}) {
  * @returns {Palette}
  */
 export function sortPalette(palette, order = 'source') {
-  if (order === 'source' || !palette.length) {
-    return palette
-      .map((entry, index) => ({ ...entry, index }))
-      .sort((a, b) => a.id - b.id)
-      .map((entry, index) => ({ ...entry, index }));
-  }
+  if (!palette.length) return [];
+  const unlocked = sortUnlockedEntries(
+    palette.filter((entry) => !entry.locked),
+    order,
+  );
+  let next = 0;
+  return palette.map((entry, index) => {
+    const chosen = entry.locked ? entry : unlocked[next++];
+    return { ...chosen, index };
+  });
+}
 
-  const items = palette.map((entry) => {
+/**
+ * Sort only the entries that are free to move. The result has no index changes;
+ * `sortPalette` assigns indices after merging with locked slots.
+ *
+ * @param {Palette} entries
+ * @param {'source'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
+ * @returns {Palette}
+ */
+function sortUnlockedEntries(entries, order) {
+  if (order === 'source') {
+    return entries.slice().sort((a, b) => a.id - b.id);
+  }
+  if (entries.length <= 1) return entries.slice();
+
+  const items = entries.map((entry) => {
     const oklab = rgb8ToOklab(entry.color.r, entry.color.g, entry.color.b);
     const chroma = Math.hypot(oklab.a, oklab.b);
     const hue = ((Math.atan2(oklab.b, oklab.a) * 180) / Math.PI + 360) % 360;
@@ -84,7 +207,7 @@ export function sortPalette(palette, order = 'source') {
     items.push(...achromatic, ...chromatic);
   }
 
-  return items.map((item, index) => ({ ...item.entry, index }));
+  return items.map((item) => item.entry);
 }
 
 /**

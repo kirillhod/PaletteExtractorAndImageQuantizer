@@ -472,6 +472,32 @@
   gap: var(--peiq-space-2);
 }
 
+.peiq-palette-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--peiq-space-2);
+  padding-top: var(--peiq-space-2);
+  border-top: 1px solid var(--peiq-border);
+}
+
+.peiq-palette-editor[hidden] {
+  display: none;
+}
+
+.peiq-palette-editor .peiq-input {
+  flex: 1 1 120px;
+  width: auto;
+  min-height: 32px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.peiq-palette-editor .peiq-hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .peiq-select--compact {
   width: auto;
   min-height: 32px;
@@ -518,6 +544,18 @@
   outline-offset: 2px;
 }
 
+.peiq-swatch.is-selected {
+  box-shadow:
+    0 0 0 2px var(--peiq-bg),
+    0 0 0 4px var(--peiq-accent);
+}
+
+.peiq-swatch.is-locked {
+  border-style: dashed;
+  border-width: 2px;
+  border-color: var(--peiq-text-strong);
+}
+
 .peiq-export-panel {
   display: grid;
   gap: var(--peiq-space-2);
@@ -558,7 +596,7 @@
 
 .peiq-export-palette .peiq-select {
   width: 100%;
-  min-width: 0;
+  min-width: 56px;
   min-height: 30px;
 }
 
