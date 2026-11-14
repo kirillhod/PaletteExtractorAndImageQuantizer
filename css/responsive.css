@@ -123,6 +123,11 @@
     height: 44px;
   }
 
+  .peiq-help {
+    width: 28px;
+    height: 28px;
+  }
+
   .peiq-drawer__header,
   .peiq-drawer__body {
     padding-inline: var(--peiq-space-3);

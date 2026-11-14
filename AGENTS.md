@@ -260,14 +260,14 @@ and the change is committed locally with a descriptive body (plan §16).
 ## 12. Current state and next task
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; latest `v0.3.3` (90 tests).
+  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; latest `v0.4.0` (90 tests).
 - Working: five extractors, fixed palettes + import, exact/LUT mapping, ED/Bayer/blue-noise
   dithering, indexed PNG with `tRNS`, strip/reduced and `.hex`/`.gpl`/`.json` exports,
   themes, fixed desktop
   frame with a scrollable rail, left export column, contextual tooltips, Help drawer with
   references and credits, LAN dev-server URLs.
-- Next: M3 — final v1.0 polish: accessibility/performance pass, README/help review,
-  Pages smoke test; then `0.4.0`.
+- Next: M4 — release checklist, both themes/mobile/keyboard pass, version `1.0.0`,
+  tag `v1.0.0`.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 

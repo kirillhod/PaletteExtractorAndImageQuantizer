@@ -38,8 +38,8 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 90 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
-| Version | `js/core/version.js`; `v0.3.3` tagged; M2 complete |
-| Next | M3: finish the lean v1.0.0 handoff (palette exports, final polish, release) |
+| Version | `js/core/version.js`; `v0.4.0` tagged; M3 complete |
+| Next | M4: release checklist, version `1.0.0`, tag `v1.0.0` |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -1590,7 +1590,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Indexed PNG + transparent index + validation
 - **Exit:** sprite mapped to PICO-8; compliance and round-trip green; `0.3.0`.
 
-### M3 — v1.0 closure (current)
+### M3 — v1.0 closure (complete)
 
 - [x] Core extraction, fixed palettes, mapping, dithering
 - [x] Indexed PNG, palette strip, reduced PNG, HEX copy
@@ -1598,12 +1598,12 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Tooltips, references, credits, version footer
 - [x] Remove the QA placeholder from the rail
 - [x] Palette-file exports: `.hex`, `.gpl`, `.json`
-- [ ] Responsive, accessibility, browser, and performance pass against §9–§10
-- [ ] README, screenshots, and help copy aligned with the lean scope
-- [ ] GitHub Pages smoke test
+- [x] Responsive, accessibility, browser, and performance pass against §9–§10
+- [x] README, screenshots, and help copy aligned with the lean scope
+- [x] GitHub Pages smoke test
 - **Exit:** lean feature matrix complete; all exports green; `0.4.0`.
 
-### M4 — Release
+### M4 — Release (current)
 
 - [ ] Release checklist §17
 - [ ] Both themes, mobile 360 px, keyboard-only pass
@@ -1723,6 +1723,7 @@ A change is done only when:
 | 2026-11-14 | Release 0.3.3 for the mobile zoom/toolbar, alpha, tooltip, background, and Help fixes | Patch release for the post-0.3.2 batch; tag the version-bump commit |
 | 2026-11-14 | Plan v1.1: minimal palette editor + locks, ΔE00 summary/error map, URL state | Owner selected the few post-1.0 features with direct workflow value; roles, presets, swap, and manifest remain later |
 | 2026-11-14 | Add `.hex`, `.gpl`, and `.json` palette-file exports with parse-back validation | Completes the v1.0 palette handoff without adding the deferred format set |
+| 2026-11-14 | Release 0.4.0: M3 complete, palette exports, accessibility/Pages/performance pass | Closes the lean v1.0 feature scope before the 1.0.0 release checklist |
 
 ---
 

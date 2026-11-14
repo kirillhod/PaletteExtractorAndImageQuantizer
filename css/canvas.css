@@ -47,17 +47,34 @@
   bottom: 0;
   left: 50%;
   z-index: 2;
+  width: 24px;
+  background: transparent;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.peiq-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
   width: 2px;
   background: var(--peiq-accent);
   transform: translateX(-50%);
-  pointer-events: none;
+}
+
+.peiq-divider:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+  border-radius: var(--peiq-radius-pill);
 }
 
 .peiq-divider__handle {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 22px;
+  width: 24px;
   height: 44px;
   border: 2px solid var(--peiq-accent);
   border-radius: var(--peiq-radius-pill);
@@ -66,11 +83,6 @@
   transform: translate(-50%, -50%);
   pointer-events: auto;
   cursor: ew-resize;
-}
-
-.peiq-divider__handle:focus-visible {
-  outline: 2px solid var(--peiq-focus);
-  outline-offset: 2px;
 }
 
 .peiq-stage__toolbar .peiq-btn,
