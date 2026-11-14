@@ -37,7 +37,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 108 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
+| Tests | 112 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, references |
 | Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete; M5 in progress |
 | Next | M5: v1.1 editing and quality (palette editor + locks, ΔE00 summary/error map, URL state) |
 
@@ -133,7 +133,7 @@ add it to the 1.0 release without a scope decision and a plan update.
 | F-17 | Two complete themes: dark + light, auto by system + 3-state toggle, persisted | MUST | M4 | No mixed tokens; no FOUC; instant switch; light/dark parity test |
 | F-18 | Help: `?` tooltips, How-it-works, references, credits | MUST | M3–M4 | Every non-obvious control has a tooltip; references open only on click; nothing auto-opens |
 
-**v1.1 (planned after 1.0):** minimal palette editor + locks, ΔE00 summary/error
+**v1.1 (in progress):** minimal palette editor + locks, ΔE00 summary/error
 map/worst pixels, URL state. **Later/not planned for v1.x:** palette roles, contrast
 matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG exports, deep
 links, 12+ guide topics, batch/ZIP, CLI/WASM, animation, NES banks, Yliluoma, exact
@@ -763,26 +763,18 @@ Presets set controls; they do not lock them.
 - Index map length MUST equal `width * height`.
 - Every index MUST be `< K`.
 
-### 6.9 QA (`core/metrics/`) — post-1.0
+### 6.9 QA (`core/metrics/`)
 
-Not implemented in v1.0.0. Export validation and palette compliance cover the release
-contract; ΔE00, error maps, and worst-pixel reports are post-1.0 reference.
+Implemented in v1.1 on the preview.
 
-- Compute ΔE00 per pixel between the source color and the mapped palette color, skipping
-  transparent pixels. For preview, compute per occupied bin (weighted); for final export,
-  per pixel (or per exact unique color with weights, which is equivalent).
-- Store per-pixel ΔE in a `Float32Array` when the image is ≤ 2M px; otherwise accumulate
-  statistics and a downsampled map.
-- Mean, p95, max:
-  - p95 via a fixed histogram of ΔE in 0.1-wide buckets from 0 to 200 (2000 buckets);
-    values above 200 fall into the last bucket.
-  - Worst pixels: min-heap of the top 20 by ΔE, tie-break `(y, x)` ascending.
-- Error map: RGBA heatmap using a fixed 256-entry ramp; transparent pixels stay
-  transparent.
-- Compliance: count distinct emitted indices; verify all `< K`; verify transparent pixels
-  use only the declared index.
-- WCAG contrast: for ≤64 entries, compute the full matrix; for >64, compute pairs vs the
-  selected entry. No automatic pass/fail claim beyond the numeric ratios.
+- `computeQuality(original, mapped)` compares source preview RGB with mapped preview RGB
+  using CIEDE2000 and skips fully transparent source or mapped pixels.
+- Mean is exact; p95 uses a fixed histogram of 0.1-wide buckets from 0 to 200; max is exact.
+- Worst pixels: top 20 by ΔE00, tie-break `(y, x)` ascending.
+- Error map: RGBA heatmap with a fixed 256-entry ramp, clamped at 20 ΔE00; transparent
+  pixels stay transparent.
+- The UI measures the preview, not the full-resolution export. Contrast matrices remain
+  out of v1.1.
 
 ### 6.10 Palette swap preview
 
@@ -858,7 +850,7 @@ toolbar, export, canvas, palette, settings.
 - **Export column:** a narrow left column with the primary indexed-PNG action, strip,
   reduced PNG, HEX, and strip orientation. It does not take width from the canvas.
 - **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
-  switch) and Dither. Export is not in the rail; QA/Quality is not part of v1.0.
+  switch) and Dither. Export is not in the rail; the Quality section is collapsed by default.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
   above it shows the palette count and a sort select: source, hue dark→light, hue
   light→dark, lightness dark→light, lightness light→dark. The selected order controls
@@ -869,8 +861,9 @@ toolbar, export, canvas, palette, settings.
 - **Export panel:** a separate left column with the primary indexed-PNG action and the
   strip/reduced/HEX actions; above the canvas below 980 px. The column spans the canvas and
   palette rows, and the palette aligns with the canvas’s left edge.
-- **QA:** v1.0 reports export validation and palette compliance in the status line.
-  ΔE00, error maps, worst pixels, and contrast are post-1.0.
+- **Quality:** export validation and palette compliance stay in the status line. The
+  Quality section measures the current preview with CIEDE2000: mean, p95, max, a toggleable
+  error map, and the 20 worst pixels. Contrast matrices are out of v1.1.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
   with an `aria-label`/`title` carrying the full name. The document title uses the full
   name.
@@ -1482,7 +1475,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 
 | Path | Responsibility |
 |---|---|
-| `js/main.js` | Bootstrap, feature detection, worker creation, wiring |
+| `js/main.js` | Bootstrap, feature detection, worker creation, wiring, palette editor and QA panel state |
 | `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` before paint, set `data-theme` |
 | `js/ui/dom.js` | `el()`, `on()`, `raf()`, `debounce()`; no framework |
 | `js/ui/state.js` | Store: `getState`, `setState`, `subscribe`; single mutation point |
@@ -1492,7 +1485,6 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
-| `js/ui/qa-view.js` | ΔE stats, worst pixels, compliance, contrast, error-map toggle |
 | `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
 | `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
@@ -1530,7 +1522,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/quantize/octree.js` | `extractOctree` | `quantize-advanced.test.js` |
 | `js/core/quantize/kmeans.js` | `extractKMeans` | `quantize-advanced.test.js` |
 | `js/core/quantize/refine.js` | `refinePalette` (Lloyd refinement) | `quantize-advanced.test.js` |
-| `js/core/palette.js` | `createPalette`, `sortPalette`, `paletteHexList`, `paletteHash` | `palette.test.js` |
+| `js/core/palette.js` | `createPalette`, `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, `movePaletteEntry`, `setPaletteLock`, `sortPalette`, `paletteHexList`, `paletteHash` | `palette.test.js` |
 | `js/core/map.js` | `buildMapper`, `buildExactMap`, `mapPixels`, `mapIndices`, `indicesToRgba` | `map.test.js` |
 | `js/core/dither/index.js` | `ditherPixels(image, palette, dither)` | `dither.test.js` |
 | `js/core/dither/kernels.js` | Error-diffusion tables + Bayer generation | `dither.test.js` |
@@ -1553,10 +1545,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/formats/manifest.js` | QA report + manifest builders | `pipeline.test.js` |
 | `js/core/palettes/builtin.js` | Built-in palette data | `palettes.test.js` |
 | `js/core/palettes/import.js` | Format detection + dispatch | `palettes.test.js` |
-| `js/core/metrics/delta-e.js` | Per-pixel ΔE, stats, p95 | `metrics.test.js` |
-| `js/core/metrics/worst.js` | Top-N heap | `metrics.test.js` |
-| `js/core/metrics/contrast.js` | WCAG matrix | `metrics.test.js` |
-| `js/core/metrics/error-map.js` | RGBA heatmap | `metrics.test.js` |
+| `js/core/metrics/index.js` | `computeQuality`: per-pixel ΔE00 stats, p95, top 20, error map | `metrics.test.js` |
 | `js/core/pipeline.js` | `runPipeline(job)` stage composition | `pipeline.test.js`, `determinism.test.js` |
 | `js/core/log.js` | Optional debug logger; disabled in production | — |
 
@@ -1641,7 +1630,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
       No semantic roles in this release.
 - [x] Locks: locked entries survive sorting/removal and keep their palette identity;
       removal renumbers deterministically.
-- [ ] ΔE00 summary (mean/p95/max), error map, and worst-pixel list. No contrast matrix.
+- [x] ΔE00 summary (mean/p95/max), error map, and worst-pixel list. No contrast matrix.
 - [ ] URL state: serialize normalized parameters in the hash, restore on reload, never
       put image data in the URL.
 - **Exit:** `1.1.0` tagged; editor, locks, QA summary, and URL restore tested.
@@ -1760,6 +1749,7 @@ A change is done only when:
 | 2026-11-14 | Manual palette order uses ← / → buttons instead of drag-and-drop | Keyboard, touch, and screen-reader friendly; locked slots and neighbors block moves deterministically |
 | 2026-11-14 | Preview renders the transparent index as transparent for nearest-color mapping; Map mode can also select None | Matches the tRNS export; the reduced side clears the original beneath it so the checkerboard shows through |
 | 2026-11-14 | Palette editor keeps a 50-step undo/redo history | Covers colors, order, locks, selection, sort, and transparent index; Ctrl/Cmd+Z stays native inside text fields |
+| 2026-11-14 | QA measures the preview per pixel with CIEDE2000; p95 uses 0.1 buckets, worst list is top 20, error map clamps at 20 ΔE00 | Keeps measurement responsive and aligned with the preview; contrast and full QA reports stay out of v1.1 |
 
 ---
 
@@ -1770,8 +1760,8 @@ scope decision and a matching plan update.
 
 | Item | Status after 1.0 | Why parked |
 |---|---|---|
-| Minimal palette editor: remove/edit/add + locks | Planned v1.1 | Expands the palette model and UI; roles stay out |
-| ΔE00 summary, error map, worst pixels | Planned v1.1 | Reporting layer; strengthens the validated-handoff story; contrast stays out |
+| Minimal palette editor: remove/edit/add + locks | Implemented in v1.1 | Expands the palette model and UI; roles stay out |
+| ΔE00 summary, error map, worst pixels | Implemented in v1.1 | Reporting layer; strengthens the validated-handoff story; contrast stays out |
 | URL state (params only) | Planned v1.1 | Cheap reproducibility/shareability; no image data |
 | Palette roles | Candidate 1.2 | Design-token semantics are outside the game/art core |
 | Presets (Photo, Pixel Art, Retro, Game Sprite, UI) | Candidate 1.2 | Convenience; users can set the same controls manually |

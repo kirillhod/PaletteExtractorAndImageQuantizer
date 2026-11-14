@@ -287,6 +287,41 @@
           </div>
         </details>
 
+        <details class="peiq-rail-section" id="qa-section">
+          <summary>Quality</summary>
+          <div class="peiq-rail-section__body">
+            <div class="peiq-field">
+              <button class="peiq-btn peiq-btn--small" id="qa-run" type="button" disabled>Measure quality</button>
+              <p class="peiq-hint" id="qa-status">Compares the preview with the source using CIEDE2000.</p>
+            </div>
+            <div class="peiq-qa-stats" id="qa-stats" hidden>
+              <div class="peiq-qa-stat">
+                <span class="peiq-label">Mean ΔE00</span>
+                <strong id="qa-mean">—</strong>
+              </div>
+              <div class="peiq-qa-stat">
+                <span class="peiq-label">p95 ΔE00</span>
+                <strong id="qa-p95">—</strong>
+              </div>
+              <div class="peiq-qa-stat">
+                <span class="peiq-label">Max ΔE00</span>
+                <strong id="qa-max">—</strong>
+              </div>
+            </div>
+            <div class="peiq-check-field" id="qa-error-field" hidden>
+              <div class="peiq-check-row">
+                <label class="peiq-check-label" for="qa-error-toggle">
+                  <input class="peiq-check" id="qa-error-toggle" type="checkbox">
+                  Show error map
+                </label>
+                <button class="peiq-help" type="button" data-tooltip="CIEDE2000 heatmap of the preview. Dark blue is near zero error; yellow and red are the largest differences. Transparent pixels stay transparent.">?</button>
+              </div>
+            </div>
+            <canvas class="peiq-qa-map" id="qa-error-canvas" aria-label="CIEDE2000 error map" hidden></canvas>
+            <div class="peiq-qa-worst" id="qa-worst" hidden></div>
+          </div>
+        </details>
+
       </aside>
     </section>
   </main>
@@ -320,6 +355,8 @@
       <h2>Palette order and the preview</h2>
       <p>The preview and the Reduced PNG map every pixel to the available palette colors (nearest color, or a dithered mix). Moving a swatch changes the export order and index values, but not the set of colors, so the image looks the same. Adding, removing, or editing a color changes the available colors, so pixels may choose differently. Exact distance ties go to the lowest palette index, which is the only case where reordering can change the result.</p>
       <p>Indexed PNG keeps the same visible colors after a move, but its <code>PLTE</code> order and index map change. The transparent index follows the color that was chosen, not the slot.</p>
+      <h2>Quality</h2>
+      <p>The Quality section compares the current preview with the source using CIEDE2000. Mean is the average error, p95 shows the high end, and max is the worst pixel. The error map runs from dark blue near zero to red at 20 or more; the worst-pixel list gives coordinates and values. Measurements use the preview and skip fully transparent pixels; contrast checks are not part of this release.</p>
       <h2>Shortcuts</h2>
       <table class="peiq-shortcuts">
         <thead>
@@ -331,6 +368,7 @@
           <tr><td>Pinch</td><td>Zoom on touch</td></tr>
           <tr><td>Drag</td><td>Pan the image</td></tr>
           <tr><td><kbd>O</kbd></td><td>Toggle original</td></tr>
+          <tr><td><kbd>E</kbd></td><td>Toggle error map</td></tr>
           <tr><td><kbd>T</kbd></td><td>Cycle theme</td></tr>
           <tr><td><kbd>Ctrl/Cmd+Z</kbd></td><td>Undo palette edit</td></tr>
           <tr><td><kbd>Ctrl/Cmd+Shift+Z</kbd></td><td>Redo palette edit</td></tr>

@@ -2,6 +2,7 @@
 /// <reference lib="webworker" />
 
 import { runPreview, exportStrip, exportReduced, exportIndexed } from '../core/pipeline.js';
+import { computeQuality } from '../core/metrics/index.js';
 
 /** @type {Set<number>} */
 const cancelled = new Set();
@@ -117,6 +118,49 @@ self.onmessage = async (event) => {
           files: result.files,
         },
         result.files.map((file) => file.data),
+      );
+      return;
+    }
+
+    if (message.type === 'qa') {
+      const original = {
+        data: new Uint8ClampedArray(message.original.data),
+        width: message.width,
+        height: message.height,
+      };
+      const mapped = {
+        data: new Uint8ClampedArray(message.mapped.data),
+        width: message.width,
+        height: message.height,
+      };
+      const result = computeQuality({
+        original,
+        mapped,
+        width: message.width,
+        height: message.height,
+      });
+      if (cancelled.has(requestId)) {
+        cancelled.delete(requestId);
+        return;
+      }
+      self.postMessage(
+        {
+          type: 'quality',
+          requestId,
+          result: {
+            deltaE00Mean: result.deltaE00Mean,
+            deltaE00P95: result.deltaE00P95,
+            deltaE00Max: result.deltaE00Max,
+            pixels: result.pixels,
+            worstPixels: result.worstPixels,
+            errorMap: {
+              data: result.errorMap.data.buffer,
+              width: result.errorMap.width,
+              height: result.errorMap.height,
+            },
+          },
+        },
+        [result.errorMap.data.buffer],
       );
       return;
     }

@@ -6,6 +6,7 @@
  *   onToggleOriginal:() => void,
  *   onToggleHelp:() => void,
  *   onCycleTheme:() => void,
+ *   onToggleErrorMap:() => void,
  * }} handlers
  */
 export function initShortcuts(handlers) {
@@ -40,6 +41,10 @@ export function initShortcuts(handlers) {
       case 'o':
         event.preventDefault();
         handlers.onToggleOriginal();
+        break;
+      case 'e':
+        event.preventDefault();
+        handlers.onToggleErrorMap();
         break;
       case 't':
         event.preventDefault();

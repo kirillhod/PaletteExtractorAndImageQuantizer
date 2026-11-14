@@ -16,7 +16,7 @@ import {
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
-import { copyText, debounce } from './ui/dom.js';
+import { copyText, debounce, el } from './ui/dom.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
@@ -56,6 +56,16 @@ const paletteMoveLeft = /** @type {HTMLButtonElement|null} */ (document.getEleme
 const paletteMoveRight = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-move-right'));
 const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
+const qaRun = /** @type {HTMLButtonElement|null} */ (document.getElementById('qa-run'));
+const qaStatus = document.getElementById('qa-status');
+const qaStats = document.getElementById('qa-stats');
+const qaMean = document.getElementById('qa-mean');
+const qaP95 = document.getElementById('qa-p95');
+const qaMax = document.getElementById('qa-max');
+const qaErrorField = document.getElementById('qa-error-field');
+const qaErrorToggle = /** @type {HTMLInputElement|null} */ (document.getElementById('qa-error-toggle'));
+const qaErrorCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('qa-error-canvas'));
+const qaWorst = document.getElementById('qa-worst');
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
 const pickPreview = document.getElementById('palette-pick-preview');
@@ -119,6 +129,10 @@ let paletteEditMode = false;
 let selectedPaletteId = null;
 let pickingColor = false;
 const paletteHistory = { past: [], future: [], limit: 50 };
+/** @type {any|null} */
+let qaResult = null;
+let qaRequestId = 0;
+let qaBusy = false;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -214,21 +228,154 @@ function onWorkerMessage(event) {
     return;
   }
 
+  if (message.type === 'quality') {
+    if (message.requestId !== qaRequestId) return;
+    qaBusy = false;
+    qaResult = {
+      ...message.result,
+      errorMap: {
+        data: new Uint8ClampedArray(message.result.errorMap.data),
+        width: message.result.errorMap.width,
+        height: message.result.errorMap.height,
+      },
+    };
+    renderQuality();
+    return;
+  }
+
   if (message.type === 'error') {
-    if (message.requestId !== app.previewRequestId && message.requestId !== app.exportRequestId) {
+    if (
+      message.requestId !== app.previewRequestId &&
+      message.requestId !== app.exportRequestId &&
+      message.requestId !== qaRequestId
+    ) {
       return;
     }
     toast(message.message || 'Processing failed', 'error');
     setStatusMessage('Error');
     if (canvasEmpty) canvasEmpty.hidden = true;
-    if (message.requestId === app.exportRequestId) finishExport();
-    else updateExportState();
+    if (message.requestId === app.exportRequestId) {
+      finishExport();
+    } else if (message.requestId === qaRequestId) {
+      qaBusy = false;
+      if (qaStatus) qaStatus.textContent = 'Measurement failed. Try again.';
+      updateQualityAvailability();
+    } else {
+      updateExportState();
+    }
   }
 }
 
 function updateExportState() {
   setExportEnabled(app.hasResult && app.palette.length > 0 && !app.exportBusy);
   updatePaletteEditor();
+  updateQualityAvailability();
+}
+
+function updateQualityAvailability() {
+  if (qaRun) {
+    qaRun.disabled =
+      !app.hasResult ||
+      !app.reduced ||
+      app.palette.length === 0 ||
+      qaBusy ||
+      app.exportBusy;
+  }
+}
+
+function resetQuality(message = 'Compares the preview with the source using CIEDE2000.') {
+  if (qaRequestId) {
+    worker.postMessage({ type: 'cancel', requestId: qaRequestId });
+    qaRequestId = 0;
+  }
+  qaBusy = false;
+  qaResult = null;
+  if (qaStats) qaStats.hidden = true;
+  if (qaErrorField) qaErrorField.hidden = true;
+  if (qaErrorToggle) qaErrorToggle.checked = false;
+  if (qaErrorCanvas) qaErrorCanvas.hidden = true;
+  if (qaWorst) {
+    qaWorst.hidden = true;
+    qaWorst.replaceChildren();
+  }
+  if (qaStatus) qaStatus.textContent = message;
+  updateQualityAvailability();
+}
+
+function runQuality() {
+  if (!app.preview || !app.reduced || qaBusy || app.palette.length === 0) return;
+  resetQuality();
+  const id = nextRequestId++;
+  qaRequestId = id;
+  qaBusy = true;
+  if (qaStatus) qaStatus.textContent = 'Measuring CIEDE2000…';
+  updateQualityAvailability();
+  const original = new Uint8ClampedArray(app.preview.data);
+  const mapped = new Uint8ClampedArray(app.reduced.data);
+  worker.postMessage(
+    {
+      type: 'qa',
+      requestId: id,
+      width: app.preview.width,
+      height: app.preview.height,
+      original: { data: original.buffer },
+      mapped: { data: mapped.buffer },
+    },
+    [original.buffer, mapped.buffer],
+  );
+}
+
+function renderQuality() {
+  if (!qaResult) return;
+  if (qaStats) qaStats.hidden = false;
+  if (qaMean) qaMean.textContent = qaResult.deltaE00Mean.toFixed(2);
+  if (qaP95) qaP95.textContent = qaResult.deltaE00P95.toFixed(2);
+  if (qaMax) qaMax.textContent = qaResult.deltaE00Max.toFixed(2);
+  if (qaErrorField) qaErrorField.hidden = false;
+  if (qaErrorToggle) qaErrorToggle.checked = false;
+  if (qaErrorCanvas) qaErrorCanvas.hidden = true;
+  if (qaWorst) {
+    qaWorst.hidden = false;
+    qaWorst.replaceChildren();
+    qaWorst.append(el('p', { className: 'peiq-label', text: 'Worst pixels' }));
+    for (const pixel of qaResult.worstPixels) {
+      const row = el('div', { className: 'peiq-qa-worst__row' });
+      row.append(
+        el('span', { text: `${pixel.x}, ${pixel.y}` }),
+        el('span', { text: pixel.deltaE00.toFixed(2) }),
+      );
+      qaWorst.append(row);
+    }
+  }
+  if (qaStatus) qaStatus.textContent = `Measured ${qaResult.pixels} preview pixels.`;
+  updateQualityAvailability();
+}
+
+function showQualityMap() {
+  if (!qaResult || !qaErrorCanvas || !qaErrorToggle) return;
+  if (!qaErrorToggle.checked) {
+    qaErrorCanvas.hidden = true;
+    return;
+  }
+  const map = qaResult.errorMap;
+  qaErrorCanvas.width = map.width;
+  qaErrorCanvas.height = map.height;
+  const ctx = qaErrorCanvas.getContext('2d');
+  if (!ctx) return;
+  ctx.putImageData(
+    new ImageData(new Uint8ClampedArray(map.data), map.width, map.height),
+    0,
+    0,
+  );
+  qaErrorCanvas.hidden = false;
+}
+
+function toggleQualityMap() {
+  if (!qaResult || !qaErrorToggle) return;
+  const section = document.getElementById('qa-section');
+  if (section) section.open = true;
+  qaErrorToggle.checked = !qaErrorToggle.checked;
+  showQualityMap();
 }
 
 /** @param {string} label */
@@ -759,6 +906,8 @@ function populateBuiltinPalettes() {
 
 function processPreview() {
   if (!app.preview) return;
+  resetQuality();
+  if (qaRun) qaRun.disabled = true;
   if (mode === 'map' && fixedColors.length === 0) {
     if (!loadTargetPalette(paletteSelect?.value || 'pico-8')) return;
   }
@@ -1074,6 +1223,7 @@ initShortcuts({
   onToggleOriginal: toggleOriginalState,
   onToggleHelp: () => learn.toggle(),
   onCycleTheme: () => theme.cycle(),
+  onToggleErrorMap: toggleQualityMap,
 });
 
 document.getElementById('zoom-out')?.addEventListener('click', () => canvasView.zoomOut());
@@ -1097,6 +1247,8 @@ palettePick?.addEventListener('click', () => {
   if (pickingColor) stopPickMode();
   else startPickMode();
 });
+qaRun?.addEventListener('click', runQuality);
+qaErrorToggle?.addEventListener('change', showQualityMap);
 document.addEventListener('keydown', (event) => {
   if (!paletteEditMode || app.exportBusy) return;
   if (!(event.ctrlKey || event.metaKey) || event.altKey) return;

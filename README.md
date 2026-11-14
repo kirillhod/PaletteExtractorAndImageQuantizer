@@ -52,6 +52,13 @@ Constrain artwork to the palette your engine or hardware expects.
 
 *Map to a built-in palette and tune error diffusion until the result looks right.*
 
+### Check quality
+
+- CIEDE2000 **mean**, **p95**, and **max** between the source and the mapped preview.
+- Toggleable CIEDE2000 error map, from near-zero (dark blue) to 20+ (red).
+- The 20 worst pixels with their coordinates.
+- Measurements use the preview; fully transparent pixels are skipped.
+
 ### Export files your tools can use
 
 - **Indexed PNG** with `PLTE` and optional `tRNS`, using the smallest bit depth for the
