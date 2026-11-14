@@ -937,8 +937,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 ### 8.3 Canvas interactions
 
 - Before/after divider at 50%, draggable; keyboard: `role="slider"`, arrow keys ±1%.
-- Zoom: wheel at cursor, buttons, `F` fit, `1` 100%, `[`/`]` step.
-- Pan: drag (left or middle), space+drag.
+- Zoom: wheel at cursor, `+`/`−` toolbar buttons, pinch on touch, `F` fit, `1` 100%.
+- Pan: drag with one finger or the mouse; two-finger pinch also pans by its midpoint.
 - `O` toggles original.
 - Pixelated rendering at ≥100%; smooth below. Error-map and palette-swap previews are
   post-1.0.

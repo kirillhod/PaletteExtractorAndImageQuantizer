@@ -559,8 +559,10 @@ initShortcuts({
   onCycleTheme: () => theme.cycle(),
 });
 
+document.getElementById('zoom-out')?.addEventListener('click', () => canvasView.zoomOut());
 document.getElementById('fit-view')?.addEventListener('click', () => canvasView.fit());
 document.getElementById('zoom-100')?.addEventListener('click', () => canvasView.zoom100());
+document.getElementById('zoom-in')?.addEventListener('click', () => canvasView.zoomIn());
 sortSelect?.addEventListener('change', () => {
   sortOrder = sortSelect.value || 'source';
   renderCurrentPalette();
