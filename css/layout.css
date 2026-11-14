@@ -68,6 +68,7 @@
   min-height: 480px;
   max-height: 560px;
   height: calc(100dvh - 64px);
+  margin-inline: calc(var(--peiq-space-3) * -1);
   padding: var(--peiq-space-5) var(--peiq-space-3);
   text-align: center;
   color: var(--peiq-text-strong);
@@ -222,6 +223,7 @@
     height: auto;
     min-height: 0;
     max-height: none;
+    margin-inline: calc(var(--peiq-space-4) * -1);
     overflow: auto;
   }
 
