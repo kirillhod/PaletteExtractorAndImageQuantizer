@@ -88,6 +88,7 @@
   .peiq-stage__toolbar .peiq-btn {
     min-width: 44px;
     padding-inline: 8px;
+    font-size: 0.8125rem;
   }
 
   .peiq-toolbar-long {
