@@ -36,8 +36,8 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
-| UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 120 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, references |
+| UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
+| Tests | 130 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, references |
 | Version | `js/core/version.js`; `v1.2.0` tagged; M6 complete |
 | Next | M7: later / not planned for v1.x |
 
@@ -837,8 +837,8 @@ toolbar, export, canvas, palette, settings.
 └──────────────────┴─────────────────────────┴───────────────────┘
 ```
 
-- **Header:** brand on the left; theme toggle and Help on the right. No mode tabs, nav
-  links, download buttons, account controls, or secondary subbar.
+- **Header:** brand on the left; language toggle, theme toggle, and Help on the right. No
+  mode tabs, nav links, download buttons, account controls, or secondary subbar.
 - **Empty state:** full-width hero; no rail. After an image loads, the hero collapses into
   the stage and the rail appears.
 - **≥ 1220 px:** export `clamp(180–220 px)` + stage `1fr` + rail **360 px**.
@@ -948,6 +948,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   credits.
 - Header theme toggle cycles `auto → light → dark`; the preference persists in
   `localStorage` under `peiq.theme`; the current mode is announced.
+- Header language toggle cycles `auto → en → ru`; `peiq.locale` persists the mode and
+  `auto` follows the browser language. Switching updates the whole site in place.
 - A small `?` next to every non-obvious control opens a plain-language tooltip. Tooltip
   text is also the button’s `aria-label`.
 - Nothing auto-opens; `Esc` and outside-click close; focus returns to the trigger.
@@ -998,6 +1000,8 @@ Shortcuts are disabled while an input/textarea/select has focus.
 - The before/after divider is keyboard-operable with `role="slider"`.
 - The theme toggle is a 32 px button with a dynamic `aria-label` naming the current mode
   and the next action; theme changes are announced via a polite live region.
+- The language toggle is a compact text button with a dynamic `aria-label` naming the
+  current mode, effective language, and next action; changes are announced.
 - Both themes meet the same contrast requirements; no state is communicated by color alone.
 - Theme switching does not move focus or trigger layout shift.
 - Target: WCAG 2.2 AA for the UI itself (4.5:1 text, 3:1 components).
@@ -1094,6 +1098,28 @@ site. Learning is opt-in, contextual, and dismissible.
   invalid record, unavailable storage, or quota error falls back without trapping the user.
 - Imported palette contents and QA results are not part of the session.
 
+### 8.11 Localization
+
+- The site UI is fully available in English and Russian. Repository documentation stays
+  English; only the rendered site switches.
+- `js/content/messages.js` holds flat `en`/`ru` catalogs with matching key sets.
+  `js/core/i18n.js` owns locale detection, interpolation, and `Intl.PluralRules` plural
+  formatting; `js/ui/i18n.js` applies the catalog to the DOM and dispatches locale changes.
+- `peiq.locale` stores `auto | en | ru`. In `auto`, the first `ru`/`en` prefix in
+  `navigator.languages` wins, otherwise English; a `languagechange` event re-resolves it.
+  `js/theme-init.js` writes `<html lang>`, `data-locale`, and `data-locale-mode` before paint.
+- The header language toggle cycles `auto → en → ru`, sits next to the theme toggle, and
+  uses a compact text label (`AUTO`/`АВТО`, `EN`, `RU`). Switching updates static copy,
+  tooltips, dynamic status and toasts, palette state, Help references/credits, and the
+  document title without reloading.
+- Static HTML uses `data-i18n`, `data-i18n-tooltip`, `data-i18n-aria-label`,
+  `data-i18n-title`, `data-i18n-content`, and `data-i18n-placeholder`. Dynamic code uses
+  `t()` and `tp()`; no user-facing string bypasses the catalog. English is the fallback.
+- Russian uses the `one` / `few` / `many` / `other` plural forms for color, pixel, and HEX
+  counts. Both languages share the same layout; no per-language component overrides.
+- Reference titles, authors, and venues stay canonical; group headings, print notes, and
+  credit labels/descriptions are localized.
+
 ## 9. Performance
 
 ### 9.1 Budgets (desktop, worker, 1024² unless stated)
@@ -1160,7 +1186,7 @@ site. Learning is opt-in, contextual, and dismissible.
 
 | File | Covers |
 |---|---|
-| `color.test.js` ✅ | sRGB/Oklab/Lab, ΔE00 Sharma pairs, hex, contrast |
+| `color.test.js` | sRGB/Oklab/Lab, ΔE00 Sharma pairs, hex, contrast |
 | `version.test.js` | `APP_VERSION` matches `package.json`; `ALGORITHM_VERSION` positive |
 | `rng.test.js` | splitmix64 sequence, seed determinism |
 | `hash.test.js` | SHA-256/FNV fallback, canonical JSON |
@@ -1498,10 +1524,11 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | Path | Responsibility |
 |---|---|
 | `js/main.js` | Bootstrap, feature detection, worker creation, wiring, palette editor and QA panel state |
-| `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` before paint, set `data-theme` |
+| `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` and `peiq.locale` before paint, set theme and language attributes |
 | `js/ui/dom.js` | `el()`, `on()`, `raf()`, `debounce()`; no framework |
 | `js/ui/state.js` | Store: `getState`, `setState`, `subscribe`; single mutation point |
 | `js/ui/theme.js` | 3-state toggle, matchMedia listener, persistence, meta theme-color |
+| `js/ui/i18n.js` | Locale resolution, static `data-i18n` application, change events, error/detail localization |
 | `js/ui/strings.js` | User-facing strings and error templates |
 | `js/ui/dropzone.js` | File picker/drag/paste; decode + downscale preview |
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
@@ -1519,6 +1546,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 |---|---|
 | `js/content/learn.js` | Static guide topics: `{id, title, summary, paragraphs, links}` |
 | `js/content/references.js` | Canonical references `{id, title, authors, year, venue, url}`, plus credits; `url` is `null` for print-only papers |
+| `js/content/messages.js` | English and Russian flat UI catalogs; matching key sets and plural forms |
 
 ### Worker
 
@@ -1532,9 +1560,10 @@ Legend: **S** = signatures/notes, **T** = required tests.
 |---|---|---|
 | `js/core/types.js` | JSDoc typedefs only | — |
 | `js/core/version.js` | `APP_VERSION`, `ALGORITHM_VERSION` | sync check |
-| `js/core/color.js` ✅ | Color math, ΔE, hex, contrast | `color.test.js` |
+| `js/core/color.js` | Color math, ΔE, hex, contrast | `color.test.js` |
 | `js/core/rng.js` | `createRng(seed)`, `splitmix64`, `nextFloat` | `rng.test.js` |
 | `js/core/hash.js` | `sha256Hex`, `fnv1a64Hex`, `stableStringify` | `hash.test.js` |
+| `js/core/i18n.js` | Locale detection, interpolation, plural selection, number formatting; no DOM | `i18n.test.js` |
 | `js/core/histogram.js` | `buildHistogram(pixels, opts)` | `histogram.test.js` |
 | `js/core/quantize/index.js` | `extractPalette(hist, params)`, dispatch, refinement | `quantize.test.js`, `quantize-advanced.test.js` |
 | `js/core/quantize/popularity.js` | `extractPopularity` | `quantize.test.js` |
@@ -1582,7 +1611,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `assets/fonts/OFL.txt` | Inter SIL Open Font License |
 | `assets/favicon.svg` | Local orange-on-charcoal PEIQ mark |
 | `assets/README.md` | Provenance, font source/license, regeneration command |
-| `tools/dev-server.mjs` ✅ | Zero-dep static server |
+| `tools/dev-server.mjs` | Zero-dep static server |
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
 | `.github/workflows/ci.yml` | `node --test` on push/PR |
 | `.github/workflows/pages.yml` | Stage the static site and deploy it to GitHub Pages on `main` |
@@ -1711,7 +1740,7 @@ A change is done only when:
       this environment (documented limitation).
 - [x] Mobile 360 px and keyboard-only pass.
 - [x] Both themes: auto follows OS, toggle cycles, persists, no FOUC; `theme.test.js` parity green.
-- [x] Header shows only brand + theme + Help; no extra buttons.
+- [x] Header shows only brand + language/theme toggles + Help; no extra buttons.
 - [x] Export progress appears and concurrent export clicks are ignored.
 - [x] README complete; screenshots current.
 - [x] `APP_VERSION` and `package.json` = `1.0.0`.
@@ -1790,6 +1819,8 @@ A change is done only when:
 | 2026-11-14 | Release 1.2.0: M6 complete | Session restore, URL precedence, forget action, and 119 tests verified |
 | 2026-11-14 | Fix the extractor select mapping so Median cut reaches the median-cut implementation | The UI mapper omitted the median-cut case and silently ran Wu for that choice; `test/controls.test.js` locks the mapping |
 | 2026-11-14 | Refresh tooltips and Help for v1.2 and the current shortcuts | The drawer still described QA and URL state as upcoming; hints now cover octree, alpha preview behavior, dither scaling, error-map clamping, and `Ctrl/Cmd+Y`, and the text is shorter |
+| 2026-11-14 | Add complete English/Russian site localization with automatic detection and a header toggle | The site follows the browser language by default and switches in place; catalogs stay separate from English repository documentation, and Russian plural forms use `Intl.PluralRules` |
+| 2026-11-14 | Remove emoji from repository documentation and add a no-emoji rule | Plain-text documentation is easier to scan and diff; emoji are allowed only when explicitly requested |
 
 ---
 

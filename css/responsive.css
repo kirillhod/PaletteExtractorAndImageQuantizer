@@ -79,10 +79,11 @@
   }
 
   .peiq-stage__toolbar .peiq-icon-btn {
-    width: 44px;
+    width: auto;
     min-width: 44px;
-    padding: 0;
-    font-size: 1rem;
+    padding: 0 6px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
   }
 
   .peiq-stage__toolbar .peiq-btn {

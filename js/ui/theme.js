@@ -1,4 +1,6 @@
 // @ts-check
+import { t } from './i18n.js';
+
 const STORAGE_KEY = 'peiq.theme';
 /** @type {const} */
 const MODES = ['auto', 'light', 'dark'];
@@ -67,7 +69,12 @@ function applyMode(mode, options = {}) {
 
   if (announce) {
     const live = document.getElementById('live-region');
-    if (live) live.textContent = `Theme: ${mode} (${theme}).`;
+    if (live) {
+      live.textContent = t('theme.announce', {
+        mode: t(`theme.mode.${mode}`),
+        theme: t(`theme.name.${theme}`),
+      });
+    }
   }
 
   window.requestAnimationFrame(() => {
@@ -79,13 +86,7 @@ function applyMode(mode, options = {}) {
  * @param {'auto'|'light'|'dark'} mode
  */
 function labelFor(mode) {
-  if (mode === 'auto') {
-    return 'Theme: automatic (follows system). Activate for light theme.';
-  }
-  if (mode === 'light') {
-    return 'Theme: light. Activate for dark theme.';
-  }
-  return 'Theme: dark. Activate for automatic theme.';
+  return t(`theme.label.${mode}`);
 }
 
 export function initTheme() {
@@ -99,6 +100,10 @@ export function initTheme() {
   const media = window.matchMedia?.('(prefers-color-scheme: dark)');
   media?.addEventListener?.('change', () => {
     if (readMode() === 'auto') applyMode('auto', { persist: false, announce: false });
+  });
+
+  window.addEventListener('peiqq:localechange', () => {
+    if (button) button.setAttribute('aria-label', labelFor(readMode()));
   });
 
   return {

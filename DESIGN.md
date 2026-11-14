@@ -64,7 +64,8 @@ empty state and Guide sections, because it is editorial, not functional.
 - **Two complete themes.** Every surface, text, border, shadow, input, semantic, and
   checkerboard token is defined in both dark and light. Components never rely on a value
   from the other theme; theme switching is instant and leaves no half-light state.
-- **Minimal header.** Brand on the left; only the theme toggle and Help on the right.
+- **Minimal header.** Brand on the left; only the language toggle, theme toggle, and Help on
+  the right.
   No mode tabs, download buttons, nav links, or account controls in the header. Mode,
   palette and dither settings live in the right rail; export is its own left
   column on desktop (above the canvas on mobile); image actions live in the stage
@@ -708,9 +709,9 @@ background: use a canvas-generated palette mosaic or the CSS gradients below.
 
 ### Header
 
-Minimal by design: brand on the left; only the theme toggle and Help on the right. No
-nav links, mode tabs, download buttons, account controls, or secondary subbar. Mode and
-export live in the right rail; image actions live in the stage toolbar.
+Minimal by design: brand on the left; only the language toggle, theme toggle, and Help on
+the right. No nav links, mode tabs, download buttons, account controls, or secondary
+subbar. Mode and export live in the right rail; image actions live in the stage toolbar.
 
 ```css
 .peiq-header {
@@ -802,6 +803,18 @@ Example labels:
 | `auto` | half-circle | “Theme: automatic (follows system). Activate for light theme.” |
 | `light` | sun | “Theme: light. Activate for dark theme.” |
 | `dark` | moon | “Theme: dark. Activate for automatic theme.” |
+
+### Language toggle
+
+A compact text button sits next to the theme toggle and cycles **auto → en → ru**. It
+shows `AUTO` / `АВТО`, `EN`, or `RU` in 11 px bold type, with a 40 px minimum width and
+the same 32 px height, hover, active, and focus tokens as the theme toggle. No dropdown.
+
+`peiq.locale` stores `auto | en | ru`; `auto` follows `navigator.languages`, while manual
+modes persist. The effective locale is written to `<html lang>` and `data-locale` before
+paint by `js/theme-init.js`. The accessible label names the mode, the effective language,
+and the next action. Both languages use the same layout; no per-language component
+overrides.
 
 ### Links
 
@@ -1194,8 +1207,8 @@ screen block.
   palette strip + status), and a 360/340 px right rail (palette settings, dither). The
   export column spans the canvas and palette rows; the palette aligns with the canvas’s
   left edge. Below 980 px the order is toolbar, export, canvas, palette, settings.
-- **Header:** 64 px; brand left; theme toggle + Help right. No subbar, no nav links, no
-  download button in the header.
+- **Header:** 64 px; brand left; language toggle, theme toggle, and Help right. No subbar,
+  no nav links, no download button in the header.
 - Stage actions (change image, zoom, fit, original) live in the stage toolbar.
 - The palette strip sits directly under the canvas; the status line reports dimensions,
   unique colors, timings, and export validation.
@@ -1432,30 +1445,31 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
   rail and a long palette strip may scroll.
 - Put export actions in their own left column, not inside the settings rail or under the
   canvas; the palette starts where the canvas starts, to the right of export.
-- Keep the header to brand + theme toggle + Help; settings and export live below it.
+- Keep the header to brand + language toggle + theme toggle + Help; settings and export
+  live below it.
 - Switch themes instantly; do not cross-fade colors between themes.
 - Respect `prefers-reduced-motion`; keep every interaction keyboard-operable.
 
 ### Don't
 
-- ❌ Copy Blender’s logo, wordmark, artwork, screenshots, CSS, or theme files.
-- ❌ Use external images, videos, icon packs, Google Fonts, or any CDN asset.
-- ❌ Turn the whole UI orange; orange is the brand mark, not the interaction color.
-- ❌ Use white text on the bright blue gradient; use `--peiq-text-on-accent`.
-- ❌ Use the release page’s per-feature pastel colors (pink/purple/green) in the tool.
-- ❌ Put a marketing hero above the tool or push the canvas below the fold.
-- ❌ Use glassmorphism, gradient text, neon glows, text shadows, or heavy shadows.
-- ❌ Use scroll-jacking, parallax, pinned sections, GSAP/Lenis, or a custom cursor.
-- ❌ Animate `width`, `height`, `top`, or `left`; animate transforms instead.
-- ❌ Use `filter: blur()` on moving elements or large `backdrop-filter` surfaces.
-- ❌ Use emoji as UI icons.
-- ❌ Hard-code hex values in components or JS; use CSS variables.
-- ❌ Add a border to every card; the site uses surface steps and shadow.
-- ❌ Use color alone to communicate state; pair it with text or an icon.
-- ❌ Mix tokens from the two themes (dark surface + light text, or the reverse).
-- ❌ Add mode tabs, download buttons, nav links, or account controls to the header.
-- ❌ Use per-theme component overrides; theme changes go through tokens only.
-- ❌ Animate a color cross-fade when switching themes; switch instantly.
+- Copy Blender’s logo, wordmark, artwork, screenshots, CSS, or theme files.
+- Use external images, videos, icon packs, Google Fonts, or any CDN asset.
+- Turn the whole UI orange; orange is the brand mark, not the interaction color.
+- Use white text on the bright blue gradient; use `--peiq-text-on-accent`.
+- Use the release page’s per-feature pastel colors (pink/purple/green) in the tool.
+- Put a marketing hero above the tool or push the canvas below the fold.
+- Use glassmorphism, gradient text, neon glows, text shadows, or heavy shadows.
+- Use scroll-jacking, parallax, pinned sections, GSAP/Lenis, or a custom cursor.
+- Animate `width`, `height`, `top`, or `left`; animate transforms instead.
+- Use `filter: blur()` on moving elements or large `backdrop-filter` surfaces.
+- Use emoji as UI icons.
+- Hard-code hex values in components or JS; use CSS variables.
+- Add a border to every card; the site uses surface steps and shadow.
+- Use color alone to communicate state; pair it with text or an icon.
+- Mix tokens from the two themes (dark surface + light text, or the reverse).
+- Add mode tabs, download buttons, nav links, or account controls to the header.
+- Use per-theme component overrides; theme changes go through tokens only.
+- Animate a color cross-fade when switching themes; switch instantly.
 
 ---
 
@@ -1477,7 +1491,8 @@ The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale cha
 
 **Collapsing strategy**
 
-- Header: full public name ≥ 980 px; `PEIQ` below. Theme toggle and Help stay visible.
+- Header: full public name ≥ 980 px; `PEIQ` below. Language toggle, theme toggle, and
+  Help stay visible.
 - No mode tabs in the header. The Extract/Map switch lives inside the Palette rail section.
 - The rail is a stack of collapsible sections; below 980 px the order is toolbar, export,
   canvas, palette, settings
@@ -1527,6 +1542,8 @@ img, canvas, video { max-width: 100%; }
 - `prefers-reduced-motion` is a complete fallback.
 - The theme toggle has a dynamic `aria-label` naming the current mode and the next action;
   changes are announced via a polite live region.
+- The language toggle names the current mode, effective language, and next action; changes
+  are announced and update `<html lang>`.
 - The Help drawer is a labelled dialog; focus moves in on open and returns on close;
   `Esc` closes it.
 
@@ -1586,7 +1603,7 @@ inspected locally. The following values were extracted, not guessed:
 | Area | Site | PEIQ | Why |
 |---|---|---|---|
 | Theme | Light-first + dark override | Two complete themes, auto + 3-state toggle | User requirement; no mixed tokens |
-| Header | Nav + secondary nav | Brand + theme toggle + Help only | Cleaner tool header |
+| Header | Nav + secondary nav | Brand + language/theme toggles + Help only | Cleaner tool header |
 | Accent use | Blue UI + orange brand | Same | Exact brand logic |
 | Button text | White on blue gradient | Dark text on blue gradient | WCAG AA; site is ≈ 2.9:1 |
 | Root font size | `62.5%` (10 px) | 16 px with equivalent rem | Avoid the 62.5% accessibility hack |

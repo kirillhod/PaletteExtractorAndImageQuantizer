@@ -1,6 +1,7 @@
 // @ts-check
 import { copyText, el } from './dom.js';
-import { toast } from './status.js';
+import { t } from './i18n.js';
+import { toastKey } from './status.js';
 
 /**
  * @param {{ id:number, hex:string, locked?:boolean }[]} palette
@@ -19,8 +20,10 @@ export function renderPalette(palette, host, options = {}) {
   for (const entry of palette) {
     const selected = editMode && entry.id === selectedId;
     const locked = entry.locked === true;
-    const action = editMode ? 'Edit' : 'Copy';
-    const suffix = locked ? ' (locked)' : '';
+    const action = editMode
+      ? t('palette.swatchEdit', { hex: entry.hex })
+      : t('palette.swatchCopy', { hex: entry.hex });
+    const suffix = locked ? t('palette.lockedSuffix') : '';
     const button = el('button', {
       className: [
         'peiq-swatch',
@@ -29,8 +32,8 @@ export function renderPalette(palette, host, options = {}) {
       ].filter(Boolean).join(' '),
       attrs: {
         type: 'button',
-        title: `${action} ${entry.hex}${suffix}`,
-        'aria-label': `${action} ${entry.hex}${suffix}`,
+        title: `${action}${suffix}`,
+        'aria-label': `${action}${suffix}`,
         ...(editMode ? { 'aria-pressed': String(selected) } : {}),
       },
     });
@@ -42,8 +45,8 @@ export function renderPalette(palette, host, options = {}) {
         return;
       }
       copyText(entry.hex)
-        .then(() => toast(`Copied ${entry.hex}`, 'success'))
-        .catch(() => toast('Clipboard is unavailable', 'error'));
+        .then(() => toastKey('toast.copiedHex', { hex: entry.hex }, 'success'))
+        .catch(() => toastKey('toast.clipboardUnavailable', {}, 'error'));
     });
     host.append(button);
   }

@@ -1,4 +1,6 @@
 // @ts-check
+import { t } from './i18n.js';
+
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 
 /**
@@ -18,11 +20,11 @@ export function initDropzone(handlers) {
   function accept(file) {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      handlers.onError('That file is not an image. Use PNG, JPEG, WebP, GIF, BMP, or AVIF.');
+      handlers.onError(t('error.notImage'));
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      handlers.onError('This file is larger than 64 MiB. Use a smaller image.');
+      handlers.onError(t('error.fileTooLarge'));
       return;
     }
     handlers.onFile(file);

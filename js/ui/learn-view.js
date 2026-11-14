@@ -1,5 +1,16 @@
 // @ts-check
 import { CREDITS, REFERENCE_GROUPS } from '../content/references.js';
+import { t } from './i18n.js';
+
+/**
+ * @param {string} key
+ * @param {string} fallback
+ * @returns {string}
+ */
+function messageOr(key, fallback) {
+  const value = t(key);
+  return value === key ? fallback : value;
+}
 
 /**
  * @returns {{ toggle:() => void, close:() => void, isOpen:() => boolean }}
@@ -22,7 +33,7 @@ export function initLearn() {
     drawer.setAttribute('data-open', String(open));
     drawer.setAttribute('aria-hidden', String(!open));
     helpButton.setAttribute('aria-expanded', String(open));
-    helpButton.setAttribute('aria-label', open ? 'Close help' : 'Open help');
+    helpButton.setAttribute('aria-label', open ? t('help.closeAria') : t('help.openAria'));
     if (open) {
       lastFocus = /** @type {HTMLElement|null} */ (document.activeElement);
       drawer.removeAttribute('inert');
@@ -68,6 +79,11 @@ export function initLearn() {
     }
   });
 
+  window.addEventListener('peiqq:localechange', () => {
+    renderHelpContent();
+    helpButton.setAttribute('aria-label', isOpen() ? t('help.closeAria') : t('help.openAria'));
+  });
+
   return { toggle, close, isOpen };
 }
 
@@ -78,10 +94,11 @@ export function initLearn() {
 function renderHelpContent() {
   const references = document.getElementById('help-references');
   if (references) {
+    references.replaceChildren();
     for (const group of REFERENCE_GROUPS) {
       const heading = document.createElement('h3');
       heading.className = 'peiq-reference-group';
-      heading.textContent = group.title;
+      heading.textContent = messageOr(`references.group.${group.id}`, group.title);
 
       const list = document.createElement('ul');
       list.className = 'peiq-references';
@@ -102,7 +119,7 @@ function renderHelpContent() {
 
         const meta = document.createElement('span');
         meta.className = 'peiq-reference-meta';
-        const printNote = reference.url ? '' : ' · print publication';
+        const printNote = reference.url ? '' : t('references.printNote');
         meta.textContent = `${reference.authors} (${reference.year}) · ${reference.venue}${printNote}`;
         item.append(meta);
         list.append(item);
@@ -114,16 +131,19 @@ function renderHelpContent() {
 
   const credits = document.getElementById('help-credits');
   if (credits) {
+    credits.replaceChildren();
     for (const credit of CREDITS) {
       const term = document.createElement('dt');
-      term.textContent = credit.label;
+      term.textContent = messageOr(`credits.${credit.id}.label`, credit.label);
       const detail = document.createElement('dd');
-      detail.append(document.createTextNode(credit.text));
+      detail.append(
+        document.createTextNode(messageOr(`credits.${credit.id}.text`, credit.text)),
+      );
       if (credit.link) {
         detail.append(document.createTextNode(' '));
         const link = document.createElement('a');
         link.href = credit.link.href;
-        link.textContent = credit.link.text;
+        link.textContent = messageOr(`credits.${credit.id}.link`, credit.link.text);
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         detail.append(link);

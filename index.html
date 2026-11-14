@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en" data-theme="dark" data-theme-mode="auto">
+<html lang="en" data-theme="dark" data-theme-mode="auto" data-locale="en" data-locale-mode="auto">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PaletteExtractorAndImageQuantizer — palette compiler</title>
-  <meta name="description" content="Extract a palette from any image, compare the result, and export a validated palette strip or reduced PNG. Runs locally in your browser.">
+  <title data-i18n="app.title">PaletteExtractorAndImageQuantizer — palette compiler</title>
+  <meta name="description" data-i18n-content="app.description" content="Extract a palette from any image, compare the result, and export a validated palette strip or reduced PNG. Runs locally in your browser.">
   <meta name="google-site-verification" content="7GRPOEldO1gzJNYoaPHqqSpE46MbGUhg77JSKouiudM" />
   <meta name="theme-color" content="#1c1e22">
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
@@ -19,12 +19,13 @@
 </head>
 <body>
   <header class="peiq-header" id="header">
-    <a class="peiq-header__brand" href="./" aria-label="PaletteExtractorAndImageQuantizer home">
+    <a class="peiq-header__brand" href="./" data-i18n-aria-label="header.homeAria" aria-label="PaletteExtractorAndImageQuantizer home">
       <span class="peiq-header__brand-dot" aria-hidden="true"></span>
       <span class="peiq-header__name-long">PaletteExtractorAndImageQuantizer</span>
       <span class="peiq-header__name-short" aria-hidden="true">PEIQ</span>
     </a>
     <div class="peiq-header__actions">
+      <button class="peiq-locale-toggle" id="locale-toggle" type="button" data-mode="auto" aria-label="Language: automatic (English). Activate for English mode." title="Language: automatic (English). Activate for English mode.">AUTO</button>
       <button class="peiq-theme-toggle" id="theme-toggle" type="button" data-mode="auto" aria-label="Theme: automatic (follows system). Activate for light theme.">
         <svg class="peiq-theme-toggle__icon peiq-icon-auto" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="8"></circle>
@@ -44,14 +45,14 @@
 
   <main class="peiq-shell">
     <section class="peiq-hero" id="hero">
-      <p class="peiq-eyebrow">Local-first palette compiler</p>
-      <h1 class="peiq-hero__title">Turn any image into a usable palette.</h1>
-      <p class="peiq-hero__subtitle">Drop an image, choose how many colors you need, compare the result, and export a validated palette strip or a reduced PNG. Nothing leaves your device.</p>
+      <p class="peiq-eyebrow" data-i18n="hero.eyebrow">Local-first palette compiler</p>
+      <h1 class="peiq-hero__title" data-i18n="hero.title">Turn any image into a usable palette.</h1>
+      <p class="peiq-hero__subtitle" data-i18n="hero.subtitle">Drop an image, choose how many colors you need, compare the result, and export a validated palette strip or a reduced PNG. Nothing leaves your device.</p>
       <div class="peiq-hero__drop" id="drop-target">
-        <p class="peiq-hero__drop-title">Drop an image here</p>
-        <p class="peiq-hint">or paste with <kbd class="peiq-kbd">Ctrl/Cmd+V</kbd></p>
-        <button class="peiq-btn peiq-btn--primary" id="pick-image" type="button">Choose an image</button>
-        <p class="peiq-hint">PNG, JPEG, WebP, GIF, BMP, AVIF · up to 16.7 MP · processed locally</p>
+        <p class="peiq-hero__drop-title" data-i18n="hero.dropTitle">Drop an image here</p>
+        <p class="peiq-hint"><span data-i18n="hero.paste">or paste with</span> <kbd class="peiq-kbd">Ctrl/Cmd+V</kbd></p>
+        <button class="peiq-btn peiq-btn--primary" id="pick-image" type="button" data-i18n="hero.choose">Choose an image</button>
+        <p class="peiq-hint" data-i18n="hero.formats">PNG, JPEG, WebP, GIF, BMP, AVIF · up to 16.7 MP · processed locally</p>
       </div>
       <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif" hidden>
     </section>
@@ -59,146 +60,146 @@
     <section class="peiq-workspace" id="workspace" hidden>
         <div class="peiq-export-panel" aria-labelledby="export-heading">
           <div class="peiq-export-bar">
-            <span class="peiq-label" id="export-heading">Export</span>
-            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" aria-label="Download indexed PNG" disabled>Indexed PNG</button>
-            <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" disabled>Palette strip</button>
-            <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" disabled>Reduced PNG</button>
-            <button class="peiq-btn peiq-btn--small" id="copy-hex" type="button" disabled>Copy HEX</button>
+            <span class="peiq-label" id="export-heading" data-i18n="export.heading">Export</span>
+            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" data-i18n-aria-label="export.indexedAria" aria-label="Download indexed PNG" data-i18n="export.indexed" disabled>Indexed PNG</button>
+            <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" data-i18n="export.strip" disabled>Palette strip</button>
+            <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" data-i18n="export.reduced" disabled>Reduced PNG</button>
+            <button class="peiq-btn peiq-btn--small" id="copy-hex" type="button" data-i18n="export.copyHex" disabled>Copy HEX</button>
             <div class="peiq-export-option">
-              <label class="peiq-label" for="strip-orientation">Strip</label>
+              <label class="peiq-label" for="strip-orientation" data-i18n="export.stripLabel">Strip</label>
               <select class="peiq-select peiq-select--compact" id="strip-orientation">
                 <option value="Nx1">N×1</option>
                 <option value="1xN">1×N</option>
               </select>
-              <button class="peiq-help" type="button" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips; a transparent index adds alpha.">?</button>
+              <button class="peiq-help" type="button" data-i18n-tooltip="export.stripTooltip" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips; a transparent index adds alpha.">?</button>
             </div>
           </div>
           <div class="peiq-export-palette">
-            <label class="peiq-label" for="palette-format">File</label>
+            <label class="peiq-label" for="palette-format" data-i18n="export.file">File</label>
             <select class="peiq-select peiq-select--compact" id="palette-format">
               <option value="hex">.hex</option>
               <option value="gpl">.gpl</option>
               <option value="json">.json</option>
             </select>
-            <button class="peiq-btn peiq-btn--small" id="export-palette" type="button" disabled>Save</button>
+            <button class="peiq-btn peiq-btn--small" id="export-palette" type="button" data-i18n="export.save" disabled>Save</button>
           </div>
           <div class="peiq-export-progress" id="export-progress" role="status" aria-live="polite" hidden>
             <div class="peiq-export-progress__track" aria-hidden="true"><span></span></div>
-            <p class="peiq-export-progress__label" id="export-progress-label">Preparing export…</p>
+            <p class="peiq-export-progress__label" id="export-progress-label" data-i18n="export.preparing">Preparing export…</p>
           </div>
           <div class="peiq-download-result" id="download-result" hidden></div>
-          <p class="peiq-hint">Decoded or parsed and checked before Save.</p>
+          <p class="peiq-hint" data-i18n="export.checkHint">Decoded or parsed and checked before Save.</p>
         </div>
 
         <div class="peiq-stage__toolbar">
-          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="change-image" type="button" aria-label="Change image">
-            <span class="peiq-toolbar-long">Change image</span>
-            <span class="peiq-toolbar-short" aria-hidden="true">Image</span>
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="change-image" type="button" data-i18n-aria-label="toolbar.changeImageAria" aria-label="Change image">
+            <span class="peiq-toolbar-long" data-i18n="toolbar.changeImage">Change image</span>
+            <span class="peiq-toolbar-short" aria-hidden="true" data-i18n="toolbar.changeImageShort">Image</span>
           </button>
           <span class="peiq-stage__spacer"></span>
-          <button class="peiq-icon-btn" id="zoom-out" type="button" aria-label="Zoom out">−</button>
-          <button class="peiq-icon-btn" id="fit-view" type="button" aria-label="Fit image to view">Fit</button>
-          <button class="peiq-icon-btn" id="zoom-100" type="button" aria-label="Zoom to 100%">100%</button>
-          <button class="peiq-icon-btn" id="zoom-in" type="button" aria-label="Zoom in">+</button>
-          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" aria-label="Toggle original" aria-pressed="false">
-            <span class="peiq-toolbar-long" id="toggle-original-label">Original</span>
-            <span class="peiq-toolbar-short" aria-hidden="true" id="toggle-original-short">Original</span>
+          <button class="peiq-icon-btn" id="zoom-out" type="button" data-i18n-aria-label="toolbar.zoomOut" aria-label="Zoom out">−</button>
+          <button class="peiq-icon-btn" id="fit-view" type="button" data-i18n-aria-label="toolbar.fitAria" aria-label="Fit image to view" data-i18n="toolbar.fit">Fit</button>
+          <button class="peiq-icon-btn" id="zoom-100" type="button" data-i18n-aria-label="toolbar.zoom100Aria" aria-label="Zoom to 100%">100%</button>
+          <button class="peiq-icon-btn" id="zoom-in" type="button" data-i18n-aria-label="toolbar.zoomIn" aria-label="Zoom in">+</button>
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" data-i18n-aria-label="toolbar.originalAria" aria-label="Toggle original" aria-pressed="false">
+            <span class="peiq-toolbar-long" id="toggle-original-label" data-i18n="toolbar.original">Original</span>
+            <span class="peiq-toolbar-short" aria-hidden="true" id="toggle-original-short" data-i18n="toolbar.originalShort">Original</span>
           </button>
         </div>
 
         <div class="peiq-canvas-frame peiq-canvas-frame--pixelated" id="canvas-frame">
-          <canvas id="view-canvas" aria-label="Image preview. Left is the original, right is the palette result."></canvas>
-          <div class="peiq-divider" id="divider" role="slider" tabindex="0" aria-label="Before and after divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+          <canvas id="view-canvas" data-i18n-aria-label="canvas.aria" aria-label="Image preview. Left is the original, right is the palette result."></canvas>
+          <div class="peiq-divider" id="divider" role="slider" tabindex="0" data-i18n-aria-label="divider.aria" aria-label="Before and after divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
             <span class="peiq-divider__handle"></span>
           </div>
-          <div class="peiq-canvas__empty" id="canvas-empty" hidden>Processing…</div>
+          <div class="peiq-canvas__empty" id="canvas-empty" data-i18n="canvas.processing" hidden>Processing…</div>
         </div>
 
         <div class="peiq-palette-panel">
           <div class="peiq-palette-bar">
             <div class="peiq-palette-label">
-              <span class="peiq-label">Palette</span>
-              <button class="peiq-help" type="button" data-tooltip="Reorders swatches, the HEX list, and exported indices; the color set stays the same. Pixels only change when two colors tie exactly. Locked colors keep their slot; use the editor arrows in Manual order.">?</button>
+              <span class="peiq-label" data-i18n="palette.label">Palette</span>
+              <button class="peiq-help" type="button" data-i18n-tooltip="palette.tooltip" data-tooltip="Reorders swatches, the HEX list, and exported indices; the color set stays the same. Pixels only change when two colors tie exactly. Locked colors keep their slot; use the editor arrows in Manual order.">?</button>
             </div>
             <label class="peiq-palette-sort" for="palette-sort">
-              <span class="peiq-label">Sort</span>
+              <span class="peiq-label" data-i18n="palette.sort">Sort</span>
               <select class="peiq-select peiq-select--compact" id="palette-sort" disabled>
-                <option value="source">Source order</option>
-                <option value="manual">Manual order</option>
-                <option value="hue-asc">Hue · dark → light</option>
-                <option value="hue-desc">Hue · light → dark</option>
-                <option value="lightness-asc">Lightness · dark → light</option>
-                <option value="lightness-desc">Lightness · light → dark</option>
+                <option value="source" data-i18n="palette.sort.source">Source order</option>
+                <option value="manual" data-i18n="palette.sort.manual">Manual order</option>
+                <option value="hue-asc" data-i18n="palette.sort.hueAsc">Hue · dark → light</option>
+                <option value="hue-desc" data-i18n="palette.sort.hueDesc">Hue · light → dark</option>
+                <option value="lightness-asc" data-i18n="palette.sort.lightnessAsc">Lightness · dark → light</option>
+                <option value="lightness-desc" data-i18n="palette.sort.lightnessDesc">Lightness · light → dark</option>
               </select>
             </label>
-            <span class="peiq-hint" id="palette-count">0 colors</span>
-            <button class="peiq-btn peiq-btn--small" id="palette-edit" type="button" aria-pressed="false" disabled>Edit</button>
+            <span class="peiq-hint" id="palette-count" data-i18n="palette.countZero">0 colors</span>
+            <button class="peiq-btn peiq-btn--small" id="palette-edit" type="button" aria-pressed="false" data-i18n="palette.edit" disabled>Edit</button>
           </div>
-          <div class="peiq-palette-strip" id="palette-strip" aria-label="Current palette"></div>
+          <div class="peiq-palette-strip" id="palette-strip" data-i18n-aria-label="palette.currentAria" aria-label="Current palette"></div>
           <div class="peiq-palette-editor" id="palette-editor" hidden>
             <label class="peiq-label" for="palette-hex">HEX</label>
             <input class="peiq-input" id="palette-hex" type="text" autocomplete="off" spellcheck="false" placeholder="#rrggbb" aria-describedby="palette-edit-hint">
-            <button class="peiq-btn peiq-btn--small" id="palette-pick" type="button" aria-pressed="false" disabled>Pick</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" disabled>Apply</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" disabled>Add</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-move-left" type="button" aria-label="Move color left" title="Move color left" disabled>←</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" aria-label="Move color right" title="Move color right" disabled>→</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" disabled>Remove</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" disabled>Lock</button>
-            <p class="peiq-hint" id="palette-edit-hint">Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.</p>
+            <button class="peiq-btn peiq-btn--small" id="palette-pick" type="button" aria-pressed="false" data-i18n="palette.pick" disabled>Pick</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" data-i18n="palette.apply" disabled>Apply</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" data-i18n="palette.add" disabled>Add</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-move-left" type="button" data-i18n-aria-label="palette.moveLeft" data-i18n-title="palette.moveLeft" aria-label="Move color left" title="Move color left" disabled>←</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" data-i18n-aria-label="palette.moveRight" data-i18n-title="palette.moveRight" aria-label="Move color right" title="Move color right" disabled>→</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" data-i18n="palette.remove" disabled>Remove</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" data-i18n="palette.lock" disabled>Lock</button>
+            <p class="peiq-hint" id="palette-edit-hint" data-i18n="palette.editHint">Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.</p>
           </div>
         </div>
 
         <div class="peiq-statusbar" id="statusbar"></div>
 
-      <aside class="peiq-rail" aria-label="Controls">
+      <aside class="peiq-rail" data-i18n-aria-label="rail.aria" aria-label="Controls">
         <details class="peiq-rail-section" open>
-          <summary>Palette</summary>
+          <summary data-i18n="rail.palette">Palette</summary>
           <div class="peiq-rail-section__body">
             <div class="peiq-field">
               <div class="peiq-label-row">
-                <span class="peiq-label">Mode</span>
-                <button class="peiq-help" type="button" data-tooltip="Extract builds a palette from this image. Map applies a fixed palette instead.">?</button>
+                <span class="peiq-label" data-i18n="mode.label">Mode</span>
+                <button class="peiq-help" type="button" data-i18n-tooltip="mode.tooltip" data-tooltip="Extract builds a palette from this image. Map applies a fixed palette instead.">?</button>
               </div>
-              <div class="peiq-tabs" role="tablist" aria-label="Palette mode">
-                <button class="peiq-tab" id="mode-extract" type="button" role="tab" aria-selected="true">Extract</button>
-                <button class="peiq-tab" id="mode-map" type="button" role="tab" aria-selected="false">Map</button>
+              <div class="peiq-tabs" role="tablist" data-i18n-aria-label="mode.aria" aria-label="Palette mode">
+                <button class="peiq-tab" id="mode-extract" type="button" role="tab" aria-selected="true" data-i18n="mode.extract">Extract</button>
+                <button class="peiq-tab" id="mode-map" type="button" role="tab" aria-selected="false" data-i18n="mode.map">Map</button>
               </div>
             </div>
 
             <div class="peiq-field-stack" id="extract-controls">
               <div class="peiq-field">
                 <div class="peiq-label-row">
-                  <label class="peiq-label" for="method">Method</label>
-                  <button class="peiq-help" type="button" data-tooltip="Popularity keeps the most frequent colors. Octree merges similar leaves for speed. Median cut and Wu split the color space and get a refinement pass. K-means++ seeds and iterates clusters; usually the slowest and smoothest.">?</button>
+                  <label class="peiq-label" for="method" data-i18n="method.label">Method</label>
+                  <button class="peiq-help" type="button" data-i18n-tooltip="method.tooltip" data-tooltip="Popularity keeps the most frequent colors. Octree merges similar leaves for speed. Median cut and Wu split the color space and get a refinement pass. K-means++ seeds and iterates clusters; usually the slowest and smoothest.">?</button>
                 </div>
                 <select class="peiq-select" id="method">
-                  <option value="median-cut">Median cut</option>
-                  <option value="popularity">Popularity</option>
-                  <option value="wu" selected>Wu (balanced)</option>
-                  <option value="octree">Octree (fast)</option>
-                  <option value="kmeans">K-means++ (max quality)</option>
+                  <option value="median-cut" data-i18n="method.medianCut">Median cut</option>
+                  <option value="popularity" data-i18n="method.popularity">Popularity</option>
+                  <option value="wu" selected data-i18n="method.wu">Wu (balanced)</option>
+                  <option value="octree" data-i18n="method.octree">Octree (fast)</option>
+                  <option value="kmeans" data-i18n="method.kmeans">K-means++ (max quality)</option>
                 </select>
               </div>
               <div class="peiq-field">
                 <div class="peiq-label-row">
-                  <label class="peiq-label" for="colors">Colors</label>
-                  <button class="peiq-help" type="button" data-tooltip="Palette size from 2 to 256. Fewer colors may be returned when the image has fewer distinct colors. Use the slider for a quick scan or type an exact number.">?</button>
+                  <label class="peiq-label" for="colors" data-i18n="colors.label">Colors</label>
+                  <button class="peiq-help" type="button" data-i18n-tooltip="colors.tooltip" data-tooltip="Palette size from 2 to 256. Fewer colors may be returned when the image has fewer distinct colors. Use the slider for a quick scan or type an exact number.">?</button>
                 </div>
                 <div class="peiq-range-row">
                   <input class="peiq-range" id="colors" type="range" min="2" max="256" step="1" value="16">
-                  <label class="sr-only" for="colors-number">Color count</label>
+                  <label class="sr-only" for="colors-number" data-i18n="colors.countAria">Color count</label>
                   <input class="peiq-input peiq-number" id="colors-number" type="number" min="2" max="256" step="1" value="16" inputmode="numeric">
                 </div>
               </div>
               <div class="peiq-field">
                 <div class="peiq-label-row">
-                  <label class="peiq-label" for="space">Working space</label>
-                  <button class="peiq-help" type="button" data-tooltip="Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0–255 RGB.">?</button>
+                  <label class="peiq-label" for="space" data-i18n="space.label">Working space</label>
+                  <button class="peiq-help" type="button" data-i18n-tooltip="space.tooltip" data-tooltip="Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0–255 RGB.">?</button>
                 </div>
                 <select class="peiq-select" id="space">
-                  <option value="oklab">Oklab (recommended)</option>
-                  <option value="srgb">sRGB</option>
+                  <option value="oklab" data-i18n="space.oklab">Oklab (recommended)</option>
+                  <option value="srgb" data-i18n="space.srgb">sRGB</option>
                 </select>
               </div>
             </div>
@@ -206,64 +207,64 @@
             <div class="peiq-field-stack" id="map-controls" hidden>
               <div class="peiq-field">
                 <div class="peiq-label-row">
-                  <label class="peiq-label" for="palette-select">Target palette</label>
-                  <button class="peiq-help" type="button" data-tooltip="A built-in or imported fixed palette. Map mode reuses it instead of extracting colors.">?</button>
+                  <label class="peiq-label" for="palette-select" data-i18n="targetPalette.label">Target palette</label>
+                  <button class="peiq-help" type="button" data-i18n-tooltip="targetPalette.tooltip" data-tooltip="A built-in or imported fixed palette. Map mode reuses it instead of extracting colors.">?</button>
                 </div>
                 <select class="peiq-select" id="palette-select"></select>
               </div>
               <div class="peiq-field">
-                <button class="peiq-btn" id="import-palette" type="button">Load palette file…</button>
+                <button class="peiq-btn" id="import-palette" type="button" data-i18n="palette.importButton">Load palette file…</button>
                 <input id="palette-input" type="file" accept=".hex,.gpl,.pal,.json,.png,image/png" hidden>
-                <span class="peiq-hint" id="palette-status">PICO-8 · 16 colors</span>
+                <span class="peiq-hint" id="palette-status" data-i18n="palette.statusInitial">PICO-8 · 16 colors</span>
               </div>
             </div>
 
             <div class="peiq-field">
               <div class="peiq-label-row">
-                <label class="peiq-label" for="transparent-index">Transparent index</label>
-                <button class="peiq-help" type="button" data-tooltip="Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. Map mode starts at index 0; choose None to keep every color opaque.">?</button>
+                <label class="peiq-label" for="transparent-index" data-i18n="transparent.label">Transparent index</label>
+                <button class="peiq-help" type="button" data-i18n-tooltip="transparent.tooltip" data-tooltip="Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. Map mode starts at index 0; choose None to keep every color opaque.">?</button>
               </div>
               <select class="peiq-select" id="transparent-index" disabled>
-                <option value="-1">None</option>
+                <option value="-1" data-i18n="transparent.none">None</option>
               </select>
             </div>
             <div class="peiq-field">
               <div class="peiq-label-row">
-                <label class="peiq-label" for="alpha-threshold">Alpha threshold <span id="alpha-threshold-value">128</span></label>
-                <button class="peiq-help" type="button" data-tooltip="Pixels below this alpha become transparent in the preview and indexed PNG when a transparent index is set. Indexed PNGs are binary; the reduced PNG keeps the source alpha.">?</button>
+                <label class="peiq-label" for="alpha-threshold"><span data-i18n="alpha.label">Alpha threshold</span> <span id="alpha-threshold-value">128</span></label>
+                <button class="peiq-help" type="button" data-i18n-tooltip="alpha.tooltip" data-tooltip="Pixels below this alpha become transparent in the preview and indexed PNG when a transparent index is set. Indexed PNGs are binary; the reduced PNG keeps the source alpha.">?</button>
               </div>
               <input class="peiq-range" id="alpha-threshold" type="range" min="1" max="254" value="128">
             </div>
-            <p class="peiq-hint">Preview uses a downscaled copy. Export always uses the full image.</p>
+            <p class="peiq-hint" data-i18n="rail.previewHint">Preview uses a downscaled copy. Export always uses the full image.</p>
           </div>
         </details>
 
         <details class="peiq-rail-section">
-          <summary>Dither</summary>
+          <summary data-i18n="rail.dither">Dither</summary>
           <div class="peiq-rail-section__body">
             <div class="peiq-field">
               <div class="peiq-label-row">
-                <label class="peiq-label" for="dither-method">Method</label>
-                <button class="peiq-help" type="button" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern.">?</button>
+                <label class="peiq-label" for="dither-method" data-i18n="dither.method">Method</label>
+                <button class="peiq-help" type="button" data-i18n-tooltip="dither.tooltip" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern.">?</button>
               </div>
               <select class="peiq-select" id="dither-method">
-                <option value="none">None</option>
-                <option value="floyd-steinberg">Floyd–Steinberg</option>
-                <option value="atkinson">Atkinson</option>
-                <option value="stucki">Stucki</option>
-                <option value="jarvis">Jarvis</option>
-                <option value="burkes">Burkes</option>
-                <option value="sierra">Sierra</option>
-                <option value="bayer2">Bayer 2×2</option>
-                <option value="bayer4">Bayer 4×4</option>
-                <option value="bayer8">Bayer 8×8</option>
-                <option value="blue-noise">Blue noise</option>
+                <option value="none" data-i18n="dither.none">None</option>
+                <option value="floyd-steinberg" data-i18n="dither.floydSteinberg">Floyd–Steinberg</option>
+                <option value="atkinson" data-i18n="dither.atkinson">Atkinson</option>
+                <option value="stucki" data-i18n="dither.stucki">Stucki</option>
+                <option value="jarvis" data-i18n="dither.jarvis">Jarvis</option>
+                <option value="burkes" data-i18n="dither.burkes">Burkes</option>
+                <option value="sierra" data-i18n="dither.sierra">Sierra</option>
+                <option value="bayer2" data-i18n="dither.bayer2">Bayer 2×2</option>
+                <option value="bayer4" data-i18n="dither.bayer4">Bayer 4×4</option>
+                <option value="bayer8" data-i18n="dither.bayer8">Bayer 8×8</option>
+                <option value="blue-noise" data-i18n="dither.blueNoise">Blue noise</option>
               </select>
             </div>
             <div class="peiq-field">
               <div class="peiq-label-row">
-                <label class="peiq-label" for="dither-strength">Strength <span id="dither-strength-value">80%</span></label>
-                <button class="peiq-help" type="button" data-tooltip="Scales the dither. 0% is plain nearest-color mapping; 100% applies the full pattern or error.">?</button>
+                <label class="peiq-label" for="dither-strength"><span data-i18n="dither.strength">Strength</span> <span id="dither-strength-value">80%</span></label>
+                <button class="peiq-help" type="button" data-i18n-tooltip="dither.strengthTooltip" data-tooltip="Scales the dither. 0% is plain nearest-color mapping; 100% applies the full pattern or error.">?</button>
               </div>
               <input class="peiq-range" id="dither-strength" type="range" min="0" max="100" value="80">
             </div>
@@ -271,40 +272,40 @@
               <div class="peiq-check-row">
                 <label class="peiq-check-label" for="dither-serpentine">
                   <input class="peiq-check" id="dither-serpentine" type="checkbox" checked>
-                  Serpentine scan
+                  <span data-i18n="dither.serpentine">Serpentine scan</span>
                 </label>
-                <button class="peiq-help" type="button" data-tooltip="Alternates the scan direction on each row so error diffusion does not leave vertical streaks. Error diffusion only.">?</button>
+                <button class="peiq-help" type="button" data-i18n-tooltip="dither.serpentineTooltip" data-tooltip="Alternates the scan direction on each row so error diffusion does not leave vertical streaks. Error diffusion only.">?</button>
               </div>
             </div>
             <div class="peiq-field">
               <div class="peiq-label-row">
-                <label class="peiq-label" for="edge-stop">Edge stop <span id="edge-stop-value">50%</span></label>
-                <button class="peiq-help" type="button" data-tooltip="Reduces error diffusion across strong edges, keeping outlines crisp. Error diffusion only.">?</button>
+                <label class="peiq-label" for="edge-stop"><span data-i18n="dither.edgeStop">Edge stop</span> <span id="edge-stop-value">50%</span></label>
+                <button class="peiq-help" type="button" data-i18n-tooltip="dither.edgeStopTooltip" data-tooltip="Reduces error diffusion across strong edges, keeping outlines crisp. Error diffusion only.">?</button>
               </div>
               <input class="peiq-range" id="edge-stop" type="range" min="0" max="100" value="50">
             </div>
-            <p class="peiq-hint">Serpentine and edge stop apply to error diffusion only.</p>
+            <p class="peiq-hint" data-i18n="dither.note">Serpentine and edge stop apply to error diffusion only.</p>
           </div>
         </details>
 
         <details class="peiq-rail-section" id="qa-section">
-          <summary>Quality</summary>
+          <summary data-i18n="rail.quality">Quality</summary>
           <div class="peiq-rail-section__body">
             <div class="peiq-field">
-              <button class="peiq-btn peiq-btn--small" id="qa-run" type="button" disabled>Measure quality</button>
-              <p class="peiq-hint" id="qa-status">Compares the preview with the source using CIEDE2000.</p>
+              <button class="peiq-btn peiq-btn--small" id="qa-run" type="button" data-i18n="quality.run" disabled>Measure quality</button>
+              <p class="peiq-hint" id="qa-status" data-i18n="quality.statusInitial">Compares the preview with the source using CIEDE2000.</p>
             </div>
             <div class="peiq-qa-stats" id="qa-stats" hidden>
               <div class="peiq-qa-stat">
-                <span class="peiq-label">Mean ΔE00</span>
+                <span class="peiq-label" data-i18n="quality.mean">Mean ΔE00</span>
                 <strong id="qa-mean">—</strong>
               </div>
               <div class="peiq-qa-stat">
-                <span class="peiq-label">p95 ΔE00</span>
+                <span class="peiq-label" data-i18n="quality.p95">p95 ΔE00</span>
                 <strong id="qa-p95">—</strong>
               </div>
               <div class="peiq-qa-stat">
-                <span class="peiq-label">Max ΔE00</span>
+                <span class="peiq-label" data-i18n="quality.max">Max ΔE00</span>
                 <strong id="qa-max">—</strong>
               </div>
             </div>
@@ -312,12 +313,12 @@
               <div class="peiq-check-row">
                 <label class="peiq-check-label" for="qa-error-toggle">
                   <input class="peiq-check" id="qa-error-toggle" type="checkbox">
-                  Show error map
+                  <span data-i18n="quality.showMap">Show error map</span>
                 </label>
-                <button class="peiq-help" type="button" data-tooltip="CIEDE2000 heatmap of the preview: dark blue is 0, red is 20 or more. Fully transparent pixels in either image are skipped.">?</button>
+                <button class="peiq-help" type="button" data-i18n-tooltip="quality.mapTooltip" data-tooltip="CIEDE2000 heatmap of the preview: dark blue is 0, red is 20 or more. Fully transparent pixels in either image are skipped.">?</button>
               </div>
             </div>
-            <canvas class="peiq-qa-map" id="qa-error-canvas" aria-label="CIEDE2000 error map" hidden></canvas>
+            <canvas class="peiq-qa-map" id="qa-error-canvas" data-i18n-aria-label="quality.mapAria" aria-label="CIEDE2000 error map" hidden></canvas>
             <div class="peiq-qa-worst" id="qa-worst" hidden></div>
           </div>
         </details>
@@ -327,65 +328,65 @@
   </main>
 
   <footer class="peiq-footer">
-    <p>Runs locally. No uploads, no accounts, no tracking. <span class="peiq-footer__version" id="app-version"></span></p>
-    <nav class="peiq-footer__links" aria-label="Project links">
+    <p><span data-i18n="footer.local">Runs locally. No uploads, no accounts, no tracking.</span> <span class="peiq-footer__version" id="app-version"></span></p>
+    <nav class="peiq-footer__links" data-i18n-aria-label="footer.linksAria" aria-label="Project links">
       <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a>
-      <a href="https://github.com/kirillhod/PaletteExtractorAndImageQuantizer" target="_blank" rel="noopener noreferrer">GitHub repository</a>
+      <a href="https://github.com/kirillhod/PaletteExtractorAndImageQuantizer" target="_blank" rel="noopener noreferrer" data-i18n="footer.github">GitHub repository</a>
     </nav>
   </footer>
 
   <aside class="peiq-drawer" id="help-drawer" data-open="false" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="help-title">
     <div class="peiq-drawer__header">
-      <h2 class="peiq-drawer__title" id="help-title">Help</h2>
-      <button class="peiq-icon-btn" id="help-close" type="button" aria-label="Close help">×</button>
+      <h2 class="peiq-drawer__title" id="help-title" data-i18n="help.title">Help</h2>
+      <button class="peiq-icon-btn" id="help-close" type="button" data-i18n-aria-label="help.closeAria" aria-label="Close help">×</button>
     </div>
     <div class="peiq-drawer__body">
-      <p>Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.</p>
+      <p data-i18n="help.intro">Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.</p>
       <div class="peiq-learn-note">
-        <p><strong>v1.2</strong> adds a palette editor with locks and undo, CIEDE2000 quality, shareable URL settings, and a saved local session.</p>
+        <p><strong>v1.2</strong> <span data-i18n="help.v12">adds a palette editor with locks and undo, CIEDE2000 quality, shareable URL settings, and a saved local session.</span></p>
       </div>
-      <h2>How it works</h2>
+      <h2 data-i18n="help.howTitle">How it works</h2>
       <ol>
-        <li>Build a 5-bit, alpha-weighted color histogram.</li>
-        <li>Extract a palette or load a fixed one; edit colors, locks, and order.</li>
-        <li>Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.</li>
-        <li>Dither optionally, then encode, decode, and compare before offering the file.</li>
+        <li data-i18n="help.how1">Build a 5-bit, alpha-weighted color histogram.</li>
+        <li data-i18n="help.how2">Extract a palette or load a fixed one; edit colors, locks, and order.</li>
+        <li data-i18n="help.how3">Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.</li>
+        <li data-i18n="help.how4">Dither optionally, then encode, decode, and compare before offering the file.</li>
       </ol>
-      <h2>Palette order and the preview</h2>
-      <p>The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its <code>PLTE</code> order and index map change; the transparent index follows its color, not the slot.</p>
-      <h2>Quality</h2>
-      <p>The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.</p>
-      <h2>Shareable settings</h2>
-      <p>The URL hash stores settings only: mode, extractor, colors, working space, built-in palette, dither, alpha, sort, and transparent index. It never includes the image, palette edits, locks, or quality results.</p>
-      <h2>Saved session</h2>
-      <p>The last image, settings, palette entries, locks, order, selection, edit mode, and undo/redo history stay in this browser's IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use <strong>Forget saved session</strong> to remove it.</p>
-      <button class="peiq-btn peiq-btn--small" id="session-clear" type="button">Forget saved session</button>
+      <h2 data-i18n="help.orderTitle">Palette order and the preview</h2>
+      <p data-i18n="help.orderP">The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot.</p>
+      <h2 data-i18n="help.qualityTitle">Quality</h2>
+      <p data-i18n="help.qualityP">The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.</p>
+      <h2 data-i18n="help.urlTitle">Shareable settings</h2>
+      <p data-i18n="help.urlP">The URL hash stores settings only: mode, extractor, colors, working space, built-in palette, dither, alpha, sort, and transparent index. It never includes the image, palette edits, locks, or quality results.</p>
+      <h2 data-i18n="help.sessionTitle">Saved session</h2>
+      <p data-i18n="help.sessionP">The last image, settings, palette entries, locks, order, selection, edit mode, and undo/redo history stay in this browser's IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove it.</p>
+      <button class="peiq-btn peiq-btn--small" id="session-clear" type="button" data-i18n="help.forget">Forget saved session</button>
       <p class="peiq-hint" id="session-status"></p>
-      <h2>Shortcuts</h2>
+      <h2 data-i18n="help.shortcutsTitle">Shortcuts</h2>
       <table class="peiq-shortcuts">
         <thead>
-          <tr><th scope="col">Key</th><th scope="col">Action</th></tr>
+          <tr><th scope="col" data-i18n="help.key">Key</th><th scope="col" data-i18n="help.action">Action</th></tr>
         </thead>
         <tbody>
-          <tr><td><kbd>F</kbd></td><td>Fit image</td></tr>
-          <tr><td><kbd>1</kbd></td><td>100% zoom</td></tr>
-          <tr><td>Pinch</td><td>Zoom on touch</td></tr>
-          <tr><td>Drag</td><td>Pan the image</td></tr>
-          <tr><td><kbd>O</kbd></td><td>Toggle original</td></tr>
-          <tr><td><kbd>E</kbd></td><td>Toggle error map</td></tr>
-          <tr><td><kbd>T</kbd></td><td>Cycle theme</td></tr>
-          <tr><td><kbd>Ctrl/Cmd+Z</kbd></td><td>Undo palette edit (editing)</td></tr>
-          <tr><td><kbd>Ctrl/Cmd+Shift+Z</kbd> or <kbd>Ctrl/Cmd+Y</kbd></td><td>Redo palette edit (editing)</td></tr>
-          <tr><td><kbd>?</kbd></td><td>Toggle this drawer</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Close tooltip or help; cancel picking</td></tr>
+          <tr><td><kbd>F</kbd></td><td data-i18n="help.fit">Fit image</td></tr>
+          <tr><td><kbd>1</kbd></td><td data-i18n="help.zoom100">100% zoom</td></tr>
+          <tr><td>Pinch</td><td data-i18n="help.pinch">Zoom on touch</td></tr>
+          <tr><td>Drag</td><td data-i18n="help.drag">Pan the image</td></tr>
+          <tr><td><kbd>O</kbd></td><td data-i18n="help.original">Toggle original</td></tr>
+          <tr><td><kbd>E</kbd></td><td data-i18n="help.errorMap">Toggle error map</td></tr>
+          <tr><td><kbd>T</kbd></td><td data-i18n="help.theme">Cycle theme</td></tr>
+          <tr><td><kbd>Ctrl/Cmd+Z</kbd></td><td data-i18n="help.undo">Undo palette edit (editing)</td></tr>
+          <tr><td><kbd>Ctrl/Cmd+Shift+Z</kbd> or <kbd>Ctrl/Cmd+Y</kbd></td><td data-i18n="help.redo">Redo palette edit (editing)</td></tr>
+          <tr><td><kbd>?</kbd></td><td data-i18n="help.toggleDrawer">Toggle this drawer</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td data-i18n="help.esc">Close tooltip or help; cancel picking</td></tr>
         </tbody>
       </table>
 
-      <h2>References</h2>
-      <p>Papers and specifications behind the extractors, dithering, color math, and output. Links open only when clicked.</p>
+      <h2 data-i18n="help.referencesTitle">References</h2>
+      <p data-i18n="help.referencesP">Papers and specifications behind the extractors, dithering, color math, and output. Links open only when clicked.</p>
       <div id="help-references"></div>
 
-      <h2>Credits and licenses</h2>
+      <h2 data-i18n="help.creditsTitle">Credits and licenses</h2>
       <dl class="peiq-credits" id="help-credits"></dl>
     </div>
   </aside>

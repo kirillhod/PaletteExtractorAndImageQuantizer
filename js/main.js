@@ -30,13 +30,23 @@ import { initDropzone } from './ui/dropzone.js';
 import {
   clearDownloadLinks,
   getStripOrientation,
+  refreshDownloadLinks,
   setExportEnabled,
   showDownloadLinks,
 } from './ui/export-view.js';
+import {
+  countLabel,
+  formatN,
+  initI18n,
+  localizeDetail,
+  localizeError,
+  t,
+  tp,
+} from './ui/i18n.js';
 import { initLearn } from './ui/learn-view.js';
 import { renderPalette } from './ui/palette-view.js';
 import { initShortcuts } from './ui/shortcuts.js';
-import { setStatus, setStatusMessage, toast } from './ui/status.js';
+import { refreshStatus, setStatus, setStatusMessage, toast, toastKey, getLastStatus } from './ui/status.js';
 import { initTheme } from './ui/theme.js';
 import { initTooltips } from './ui/tooltips.js';
 import { clearSession, loadSession, saveSession } from './ui/session-store.js';
@@ -81,9 +91,6 @@ const paletteEditHint = document.getElementById('palette-edit-hint');
 const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
-const PALETTE_EDIT_HINT =
-  'Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.';
-const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
 const extractControls = document.getElementById('extract-controls');
@@ -106,6 +113,7 @@ const canvasEmpty = document.getElementById('canvas-empty');
 const toggleOriginal = /** @type {HTMLButtonElement} */ (document.getElementById('toggle-original'));
 const header = document.getElementById('header');
 
+initI18n();
 const canvasView = createCanvasView({ canvas, frame, divider });
 const theme = initTheme();
 const learn = initLearn();
@@ -143,6 +151,7 @@ const paletteHistory = { past: [], future: [], limit: 50 };
 let qaResult = null;
 let qaRequestId = 0;
 let qaBusy = false;
+let qaFailed = false;
 let applyingUrlState = false;
 /** @type {number|null} */
 let pendingTransparentIndex = null;
@@ -152,13 +161,19 @@ let lastFile = null;
 let restoringSession = false;
 let sessionPersistence = true;
 let sessionSaveWarned = false;
+let sessionStatusKey = '';
+let paletteStatusName = '';
+let paletteStatusCount = 0;
+/** @type {{ kind:'imported'|'restored', name:string, count:number }|null} */
+let customPaletteOption = null;
+let exportProgressKey = '';
+let lastValidationDetailRaw = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let importedColors = [];
 let importedName = '';
-let importedOption = false;
 
 function createWorker() {
   const instance = new Worker(new URL('./workers/pipeline.worker.js', import.meta.url), {
@@ -166,8 +181,8 @@ function createWorker() {
   });
   instance.addEventListener('message', onWorkerMessage);
   instance.addEventListener('error', () => {
-    toast('The processing worker failed. Reload the page.', 'error');
-    setStatusMessage('Worker error');
+    toastKey('toast.workerFailed', {}, 'error');
+    setStatusMessage('status.workerError');
     if (canvasEmpty) canvasEmpty.hidden = true;
     app.exportBusy = false;
     clearExportProgress();
@@ -182,13 +197,15 @@ function onWorkerMessage(event) {
 
   if (message.type === 'progress') {
     if (message.requestId === app.previewRequestId) {
-      setStatusMessage(message.stage === 'extract' ? 'Extracting palette…' : 'Processing…');
+      setStatusMessage(
+        message.stage === 'extract' ? 'status.extractingPalette' : 'status.processing',
+      );
     }
     if (message.requestId === app.exportRequestId && app.exportBusy) {
       const labels = {
-        strip: 'Building palette strip…',
-        index: 'Encoding indexed PNG…',
-        encode: 'Encoding reduced PNG…',
+        strip: 'status.progressStrip',
+        index: 'status.progressIndex',
+        encode: 'status.progressEncode',
       };
       if (labels[message.stage]) setExportProgress(labels[message.stage]);
     }
@@ -209,19 +226,19 @@ function onWorkerMessage(event) {
     updateExportState();
     if (canvasEmpty) canvasEmpty.hidden = true;
     setStatus([
-      { value: `${app.width}×${app.height}`, label: 'source' },
-      { value: message.uniqueColors, label: 'unique' },
-      { value: app.palette.length, label: 'colors' },
-      { value: `${message.timings.extractMs} ms`, label: 'extract' },
-      { value: `${message.timings.mapMs} ms`, label: 'map' },
+      { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
+      { value: message.uniqueColors, labelKey: 'status.unique' },
+      { value: app.palette.length, labelKey: 'unit.colors', count: app.palette.length },
+      { value: `${message.timings.extractMs} ms`, labelKey: 'status.extract' },
+      { value: `${message.timings.mapMs} ms`, labelKey: 'status.map' },
     ]);
     if (app.palette.length === 0) {
       // An indexed PNG needs at least one PLTE entry, so a fully transparent image has
       // nothing to export. Say why instead of leaving the disabled buttons unexplained.
-      toast('This image is fully transparent, so no palette can be built. Try another image or a fixed palette.', 'error');
+      toastKey('toast.fullyTransparent', {}, 'error');
       setStatus([
-        { value: 'Warning', label: 'fully transparent image · no palette to export' },
-        { value: `${app.width}×${app.height}`, label: 'source' },
+        { valueKey: 'status.warning', labelKey: 'status.fullyTransparent' },
+        { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
       ]);
     }
     if (pendingTransparentRemap) {
@@ -241,17 +258,18 @@ function onWorkerMessage(event) {
     const files = message.files ?? [];
     const ok = files.length > 0 && files.every((file) => file.validation?.ok);
     if (!ok) {
-      const detail = files[0]?.validation?.detail ?? 'unknown validation error';
-      toast(`Export failed validation: ${detail}`, 'error');
-      setStatusMessage('Export failed validation');
+      const detail = localizeDetail(files[0]?.validation?.detail);
+      toastKey('toast.exportFailedValidation', { detail }, 'error');
+      setStatusMessage('status.exportFailedValidation');
       clearDownloadLinks();
       finishExport();
       return;
     }
     showDownloadLinks(files);
-    const detail = files[0]?.validation?.detail ?? 'export complete';
-    toast('Validated. Click Save to download.', 'success');
-    setStatusMessage(`Validated: ${detail} — save link ready`);
+    lastValidationDetailRaw = files[0]?.validation?.detail ?? '';
+    const detail = localizeDetail(lastValidationDetailRaw);
+    toastKey('toast.validatedDownload', {}, 'success');
+    setStatusMessage('status.validatedReady', { detail });
     finishExport();
     return;
   }
@@ -259,6 +277,7 @@ function onWorkerMessage(event) {
   if (message.type === 'quality') {
     if (message.requestId !== qaRequestId) return;
     qaBusy = false;
+    qaFailed = false;
     qaResult = {
       ...message.result,
       errorMap: {
@@ -279,14 +298,15 @@ function onWorkerMessage(event) {
     ) {
       return;
     }
-    toast(message.message || 'Processing failed', 'error');
-    setStatusMessage('Error');
+    toast(localizeError(message.message || t('toast.processingFailed')), 'error');
+    setStatusMessage('status.error');
     if (canvasEmpty) canvasEmpty.hidden = true;
     if (message.requestId === app.exportRequestId) {
       finishExport();
     } else if (message.requestId === qaRequestId) {
       qaBusy = false;
-      if (qaStatus) qaStatus.textContent = 'Measurement failed. Try again.';
+      qaFailed = true;
+      if (qaStatus) qaStatus.textContent = t('quality.statusFailed');
       updateQualityAvailability();
     } else {
       if (restoringSession) restoringSession = false;
@@ -312,12 +332,13 @@ function updateQualityAvailability() {
   }
 }
 
-function resetQuality(message = 'Compares the preview with the source using CIEDE2000.') {
+function resetQuality() {
   if (qaRequestId) {
     worker.postMessage({ type: 'cancel', requestId: qaRequestId });
     qaRequestId = 0;
   }
   qaBusy = false;
+  qaFailed = false;
   qaResult = null;
   if (qaStats) qaStats.hidden = true;
   if (qaErrorField) qaErrorField.hidden = true;
@@ -327,7 +348,7 @@ function resetQuality(message = 'Compares the preview with the source using CIED
     qaWorst.hidden = true;
     qaWorst.replaceChildren();
   }
-  if (qaStatus) qaStatus.textContent = message;
+  if (qaStatus) qaStatus.textContent = t('quality.statusInitial');
   updateQualityAvailability();
 }
 
@@ -337,7 +358,8 @@ function runQuality() {
   const id = nextRequestId++;
   qaRequestId = id;
   qaBusy = true;
-  if (qaStatus) qaStatus.textContent = 'Measuring CIEDE2000…';
+  qaFailed = false;
+  if (qaStatus) qaStatus.textContent = t('quality.statusMeasuring');
   updateQualityAvailability();
   const original = new Uint8ClampedArray(app.preview.data);
   const mapped = new Uint8ClampedArray(app.reduced.data);
@@ -366,7 +388,7 @@ function renderQuality() {
   if (qaWorst) {
     qaWorst.hidden = false;
     qaWorst.replaceChildren();
-    qaWorst.append(el('p', { className: 'peiq-label', text: 'Worst pixels' }));
+    qaWorst.append(el('p', { className: 'peiq-label', text: t('quality.worst') }));
     for (const pixel of qaResult.worstPixels) {
       const row = el('div', { className: 'peiq-qa-worst__row' });
       row.append(
@@ -376,7 +398,11 @@ function renderQuality() {
       qaWorst.append(row);
     }
   }
-  if (qaStatus) qaStatus.textContent = `Measured ${qaResult.pixels} preview pixels.`;
+  if (qaStatus) {
+    qaStatus.textContent = t('quality.statusMeasured', {
+      countLabel: tp('count.pixels', qaResult.pixels, { count: qaResult.pixels }),
+    });
+  }
   updateQualityAvailability();
 }
 
@@ -407,17 +433,19 @@ function toggleQualityMap() {
   showQualityMap();
 }
 
-/** @param {string} label */
-function setExportProgress(label) {
+/** @param {string} labelKey */
+function setExportProgress(labelKey) {
+  exportProgressKey = labelKey;
   const host = document.getElementById('export-progress');
   const labelNode = document.getElementById('export-progress-label');
   const panel = document.querySelector('.peiq-export-panel');
-  if (labelNode) labelNode.textContent = label;
+  if (labelNode) labelNode.textContent = t(labelKey);
   if (host) host.hidden = false;
   if (panel) panel.setAttribute('aria-busy', 'true');
 }
 
 function clearExportProgress() {
+  exportProgressKey = '';
   const host = document.getElementById('export-progress');
   const panel = document.querySelector('.peiq-export-panel');
   if (host) host.hidden = true;
@@ -425,10 +453,10 @@ function clearExportProgress() {
 }
 
 /**
- * @param {string} label
+ * @param {string} labelKey
  * @returns {number} request id, or 0 when an export is already running
  */
-function beginExport(label) {
+function beginExport(labelKey) {
   if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return 0;
   const id = nextRequestId++;
   app.exportRequestId = id;
@@ -437,7 +465,7 @@ function beginExport(label) {
   stopPickMode();
   updatePaletteEditor();
   clearDownloadLinks();
-  setExportProgress(label);
+  setExportProgress(labelKey);
   return id;
 }
 
@@ -468,7 +496,9 @@ function renderCurrentPalette() {
     selectedId: selectedPaletteId,
     onActivate: paletteEditMode ? selectPaletteEntry : null,
   });
-  if (paletteCount) paletteCount.textContent = `${app.palette.length} colors`;
+  if (paletteCount) {
+    paletteCount.textContent = countLabel('count.colors', app.palette.length);
+  }
   if (sortSelect) sortSelect.disabled = app.palette.length === 0;
   updatePaletteEditor();
 
@@ -493,7 +523,7 @@ function updatePaletteEditor() {
   const selected = selectedPaletteEntry();
   const active = paletteEditMode && app.hasResult && app.palette.length > 0;
   if (paletteEdit) {
-    paletteEdit.textContent = paletteEditMode ? 'Done' : 'Edit';
+    paletteEdit.textContent = paletteEditMode ? t('palette.done') : t('palette.edit');
     paletteEdit.setAttribute('aria-pressed', String(paletteEditMode));
     paletteEdit.disabled = !app.hasResult || app.palette.length === 0 || app.exportBusy;
   }
@@ -525,7 +555,7 @@ function updatePaletteEditor() {
   if (paletteLock) {
     paletteLock.disabled = !selected || app.exportBusy;
     paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
-    paletteLock.textContent = selected?.locked ? 'Unlock' : 'Lock';
+    paletteLock.textContent = selected?.locked ? t('palette.unlock') : t('palette.lock');
   }
 }
 
@@ -545,7 +575,7 @@ function startPickMode() {
   pickingColor = true;
   palettePick?.setAttribute('aria-pressed', 'true');
   frame.classList.add('is-picking');
-  if (paletteEditHint) paletteEditHint.textContent = PALETTE_PICK_HINT;
+  if (paletteEditHint) paletteEditHint.textContent = t('palette.pickHint');
   hidePickPreview();
   updatePaletteEditor();
 }
@@ -556,7 +586,7 @@ function stopPickMode() {
   palettePick?.setAttribute('aria-pressed', 'false');
   frame.classList.remove('is-picking');
   hidePickPreview();
-  if (paletteEditHint) paletteEditHint.textContent = PALETTE_EDIT_HINT;
+  if (paletteEditHint) paletteEditHint.textContent = t('palette.editHint');
   updatePaletteEditor();
 }
 
@@ -641,7 +671,7 @@ function undoPaletteEdit() {
   paletteHistory.future.push(paletteSnapshot());
   const snapshot = paletteHistory.past.pop();
   restorePaletteSnapshot(snapshot);
-  toast('Undid palette edit', 'success');
+  toastKey('toast.undo', {}, 'success');
 }
 
 function redoPaletteEdit() {
@@ -649,7 +679,7 @@ function redoPaletteEdit() {
   paletteHistory.past.push(paletteSnapshot());
   const snapshot = paletteHistory.future.pop();
   restorePaletteSnapshot(snapshot);
-  toast('Redid palette edit', 'success');
+  toastKey('toast.redo', {}, 'success');
 }
 
 /** @param {PointerEvent} event */
@@ -660,11 +690,11 @@ function handleCanvasPick(event) {
   event.stopImmediatePropagation();
   const color = canvasView.pickColor(event.clientX, event.clientY);
   if (!color) {
-    toast('Click a visible part of the image', 'error');
+    toastKey('toast.pickOutside', {}, 'error');
     return;
   }
   if (color.a === 0) {
-    toast('That pixel is transparent', 'error');
+    toastKey('toast.pickTransparent', {}, 'error');
     return;
   }
   hidePickPreview();
@@ -673,7 +703,7 @@ function handleCanvasPick(event) {
   if (selectedPaletteEntry()) {
     applyPaletteHex();
   } else {
-    toast(`Picked ${formatHex(color)}. Press Add to append it.`, 'success');
+    toastKey('toast.picked', { hex: formatHex(color) }, 'success');
   }
 }
 
@@ -705,7 +735,7 @@ function applyPaletteHex() {
   if (!selected) return;
   const value = paletteHexValue();
   if (!value) {
-    toast('Enter a HEX color first', 'error');
+    toastKey('toast.enterHex', {}, 'error');
     return;
   }
   try {
@@ -718,16 +748,16 @@ function applyPaletteHex() {
     renderCurrentPalette();
     processPreview();
     pushPaletteHistory(before);
-    toast('Palette color updated', 'success');
+    toastKey('toast.colorUpdated', {}, 'success');
   } catch (error) {
-    toast(error instanceof Error ? error.message : String(error), 'error');
+    toast(localizeError(error), 'error');
   }
 }
 
 function addPaletteColor() {
   const value = paletteHexValue();
   if (!value) {
-    toast('Enter a HEX color first', 'error');
+    toastKey('toast.enterHex', {}, 'error');
     return;
   }
   try {
@@ -741,9 +771,9 @@ function addPaletteColor() {
     renderCurrentPalette();
     processPreview();
     pushPaletteHistory(before);
-    toast(`Added ${entry.hex}`, 'success');
+    toastKey('toast.colorAdded', { hex: entry.hex }, 'success');
   } catch (error) {
-    toast(error instanceof Error ? error.message : String(error), 'error');
+    toast(localizeError(error), 'error');
   }
 }
 
@@ -760,9 +790,9 @@ function removePaletteColor() {
     renderCurrentPalette();
     processPreview();
     pushPaletteHistory(before);
-    toast(`Removed ${selected.hex}`, 'success');
+    toastKey('toast.colorRemoved', { hex: selected.hex }, 'success');
   } catch (error) {
-    toast(error instanceof Error ? error.message : String(error), 'error');
+    toast(localizeError(error), 'error');
   }
 }
 
@@ -776,9 +806,13 @@ function togglePaletteLock() {
     markPaletteEdited();
     renderCurrentPalette();
     pushPaletteHistory(before);
-    toast(selected.locked ? `Unlocked ${selected.hex}` : `Locked ${selected.hex}`, 'success');
+    toastKey(
+      selected.locked ? 'toast.unlocked' : 'toast.locked',
+      { hex: selected.hex },
+      'success',
+    );
   } catch (error) {
-    toast(error instanceof Error ? error.message : String(error), 'error');
+    toast(localizeError(error), 'error');
   }
 }
 
@@ -805,9 +839,13 @@ function moveSelectedPaletteEntry(direction) {
     pushPaletteHistory(before);
     updatePaletteEditor();
     syncUrlState();
-    toast(`Moved ${selected.hex} ${direction}`, 'success');
+    toastKey(
+      direction === 'left' ? 'toast.movedLeft' : 'toast.movedRight',
+      { hex: selected.hex },
+      'success',
+    );
   } catch (error) {
-    toast(error instanceof Error ? error.message : String(error), 'error');
+    toast(localizeError(error), 'error');
   }
 }
 
@@ -820,7 +858,7 @@ function populateTransparentIndex(palette, preferred) {
   transparentIndex.replaceChildren();
   const none = document.createElement('option');
   none.value = '-1';
-  none.textContent = 'None';
+  none.textContent = t('transparent.none');
   transparentIndex.append(none);
   palette.forEach((entry, index) => {
     const option = document.createElement('option');
@@ -839,6 +877,50 @@ function populateTransparentIndex(palette, preferred) {
   }
   const valid = preferred >= 0 && preferred < palette.length;
   transparentIndex.value = valid ? String(preferred) : '-1';
+}
+
+/**
+ * @param {string} name
+ * @param {number} count
+ */
+function setPaletteStatus(name, count) {
+  paletteStatusName = name;
+  paletteStatusCount = count;
+  renderPaletteStatus();
+}
+
+function renderPaletteStatus() {
+  if (!paletteStatus || !paletteStatusName) return;
+  paletteStatus.textContent = t('palette.status', {
+    name: paletteStatusName,
+    countLabel: countLabel('count.colors', paletteStatusCount),
+  });
+}
+
+/**
+ * @param {'imported'|'restored'} kind
+ * @param {string} name
+ * @param {number} count
+ */
+function setCustomPaletteOption(kind, name, count) {
+  customPaletteOption = { kind, name, count };
+  renderCustomPaletteOption();
+}
+
+function renderCustomPaletteOption() {
+  if (!paletteSelect || !customPaletteOption) return;
+  const option = [...paletteSelect.options].find(
+    (candidate) => candidate.value === 'imported',
+  );
+  if (!option) return;
+  const key =
+    customPaletteOption.kind === 'imported'
+      ? 'palette.importedOption'
+      : 'palette.restoredOption';
+  option.textContent = t(key, {
+    name: customPaletteOption.name,
+    countLabel: countLabel('count.colors', customPaletteOption.count),
+  });
 }
 
 function getParams() {
@@ -963,16 +1045,24 @@ async function saveCurrentSession() {
   if (!record) return;
   try {
     await saveSession(record);
-    if (sessionStatus) sessionStatus.textContent = 'Saved locally.';
+    sessionStatusKey = 'session.saved';
+    renderSessionStatus();
   } catch (error) {
     if (!sessionSaveWarned) {
       sessionSaveWarned = true;
-      toast(
-        `Could not save the session locally: ${error instanceof Error ? error.message : String(error)}`,
+      toastKey(
+        'toast.sessionSaveFailed',
+        { detail: localizeError(error) },
         'error',
       );
     }
     sessionPersistence = false;
+  }
+}
+
+function renderSessionStatus() {
+  if (sessionStatus && sessionStatusKey) {
+    sessionStatus.textContent = t(sessionStatusKey);
   }
 }
 
@@ -981,11 +1071,13 @@ async function forgetSavedSession() {
     await clearSession();
     lastFile = null;
     sessionPersistence = false;
-    if (sessionStatus) sessionStatus.textContent = 'Saved session cleared.';
-    toast('Saved session cleared.', 'success');
+    sessionStatusKey = 'session.cleared';
+    renderSessionStatus();
+    toastKey('toast.sessionCleared', {}, 'success');
   } catch (error) {
-    toast(
-      `Could not clear the saved session: ${error instanceof Error ? error.message : String(error)}`,
+    toastKey(
+      'toast.sessionClearFailed',
+      { detail: localizeError(error) },
       'error',
     );
   }
@@ -1045,7 +1137,7 @@ function loadTargetPalette(value) {
   if (colors.length === 0) return false;
   fixedColors = colors;
   fixedName = name;
-  if (paletteStatus) paletteStatus.textContent = `${name} · ${colors.length} colors`;
+  setPaletteStatus(name, colors.length);
   if (paletteSelect) paletteSelect.value = value;
   app.palette = sortPalette(createPalette(colors), sortOrder);
   renderCurrentPalette();
@@ -1066,7 +1158,7 @@ function populateBuiltinPalettes() {
     fixedColors = first.colors.map(parseHex);
     fixedName = first.name;
     paletteSelect.value = first.id;
-    if (paletteStatus) paletteStatus.textContent = `${first.name} · ${first.colors.length} colors`;
+    setPaletteStatus(first.name, first.colors.length);
   }
 }
 
@@ -1102,7 +1194,7 @@ function processPreview() {
 
   setExportEnabled(false);
   if (canvasEmpty && !app.hasResult) canvasEmpty.hidden = false;
-  setStatusMessage('Processing preview…');
+  setStatusMessage('status.processingPreview');
 }
 
 /**
@@ -1113,20 +1205,23 @@ async function loadFile(file, restore = null) {
   try {
     if (!restore) sessionPersistence = true;
     cancelExport();
-    setStatusMessage('Decoding image…');
+    setStatusMessage('status.decoding');
     const bitmap = await decodeBitmap(file);
     const width = bitmap.width;
     const height = bitmap.height;
 
     if (width < 1 || height < 1) {
       bitmap.close?.();
-      throw new Error('The image has invalid dimensions.');
+      throw new Error(t('error.invalidDimensions'));
     }
     if (width * height > MAX_PIXELS) {
       bitmap.close?.();
       throw new Error(
-        `This image is ${width}×${height} (${(width * height / 1_000_000).toFixed(1)} MP). ` +
-          `The limit is 16.7 MP. Resize it first.`,
+        t('error.imageTooLarge', {
+          width,
+          height,
+          mp: formatN((width * height) / 1_000_000),
+        }),
       );
     }
 
@@ -1169,15 +1264,20 @@ async function loadFile(file, restore = null) {
           paletteSelect.append(option);
         }
         if (option) {
-          if (restore.paletteValue === 'imported') {
-            option.textContent = `Restored: ${restore.paletteName || 'palette'} · ${app.palette.length}`;
-          }
           paletteSelect.value = restore.paletteValue;
         }
+        if (restore.paletteValue === 'imported') {
+          setCustomPaletteOption(
+            'restored',
+            restore.paletteName || t('palette.restoredSession'),
+            app.palette.length,
+          );
+        }
       }
-      if (paletteStatus) {
-        paletteStatus.textContent = `${restore.paletteName || 'Restored session'} · ${app.palette.length} colors`;
-      }
+      setPaletteStatus(
+        restore.paletteName || t('palette.restoredSession'),
+        app.palette.length,
+      );
     }
     lastFile = file;
     clearDownloadLinks();
@@ -1199,11 +1299,11 @@ async function loadFile(file, restore = null) {
     setExportEnabled(false);
     if (canvasEmpty) {
       canvasEmpty.hidden = false;
-      canvasEmpty.textContent = 'Processing…';
+      canvasEmpty.textContent = t('canvas.processing');
     }
     setStatus([
-      { value: `${width}×${height}`, label: 'source' },
-      { value: file.name || 'image', label: 'file' },
+      { value: `${width}×${height}`, labelKey: 'status.source' },
+      { value: file.name || t('status.file'), labelKey: 'status.file' },
     ]);
     processPreview();
   } catch (error) {
@@ -1211,12 +1311,11 @@ async function loadFile(file, restore = null) {
       restoringSession = false;
       sessionPersistence = false;
       clearSession().catch(() => {
-        setStatusMessage('Saved session could not be cleared');
+        setStatusMessage('status.savedSessionCouldNotClear');
       });
     }
-    const message = error instanceof Error ? error.message : String(error);
-    toast(message, 'error');
-    setStatusMessage('Could not read image');
+    toast(localizeError(error), 'error');
+    setStatusMessage('status.couldNotReadImage');
   }
 }
 
@@ -1226,12 +1325,16 @@ async function loadFile(file, restore = null) {
  */
 async function decodeBitmap(file) {
   if (typeof createImageBitmap !== 'function') {
-    throw new Error('This browser cannot decode images (createImageBitmap is missing).');
+    throw new Error(t('error.createImageBitmapMissing'));
   }
   try {
     return await createImageBitmap(file, { imageOrientation: 'from-image' });
   } catch {
-    return await createImageBitmap(file);
+    try {
+      return await createImageBitmap(file);
+    } catch {
+      throw new Error(t('error.imageDecode'));
+    }
   }
 }
 
@@ -1247,7 +1350,7 @@ function drawToImageData(bitmap, width, height, smooth) {
   buffer.width = width;
   buffer.height = height;
   const ctx = buffer.getContext('2d');
-  if (!ctx) throw new Error('Canvas 2D is unavailable');
+  if (!ctx) throw new Error(t('error.canvasUnavailable'));
   ctx.imageSmoothingEnabled = smooth;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(bitmap, 0, 0, width, height);
@@ -1255,9 +1358,9 @@ function drawToImageData(bitmap, width, height, smooth) {
 }
 
 function exportStrip() {
-  const id = beginExport('Building palette strip…');
+  const id = beginExport('status.progressStrip');
   if (!id) return;
-  setStatusMessage('Building and validating the palette strip…');
+  setStatusMessage('status.buildingStrip');
   worker.postMessage({
     type: 'export-strip',
     requestId: id,
@@ -1270,9 +1373,9 @@ function exportStrip() {
 
 function exportReduced() {
   if (!app.full) return;
-  const id = beginExport('Encoding reduced PNG…');
+  const id = beginExport('status.progressEncode');
   if (!id) return;
-  setStatusMessage('Encoding the full-resolution PNG…');
+  setStatusMessage('status.encodingReduced');
   const copy = new Uint8ClampedArray(app.full.data);
   worker.postMessage(
     {
@@ -1288,9 +1391,9 @@ function exportReduced() {
 
 function exportIndexed() {
   if (!app.full) return;
-  const id = beginExport('Encoding indexed PNG…');
+  const id = beginExport('status.progressIndex');
   if (!id) return;
-  setStatusMessage('Encoding and validating the indexed PNG…');
+  setStatusMessage('status.encodingIndexed');
   const copy = new Uint8ClampedArray(app.full.data);
   worker.postMessage(
     {
@@ -1308,12 +1411,20 @@ function exportIndexed() {
 function copyHex() {
   if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return;
   copyText(paletteHexList(app.palette))
-    .then(() => toast(`Copied ${app.palette.length} HEX values`, 'success'))
-    .catch(() => toast('Clipboard is unavailable', 'error'));
+    .then(() =>
+      toastKey(
+        'toast.copiedHexValues',
+        {
+          countLabel: countLabel('count.hexValues', app.palette.length),
+        },
+        'success',
+      ),
+    )
+    .catch(() => toastKey('toast.clipboardUnavailable', {}, 'error'));
 }
 
 async function exportPaletteFile() {
-  const id = beginExport('Preparing palette file…');
+  const id = beginExport('status.progressPaletteFile');
   if (!id) return;
   const format = paletteFormat?.value === 'gpl'
     ? 'gpl'
@@ -1347,8 +1458,7 @@ async function exportPaletteFile() {
     }
   } catch (error) {
     finishExport();
-    const message = error instanceof Error ? error.message : String(error);
-    toast(`Could not build palette file: ${message}`, 'error');
+    toastKey('toast.paletteBuildFailed', { detail: localizeError(error) }, 'error');
     return;
   }
 
@@ -1356,8 +1466,12 @@ async function exportPaletteFile() {
   const validation = validatePaletteColors(parsed, expected, compareAlpha, format);
   if (!validation.ok) {
     finishExport();
-    toast(`Palette validation failed: ${validation.detail}`, 'error');
-    setStatusMessage('Palette validation failed');
+    toastKey(
+      'toast.paletteValidationFailed',
+      { detail: localizeDetail(validation.detail) },
+      'error',
+    );
+    setStatusMessage('status.validationFailed');
     return;
   }
 
@@ -1371,8 +1485,11 @@ async function exportPaletteFile() {
       validation,
     },
   ]);
-  toast('Palette file ready. Click Save.', 'success');
-  setStatusMessage(`Validated: ${validation.detail} — save link ready`);
+  toastKey('toast.paletteFileReady', {}, 'success');
+  lastValidationDetailRaw = validation.detail;
+  setStatusMessage('status.validatedReady', {
+    detail: localizeDetail(lastValidationDetailRaw),
+  });
   finishExport();
 }
 
@@ -1419,11 +1536,67 @@ function baseName(name) {
 function toggleOriginalState() {
   const next = toggleOriginal.getAttribute('aria-pressed') !== 'true';
   toggleOriginal.setAttribute('aria-pressed', String(next));
+  renderOriginalLabels();
+  canvasView.setShowOriginal(next);
+}
+
+function renderOriginalLabels() {
+  const next = toggleOriginal.getAttribute('aria-pressed') === 'true';
+  const label = next ? t('toolbar.reduced') : t('toolbar.original');
+  const shortLabelText = next
+    ? t('toolbar.reducedShort')
+    : t('toolbar.originalShort');
   const longLabel = document.getElementById('toggle-original-label');
   const shortLabel = document.getElementById('toggle-original-short');
-  if (longLabel) longLabel.textContent = next ? 'Reduced' : 'Original';
-  if (shortLabel) shortLabel.textContent = next ? 'Reduced' : 'Original';
-  canvasView.setShowOriginal(next);
+  if (longLabel) longLabel.textContent = label;
+  if (shortLabel) shortLabel.textContent = shortLabelText;
+}
+
+function refreshDynamicUi() {
+  const lastStatus = getLastStatus();
+  if (
+    lastStatus.kind === 'message' &&
+    lastStatus.key === 'status.validatedReady' &&
+    lastValidationDetailRaw
+  ) {
+    setStatusMessage('status.validatedReady', {
+      detail: localizeDetail(lastValidationDetailRaw),
+    });
+  } else {
+    refreshStatus();
+  }
+  refreshDownloadLinks();
+  renderCurrentPalette();
+  updatePaletteEditor();
+  renderPaletteStatus();
+  renderCustomPaletteOption();
+  renderSessionStatus();
+  renderOriginalLabels();
+  if (canvasEmpty) canvasEmpty.textContent = t('canvas.processing');
+  if (paletteEditHint) {
+    paletteEditHint.textContent = t(
+      pickingColor ? 'palette.pickHint' : 'palette.editHint',
+    );
+  }
+  if (exportProgressKey) {
+    const label = document.getElementById('export-progress-label');
+    if (label) label.textContent = t(exportProgressKey);
+  }
+  if (qaStatus) {
+    if (qaBusy) qaStatus.textContent = t('quality.statusMeasuring');
+    else if (qaFailed) qaStatus.textContent = t('quality.statusFailed');
+    else if (qaResult) {
+      qaStatus.textContent = t('quality.statusMeasured', {
+        countLabel: tp('count.pixels', qaResult.pixels, {
+          count: qaResult.pixels,
+        }),
+      });
+    } else qaStatus.textContent = t('quality.statusInitial');
+  }
+  if (qaResult && qaWorst) {
+    const label = qaWorst.querySelector('.peiq-label');
+    if (label) label.textContent = t('quality.worst');
+  }
 }
 
 const controls = initControls({
@@ -1529,8 +1702,9 @@ async function initializeSessionAndUrl() {
     record = await loadSession();
   } catch (error) {
     sessionPersistence = false;
-    toast(
-      `Saved session is unavailable: ${error instanceof Error ? error.message : String(error)}`,
+    toastKey(
+      'toast.sessionUnavailable',
+      { detail: localizeError(error) },
       'error',
     );
   }
@@ -1540,8 +1714,9 @@ async function initializeSessionAndUrl() {
   }
   if (!isValidSessionRecord(record)) {
     clearSession().catch((error) => {
-      toast(
-        `Could not reset the saved session: ${error instanceof Error ? error.message : String(error)}`,
+      toastKey(
+        'toast.sessionResetFailed',
+        { detail: localizeError(error) },
         'error',
       );
     });
@@ -1599,16 +1774,22 @@ paletteInput?.addEventListener('change', async () => {
         option.value = 'imported';
         paletteSelect.append(option);
       }
-      option.textContent = `Imported: ${importedName} · ${importedColors.length}`;
+      setCustomPaletteOption('imported', importedName, importedColors.length);
       paletteSelect.value = 'imported';
     }
 
     loadTargetPalette('imported');
     setMode('map');
-    toast(`Loaded ${importedName} · ${importedColors.length} colors`, 'success');
+    toastKey(
+      'toast.paletteLoaded',
+      {
+        name: importedName,
+        countLabel: countLabel('count.colors', importedColors.length),
+      },
+      'success',
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    toast(message, 'error');
+    toast(localizeError(error), 'error');
   }
 });
 
@@ -1686,3 +1867,5 @@ window.addEventListener(
 window.addEventListener('beforeunload', () => {
   worker.terminate();
 });
+
+window.addEventListener('peiqq:localechange', refreshDynamicUi);

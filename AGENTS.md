@@ -178,6 +178,8 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - All colors come from `--peiq-*` variables in `DESIGN.md`; no hard-coded hex in CSS or JS.
 - No dead code, speculative abstractions, or TODOs without a plan/backlog entry.
 - Comments explain *why*; cite the plan section or paper for non-obvious math.
+- No emoji in code, UI strings, comments, documentation, or commit messages unless the
+  user explicitly requests them. Use plain words or ASCII markers instead.
 
 ## 7. Testing and verification
 
@@ -262,16 +264,17 @@ and the change is committed locally with a descriptive body (plan §16).
 
 ## 12. Current state and next task
 
-- Plan: ✅ `1.2.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; M3 ✅ `v0.4.0`; M4 ✅ `v1.0.0`;
-  M5 ✅ `v1.1.0`; M6 ✅ `v1.2.0` (120 tests).
+- Plan: 1.2.0 complete; `DESIGN.md` complete (dark + light themes, auto + 3-state toggle);
+  M0 complete to `v0.1.0`; M1 to `v0.2.2`; M2 to `v0.3.0`; M3 to `v0.4.0`; M4 to `v1.0.0`;
+  M5 to `v1.1.0`; M6 to `v1.2.0` (130 tests).
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, canvas picking,
   add/remove, locks, and ←/→ manual order, CIEDE2000 quality stats/error map/worst pixels,
   versioned URL settings, IndexedDB session restore (image, palette, locks, undo/redo),
-  themes, fixed desktop frame with a scrollable rail, left export column, contextual
-  tooltips, Help drawer with references and credits, LAN dev-server URLs.
+  English/Russian UI with auto-detection and a header language toggle, themes, fixed
+  desktop frame with a scrollable rail, left export column, contextual tooltips, Help
+  drawer with references and credits, LAN dev-server URLs.
 - Next: M7 — later / not planned for v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.

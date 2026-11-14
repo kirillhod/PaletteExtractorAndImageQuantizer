@@ -1,21 +1,37 @@
 // @ts-check
+import { t } from './i18n.js';
+
 /** @type {string[]} */
 const activeUrls = [];
+/** @type {{ name:string, mime:string, data:ArrayBuffer, validation?:{ok:boolean,detail:string} }[]} */
+let currentFiles = [];
 
 /**
  * @param {{ name:string, mime:string, data:ArrayBuffer, validation?:{ok:boolean,detail:string} }[]} files
  */
 export function showDownloadLinks(files) {
-  clearDownloadLinks();
+  currentFiles = files;
+  renderDownloadLinks();
+}
+
+/**
+ * Rebuild the hints and link labels after a locale change.
+ */
+export function refreshDownloadLinks() {
+  if (currentFiles.length > 0) renderDownloadLinks();
+}
+
+function renderDownloadLinks() {
+  clearElements();
   const host = document.getElementById('download-result');
-  if (!host) return;
+  if (!host || currentFiles.length === 0) return;
 
   const hint = document.createElement('p');
   hint.className = 'peiq-hint';
-  hint.textContent = 'Validated. Click Save to write the file.';
+  hint.textContent = t('export.validatedHint');
   host.append(hint);
 
-  for (const file of files) {
+  for (const file of currentFiles) {
     const blob = new Blob([file.data], { type: file.mime });
     const url = URL.createObjectURL(blob);
     activeUrls.push(url);
@@ -25,14 +41,14 @@ export function showDownloadLinks(files) {
     link.href = url;
     link.download = file.name;
     link.rel = 'noopener';
-    link.textContent = `Save ${file.name}`;
+    link.textContent = t('export.saveFile', { name: file.name });
     host.append(link);
   }
 
   host.hidden = false;
 }
 
-export function clearDownloadLinks() {
+function clearElements() {
   for (const url of activeUrls) URL.revokeObjectURL(url);
   activeUrls.length = 0;
   const host = document.getElementById('download-result');
@@ -40,6 +56,11 @@ export function clearDownloadLinks() {
     host.replaceChildren();
     host.hidden = true;
   }
+}
+
+export function clearDownloadLinks() {
+  currentFiles = [];
+  clearElements();
 }
 
 /**
