@@ -105,3 +105,21 @@ test('reduced PNG export with dithering validates against the fixed palette', as
   assert.equal(decoded.width, 16);
   assert.equal(decoded.height, 16);
 });
+
+test('reduced RGBA export preserves source alpha with dithering', async () => {
+  const alphas = [0, 64, 128, 255];
+  const image = makeImage(4, 1, (x) => ({ r: 255, g: 0, b: 0, a: alphas[x] }));
+  const result = await exportReduced({
+    image,
+    params: mapParams({
+      dither: { method: 'floyd-steinberg', strength: 0.8, serpentine: true, edgeStop: 0 },
+      transparentIndex: 0,
+    }),
+    name: 'alpha',
+  });
+  assert.equal(result.files[0].validation.ok, true);
+  const decoded = await decodePng(new Uint8Array(result.files[0].data));
+  const decodedAlphas = [];
+  for (let i = 3; i < decoded.data.length; i += 4) decodedAlphas.push(decoded.data[i]);
+  assert.deepEqual(decodedAlphas, alphas);
+});
