@@ -266,11 +266,16 @@ function validateIndexed(decoded, expected, paletteSize) {
     return { ok: false, detail: 'indexed PNG dimensions do not match' };
   }
   for (let i = 0; i < decoded.data.length; i += 4) {
+    if (decoded.data[i + 3] !== expected.data[i + 3]) {
+      return { ok: false, detail: `pixel ${i / 4} alpha does not match the index map` };
+    }
+    // RGB under a fully transparent pixel is unspecified by the PNG contract; the
+    // decoder may keep the palette color there. Alpha is the meaningful comparison.
     if (
-      decoded.data[i] !== expected.data[i] ||
-      decoded.data[i + 1] !== expected.data[i + 1] ||
-      decoded.data[i + 2] !== expected.data[i + 2] ||
-      decoded.data[i + 3] !== expected.data[i + 3]
+      expected.data[i + 3] !== 0 &&
+      (decoded.data[i] !== expected.data[i] ||
+        decoded.data[i + 1] !== expected.data[i + 1] ||
+        decoded.data[i + 2] !== expected.data[i + 2])
     ) {
       return { ok: false, detail: `pixel ${i / 4} does not match the index map` };
     }

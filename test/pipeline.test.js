@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { runPreview, exportStrip, exportReduced } from '../js/core/pipeline.js';
+import { runPreview, exportStrip, exportReduced, exportIndexed } from '../js/core/pipeline.js';
 import { createPalette } from '../js/core/palette.js';
 import { decodePng } from '../js/core/png/decode.js';
 import { quadrantsImage } from './helpers.js';
@@ -47,6 +47,23 @@ test('paletteOverride maps with the supplied palette instead of extracting', asy
   assert.deepEqual(result.palette.map((entry) => entry.hex), ['#000000', '#ffffff']);
   assert.equal(result.preview.width, 8);
   assert.equal(result.preview.height, 8);
+});
+
+test('indexed export validates when the transparent index is used', async () => {
+  const image = { data: new Uint8ClampedArray(4 * 4 * 4), width: 4, height: 4 };
+  for (let i = 0; i < image.data.length; i += 4) {
+    image.data[i] = 255;
+    image.data[i + 3] = 255;
+  }
+  const palette = createPalette([{ r: 255, g: 0, b: 0 }]);
+  const result = await exportIndexed({
+    image,
+    palette,
+    params: { ...params, transparentIndex: 0, alphaThreshold: 128 },
+    name: 'solid',
+  });
+  assert.equal(result.files[0].validation.ok, true);
+  assert.match(result.files[0].validation.detail, /exact/);
 });
 
 test('exportStrip validates a horizontal strip', async () => {
