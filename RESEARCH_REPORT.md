@@ -2,12 +2,20 @@
 
 ### A state-of-the-art review and product opportunity analysis, benchmarked against PaletteForge
 
-**Version:** 1.0 · **Date:** 13 November 2026 · **Audience:** product, engineering, and design leadership
+**Version:** 1.1 · **Date:** 14 November 2026 · **Audience:** product, engineering, and design leadership
 **Scope:** algorithmic foundations, dithering and fixed-palette mapping, tool landscape, domain requirements (game development / pixel art, UI-UX, print), and a concrete technical foundation for a new open-source tool.
 
 **Contents:** [Executive Summary](#executive-summary) · [1. Algorithmic Approaches](#1-algorithmic-approaches) · [2. Dithering and Target-Palette Mapping](#2-dithering-and-target-palette-mapping) · [3. Scientific Literature Review](#3-scientific-literature-review) · [4. Landscape](#4-landscape) · [5. Domains](#5-domains) · [6. Technical Foundation](#6-technical-foundation) · [Appendix](#appendix-method-and-evidence-base) · [References](#references)
 
 **Citations:** every bracketed citation number in the text is a clickable link that opens the source directly; full bibliographic details are in [References](#references).
+
+> **Scope note (14 Nov 2026).** A fresh search for “palette extractor and image quantizer”
+> found a crowded field of free browser tools. Generic extraction, quantization,
+> dithering, and palette-format export are now commodity features. The v1.0.0 plan is
+> therefore deliberately narrower: one image, fixed-palette mapping, validated indexed
+> PNG, exact palette strip, and essential dithering. Batch, CLI, manifests, full QA,
+> palette editing, presets, and extra formats are parked. See [§4.5](#45-landscape-refresh-14-nov-2026)
+> for the evidence and the exact scope decision.
 
 ---
 
@@ -54,7 +62,17 @@ Scores are analyst judgment on a 0–5 scale (0 = absent, 5 = best-in-class amon
 9. **Licensing constrains the architecture.** libimagequant — the engine behind pngquant and one of the highest-quality readily available quantizers — is GPLv3-or-commercial [[25]](https://github.com/ImageOptim/libimagequant)[[26]](https://github.com/kornelski/pngquant). An MIT/Apache-licensed tool cannot link it into the core. Implement the algorithms independently; offer GPL components only as an optional, clearly separated plugin.
 10. **The winning product is a "palette compiler", not another palette extractor.** Inputs: images, target palette, constraints, build profile. Outputs: indexed PNG/atlas, 1×N strip, palette sidecars, ΔE report, manifest with hashes. Interface: web UI for exploration, CLI for CI. That combination does not exist today.
 
+**Scope correction (14 Nov 2026).** Findings 7 and 10 describe the long-term compiler
+thesis. The refreshed landscape in [§4.5](#45-landscape-refresh-14-nov-2026) shows that
+batch, CLI, extra formats, and QA are already adjacent commodities or expensive
+distractions. v1.0.0 is intentionally a **single-image, fixed-palette compiler with a
+validated handoff**, not the full folder-to-CI product described above.
+
 ### Recommended product shape (summary)
+
+> The table below is the original research sketch. The implemented product is
+> zero-dependency vanilla ES modules in the browser, not Rust/WASM/CLI; the v1.0 plan in
+> [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) is authoritative for the shipped shape.
 
 | Layer | Recommendation |
 |---|---|
@@ -65,7 +83,9 @@ Scores are analyst judgment on a 0–5 scale (0 = absent, 5 = best-in-class amon
 | Deferred | Neural quantization, CMYK/spot-color separations, per-tile console banks, plugin SDK. |
 | license | Apache-2.0 OR MIT for the core; optional GPL plugin boundary for libimagequant. |
 
-**Bottom line:** build the tool that takes a folder of art and a locked palette and produces provably correct, reproducible, engine-ready assets — with a pretty extractor attached, not the other way round.
+**Bottom line for v1.0.0:** build the single-image tool that takes an image and a locked
+palette and produces provably correct, reproducible, engine-ready assets — with a good
+extractor attached. A folder/CI compiler remains the long-term thesis, not the 1.0 scope.
 
 ---
 
@@ -800,6 +820,70 @@ The gaps below are ranked by **user impact × differentiation × feasibility**. 
 
 **Why now.** Three trends converge: (a) the indie/retro game market keeps growing, and engines make palette-swap shaders easy; (b) design systems need token-ready palettes with contrast guarantees; (c) WASM makes local, private, high-performance image processing viable in the browser. The algorithms are free; the workflow is not.
 
+### 4.5 Landscape refresh (14 Nov 2026)
+
+A fresh search for “palette extractor and image quantizer” was run on 14 November 2026.
+Some sites were reached through Tor because they were unavailable from the local
+network. The table below records only what the landing page or tool UI documents; none
+of these tools was independently benchmarked on a shared corpus.
+
+| Tool | What it does | Fixed palette | Dithering | Outputs | Local | Signal for PEIQ |
+|---|---|---|---|---|---|---|
+| **Lospec Palette Quantizer** [[58]](https://lospec.com/palette-quantizer/) | Upload an image, choose a Lospec palette or a palette image, quantize to it | Yes | Not documented on the landing page | Image download | Yes | The closest direct competitor for “map image → palette”; the page publishes no index map, strip contract, or QA |
+| **Online PNG Tools — Quantize PNG** [[65]](https://onlinepngtools.com/quantize-png) | Automatic k-means quantization or an exact manual palette; transparency can be a palette entry | Yes, manual mode | Separate dithering tool, not part of quantize | Indexed PNG | Not stated | Shows that exact-palette quantization and indexed PNG are already free on the web |
+| **ImgImage — Quantize** [[67]](https://imgimage.com/quantize-image/) | Median cut + k-means, 2–256 colors, several images, ZIP download | No | Floyd–Steinberg or ordered | PNG/GIF palette images, HEX copy | Yes | Generic quantizer with indexed output and batch ZIP; this is now table stakes |
+| **ImageOnline — Quantize Image** [[66]](https://imageonline.io/quantize-image/) | Adaptive palette 2–256 colors | No | None, Floyd–Steinberg, ordered Bayer | PNG, GIF, WebP | Not stated | Another free adaptive quantizer with dithering |
+| **YourImageKit — Color Quantizer** [[69]](https://yourimagekit.com/quantize) | 2–256 colors, dithering level, retro presets, 10 MB cap | Not documented | Floyd–Steinberg and others | Quantized image | Yes, WebAssembly | Local quantizer with presets; no fixed-palette contract documented |
+| **5iTool — Color Palette Extractor** [[59]](https://www.5itool.com/en/palette-extractor/) | Median cut, K-means, frequency extraction; 1–10 images | No | No | TXT, CSS variables, JSON, ZIP | Yes | Batch extraction and archive export are already commodity |
+| **Toolonic — Image Quantizer** [[60]](https://www.toolonic.com/tools/compress-image) | Dominant, K-means, uniform extraction; 16–256 colors; pixelation; custom/base palettes | Partial | None, Floyd–Steinberg, Atkinson, Bayer, random noise | PNG, JPG, SVG, JSON palette | Yes | Quantize + dither + pixelation + palette JSON is a crowded feature set |
+| **Brownie.tools — Image Palette Extractor** [[61]](https://brownie.tools/image-tools/image-palette-extractor/) | Region selection, background filtering, 4–10 dominant colors, contrast badges | No | No | CSS, JSON, Tailwind, HEX, ASE, GPL, PNG, SVG | Yes | Format breadth and contrast checks are already covered |
+| **PixelPanda — Color Palette Extractor** [[68]](https://pixelpanda.ai/free-tools/palette-extractor) | K-means extraction, 5/8/10 colors, design-system modes | No | No | CSS, Tailwind, SCSS, JSON, HEX | Yes | Fast, polished, but explicitly non-deterministic: its FAQ recommends regenerating until satisfied |
+| **Cloudinary — Image Palette Extractor** [[62]](https://cloudinary.com/tools/image-palette-extractor) | 4–16 dominant colors, 20 MB upload | No | No | CSS, Tailwind, JSON, ZIP; API/bulk | Browser + API | Palette extraction at scale is a commodity API |
+| **SVG.design — Color Palette Extractor** [[63]](https://svg.design/extract) | Draggable sampling points, up to 10 colors | No | No | SVG swatch card | Yes | Manual sampling for designers; not quantization |
+| **Raky.net — Color Quantizer** [[64]](https://www.raky.net/color-quantizer/) | Color reduction, forced colors, palette extraction and palette transfer | Yes | None, standard, soft, mesh, horizontal, vertical, diagonal | PNG/clipboard; cross-stitch Excel/PDF | Yes | Rich dithering and forced colors; the cross-stitch output shows adjacent niches |
+
+**What changed in the evidence.**
+
+1. **Extraction is no longer a differentiator.** K-means, median cut, adaptive palettes,
+   2–256 colors, local processing, and no-signup flows are available across at least six
+   free sites. Implementing five extractors is still useful for quality and pedagogy, but
+   it is not a reason to choose PEIQ.
+2. **Dithering is also commodity.** Floyd–Steinberg, ordered Bayer, Atkinson, random
+   noise, and multiple artistic modes are shipped by Toolonic, ImgImage, ImageOnline, and
+   Raky. A dither selector alone will not carry the product.
+3. **Format export is not a moat.** CSS variables, Tailwind, SCSS, JSON, HEX, ASE, and
+   GPL exports appear across Brownie, PixelPanda, Toolonic, and PaletteForge. The original
+   plan treated extra formats as a differentiator; the market disagrees.
+4. **Fixed-palette mapping is no longer unique either.** Lospec, Online PNG Tools
+   (manual mode), and Raky expose it. The remaining question is not “can it map to a
+   palette?” but “does it produce a *contract* an engine can trust?”
+5. **Batch and API are already served.** 5iTool does 1–10 images with ZIP; ImgImage does
+   multiple files; Cloudinary exposes palette extraction as an API. Building batch/CLI for
+   v1.0 would add cost without a clear gap.
+6. **Perceptual QA is still scarce, but it is a reporting layer.** None of the reviewed
+   tools exposes ΔE00, worst-pixel locations, or a pass/fail budget. That is a credible
+   post-1.0 feature, not a reason to delay the core handoff.
+7. **The remaining wedge is narrow and concrete.** No reviewed web tool documents all of:
+   fixed target palette → deterministic index map → indexed PNG with an explicit
+   transparent index → exact `N×1`/`1×N` strip with round-trip validation → local,
+   zero-dependency execution. PEIQ already owns most of this chain. v1.0 should finish it
+   instead of adding palette editors, presets, batch, or QA dashboards.
+
+**Scope implication for v1.0.0.**
+
+| Keep | Park after 1.0 |
+|---|---|
+| Image input + before/after preview | Batch, ZIP, CLI, WASM, API |
+| Five extractors + Oklab/sRGB | ΔE00/error map/worst-pixel QA, contrast matrix |
+| Fixed palettes, import, mapping, dithering | Palette editor, locks, roles, swap preview |
+| Indexed PNG + transparent index | Presets, manifest, DTCG, CSS/ASE exports |
+| Validated strip + reduced PNG + HEX copy | Long-form guide, deep links, URL state |
+| Sort, themes, responsive, tooltips, references | NES banks, animation, print, neural, accounts |
+
+The plan was reduced accordingly in [IMPLEMENTATION_PLAN.md §1–§2](IMPLEMENTATION_PLAN.md#1-product-definition).
+The report’s earlier “palette compiler with CLI/batch/QA” thesis remains a possible
+long-term direction, but it is not the v1.0.0 release target.
+
 ---
 
 ## 5. Domains
@@ -1297,7 +1381,7 @@ This report is deliberately conservative about numbers. No independent head-to-h
 
 Two method notes matter for reproducibility:
 
-1. **Search API unavailability.** The general web-search endpoint returned HTTP 403 throughout the research window. Research therefore used the arXiv API, the GitHub REST API, and direct HTTP fetches of documentation and product pages. This biases source selection toward projects with machine-readable metadata (arXiv, GitHub) and away from closed-source tools whose feature lists live only in marketing pages. The bias is acceptable for this report because the closed-source tools are used only as landscape context, not as algorithm evidence.
+1. **Search API unavailability.** The general web-search endpoint returned HTTP 403 throughout the research window. Research therefore used the arXiv API, the GitHub REST API, DuckDuckGo HTML results, and direct HTTP fetches of documentation and product pages. On 14 November 2026, sites unavailable from the local network were fetched through Tor Browser’s obfs4 bridge and a local SOCKS proxy. This biases source selection toward projects with machine-readable metadata (arXiv, GitHub) and away from closed-source tools whose feature lists live only in marketing pages. The bias is acceptable for this report because the closed-source tools are used only as landscape context, not as algorithm evidence.
 2. **Premise correction.** An earlier brief referred to a "CVPR Material Palette" paper on color-palette quantization. The verified paper is *Material Palette: Extraction of Materials from a Single Image* (arXiv:2311.17060), a 2023 work on PBR material extraction. It is **not** a color-quantization method and is not used here as evidence for palette algorithms. It is cited only in §1.2 as an example of adjacent neural decomposition work.
 
 Every URL in the References section was fetched or API-verified during this study unless marked *(canonical DOI; bot-blocked in this environment)*.
@@ -1365,6 +1449,18 @@ All links were accessed or API-verified in November 2026. Entries marked *print*
 55. Pillow. *Image.quantize.* [https://pillow.readthedocs.io/en/stable/reference/Image.html](https://pillow.readthedocs.io/en/stable/reference/Image.html)
 56. W3C. *A Standard Default Color Space for the Internet — sRGB.* [https://www.w3.org/Graphics/Color/sRGB](https://www.w3.org/Graphics/Color/sRGB)
 57. Chang, H., Fried, O., Liu, Y., DiVerdi, S., & Finkelstein, A. (2015). *Palette-based Photo Recoloring.* ACM Transactions on Graphics (SIGGRAPH 2015). [https://dl.acm.org/doi/10.1145/2766978](https://dl.acm.org/doi/10.1145/2766978) *(bot-blocked)*
+58. Lospec. *Palette Quantizer.* [https://lospec.com/palette-quantizer/](https://lospec.com/palette-quantizer/)
+59. 5iTool. *Color Palette Extractor.* [https://www.5itool.com/en/palette-extractor/](https://www.5itool.com/en/palette-extractor/)
+60. Toolonic. *Image Quantizer & Color Compressor.* [https://www.toolonic.com/tools/compress-image](https://www.toolonic.com/tools/compress-image)
+61. Brownie Tools. *Image Palette Extractor.* [https://brownie.tools/image-tools/image-palette-extractor/](https://brownie.tools/image-tools/image-palette-extractor/)
+62. Cloudinary. *Image Palette Extractor.* [https://cloudinary.com/tools/image-palette-extractor](https://cloudinary.com/tools/image-palette-extractor)
+63. SVG.design. *Color Palette Extractor.* [https://svg.design/extract](https://svg.design/extract)
+64. Raky.net. *Image Color Quantizer.* [https://www.raky.net/color-quantizer/](https://www.raky.net/color-quantizer/)
+65. Online PNG Tools. *Quantize a PNG.* [https://onlinepngtools.com/quantize-png](https://onlinepngtools.com/quantize-png)
+66. ImageOnline.io. *Quantize Image Online.* [https://imageonline.io/quantize-image/](https://imageonline.io/quantize-image/)
+67. ImgImage. *Reduce Image Colors — Color Quantizer Online.* [https://imgimage.com/quantize-image/](https://imgimage.com/quantize-image/)
+68. PixelPanda. *Color Palette Extractor.* [https://pixelpanda.ai/free-tools/palette-extractor](https://pixelpanda.ai/free-tools/palette-extractor)
+69. YourImageKit. *Free Color Quantizer.* [https://yourimagekit.com/quantize](https://yourimagekit.com/quantize)
 
 ---
 

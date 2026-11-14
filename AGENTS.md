@@ -7,11 +7,12 @@ Operating instructions for coding agents working on
 
 A zero-dependency, local-first **palette compiler** in the browser: extract palettes, map
 images to fixed palettes, dither, and export validated indexed PNGs, palette strips,
-palette sidecars, and QA reports. Nothing is uploaded. Static GitHub Pages; no backend,
-no accounts, no build step.
+reduced PNGs, and `.hex`/`.gpl`/`.json` palette files. Nothing is uploaded. Static GitHub
+Pages; no backend, no accounts, no build step.
 
-**Status:** `0.1.0`. Plan `1.0.0` approved. M0 in progress: color core and tests exist;
-M1 is not started.
+**Status:** `0.3.2`; M2 complete. v1.0.0 scope reset (2026-11-14): lean single-image
+handoff. Palette editor, QA metrics, presets, manifests, extra formats, batch, and CLI are
+post-1.0.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -54,12 +55,12 @@ layout values, motion, and responsive rules.
 /css/                tokens, base, layout, components, canvas, learn, responsive
 /js/main.js          bootstrap, feature detection, worker wiring
 /js/theme-init.js    classic head script: resolve theme before paint
-/js/ui/              DOM, state, canvas, palette, QA, export, help, theme, status,
+/js/ui/              DOM, canvas, palette, export, help, tooltips, theme, status,
                      shortcuts
-/js/content/         static learning topics and references (no fetch, no DOM)
+/js/content/         static references and guide data (no fetch, no DOM)
 /js/workers/         pipeline.worker.js
 /js/core/            DOM-free, Node-testable: color, quantize, dither, png, formats,
-                     palettes, metrics, pipeline
+                     palettes, pipeline
 /assets/             blue-noise-64.bin, Inter (OFL) + license, own artwork
 /test/               node --test suites and fixture helpers
 /tools/              dev-server.mjs, gen-blue-noise.mjs
@@ -115,14 +116,15 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
    or profile. Every export is decoded and compared; a mismatch aborts the download.
 8. **Never silently downscale or crop the final output.** Preview may use ≤1024 px long
    edge; export re-decodes the original at full resolution. Reject > 16,777,216 pixels
-   with a clear error. Reduced-size export requires an explicit opt-in and a manifest note.
+   with a clear error. Reduced-size export requires an explicit opt-in and a warning in the
+   export result.
 9. **Worker protocol.** Monotonic `requestId`; stale results ignored; buffers transferred,
    not cloned; worker stateless between jobs; yield every 64 rows so `cancel` is
    deliverable; one in-flight job; replace the worker after a crash.
 10. **No silent failures.** Every error has a code (plan §4.6), a human message, and a next
-    action. Warnings appear in the status bar and manifest. Empty `catch` is forbidden.
+    action. Warnings appear in the status bar and export result. Empty `catch` is forbidden.
 11. **Accessibility is part of the contract.** Labels, visible focus, keyboard operation
-    for the divider and palette reorder, `aria-live` status, no traps, reduced motion,
+    for the divider and native selects, `aria-live` status, no traps, reduced motion,
     color never the only signal. Target WCAG 2.2 AA for the UI.
 12. **License stays GPL-3.0-only.** Original code only. Do not change `LICENSE`,
     `package.json` license, or the README license statement without owner approval.
@@ -130,11 +132,12 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
     a runtime asset generated deterministically by `tools/gen-blue-noise.mjs` and committed
     with its checksum/provenance. Never hand-edit it.
 14. **Contracts and identifiers are frozen.** Do not change the palette JSON schema,
-    manifest, filenames, chunk layout, determinism guarantee, `peiq-` prefix, or `peiq/*`
-    namespace without updating the plan and decision log.
+    filenames, chunk layout, determinism guarantee, `peiq-` prefix, or `peiq/*` namespace
+    without updating the plan and decision log.
 15. **Palette identity is not array position.** `PaletteEntry.id` survives reordering;
-    `index` is the export position. Locks keep indices during sort. Exact duplicates fold
-    into the first entry with aliases. Removal renumbers deterministically.
+    `index` is the export position. When palette editing lands post-1.0, locks keep
+    indices during sort. Exact duplicates fold into the first entry with aliases. Removal
+    renumbers deterministically.
 16. **Caps are enforced before allocation.** File ≤ 64 MiB, pixels ≤ 16,777,216, palette
     1–256, index map length = `w*h`. Reject decompression bombs and invalid dimensions.
 17. **The learning layer must not get in the way.** Hints and the Help drawer are
@@ -262,8 +265,8 @@ and the change is committed locally with a descriptive body (plan §16).
   dithering, indexed PNG with `tRNS`, strip/reduced exports, themes, fixed desktop
   frame with a scrollable rail, left export column, contextual tooltips, Help drawer with
   references and credits, LAN dev-server URLs.
-- Next: M3 — ΔE00 QA, palette editor/locks, presets, all palette formats, the remaining
-  theory topics; then `0.4.0`.
+- Next: M3 — lean v1.0 closure: `.hex`/`.gpl`/`.json` palette exports, final polish,
+  accessibility/performance pass, README/screenshots, Pages smoke test; then `0.4.0`.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 

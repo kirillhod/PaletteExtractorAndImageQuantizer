@@ -66,7 +66,7 @@ empty state and Guide sections, because it is editorial, not functional.
   from the other theme; theme switching is instant and leaves no half-light state.
 - **Minimal header.** Brand on the left; only the theme toggle and Help on the right.
   No mode tabs, download buttons, nav links, or account controls in the header. Mode,
-  palette, dither, and QA settings live in the right rail; export is its own left
+  palette and dither settings live in the right rail; export is its own left
   column on desktop (above the canvas on mobile); image actions live in the stage
   toolbar.
 
@@ -368,7 +368,7 @@ the exact fallback. No Google Fonts, no CDN, no external request.
 - App controls use 14 px body for density; editorial surfaces use the site’s 16/18 px
   scale. Do not use 18 px in dense control panels.
 - Uppercase only for labels/eyebrows. No uppercase body.
-- Numbers in QA/timings use `font-variant-numeric: tabular-nums`; hex uses mono.
+- Numbers in stats/timings use `font-variant-numeric: tabular-nums`; hex uses mono.
 - No gradient text, no text-shadow, no decorative outlines. The site’s hero text-shadow
   exists only because it sits on a photo; PEIQ has no photo hero.
 - **NEVER use:** Comic Sans, Papyrus, Brush Script, decorative display fonts, script
@@ -506,8 +506,9 @@ subtle shadow, no border.
 
 The right rail is a stack of `<details>` sections styled as the site’s boxes. Each section
 has a 12 px radius and a surface step — no border. Sections are independently
-collapsible; **Palette** starts open, and users may open **Dither** and **Quality** at the
-same time. Export is not part of this settings rail; it has a dedicated left column.
+collapsible; **Palette** starts open, and users may open **Dither** at the same time.
+Export is not part of this settings rail; it has a dedicated left column. QA is not part
+of v1.0.
 The rail scrolls only when the combined bodies exceed the viewport, so no section blocks
 another.
 
@@ -1031,7 +1032,7 @@ light “paper” sheet.
 }
 ```
 
-### QA stats, status, toasts
+### Stats, status, toasts
 
 ```css
 .peiq-stat { display: grid; gap: 2px; }
@@ -1069,7 +1070,7 @@ light “paper” sheet.
 ### Status line
 
 A single compact line under the palette strip; it is not a footer bar and has no buttons.
-It reports dimensions, unique colors, stage/progress, timings, and the QA summary.
+It reports dimensions, unique colors, stage/progress, timings, and export validation.
 
 ```css
 .peiq-statusbar {
@@ -1190,14 +1191,14 @@ screen block.
 
 - **Empty state:** full-width hero with the drop zone; no rail.
 - **Loaded state:** **three columns** – a narrow export column, the stage (canvas +
-  palette strip + status), and a 360/340 px right rail (palette settings, dither,
-  quality). The export column spans the canvas and palette rows; the palette aligns with
-  the canvas’s left edge. Below 980 px the order is toolbar, export, canvas, palette,
-  settings.
+  palette strip + status), and a 360/340 px right rail (palette settings, dither). The
+  export column spans the canvas and palette rows; the palette aligns with the canvas’s
+  left edge. Below 980 px the order is toolbar, export, canvas, palette, settings.
 - **Header:** 64 px; brand left; theme toggle + Help right. No subbar, no nav links, no
   download button in the header.
-- Stage actions (change image, zoom, fit, original, error map) live in the stage toolbar.
-- The palette strip sits directly under the canvas; the QA summary sits in the status line.
+- Stage actions (change image, zoom, fit, original) live in the stage toolbar.
+- The palette strip sits directly under the canvas; the status line reports dimensions,
+  unique colors, timings, and export validation.
 - The rail is a stack of collapsible sections, not tabs; the Extract/Map mode switch lives
   inside the Palette section.
 
@@ -1483,7 +1484,7 @@ The site also uses 900/1680 px breakpoints; PEIQ keeps 900 px for type-scale cha
   the stage. No separate tab bar is needed.
 - The palette strip sits under the canvas and wraps; it scrolls rather than widening the
   stage.
-- QA summary stays in the status line; the full QA table stacks into label/value pairs
+- Status metrics wrap into label/value pairs
   below 640 px.
 - Help drawer: full-width sheet below 980 px; close button in the drawer header.
 - Canvas: sticky at the top on mobile; never taller than `55dvh` unless zoomed.

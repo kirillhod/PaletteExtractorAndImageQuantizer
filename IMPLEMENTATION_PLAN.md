@@ -28,18 +28,27 @@ agents; it defers to this plan for *what* to build.
 - Read §10–§12 for tests and contracts.
 - Keep the §18 decision log current; never silently diverge from a frozen contract.
 
-### Current state (2026-11-13)
+### Current state (2026-11-14)
 
 | Item | State |
 |---|---|
-| Research report | Complete |
-| Plan | This document, v1.0.0 |
+| Research report | Complete; landscape refreshed 2026-11-14 |
+| Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 85 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, references |
 | Version | `js/core/version.js`; `v0.3.2` tagged; M2 complete |
-| Next | M3: ΔE00 QA, palette editor/locks, presets, all palette formats, remaining theory topics |
+| Next | M3: finish the lean v1.0.0 handoff (palette exports, final polish, release) |
+
+> **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
+> [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
+> that generic extraction, quantization, dithering, batch export, and palette-format
+> export are now commodity features. v1.0.0 is deliberately narrowed to **single-image
+> extraction + fixed-palette mapping + validated indexed PNG/strip + essential
+> dithering**. Palette editing, perceptual QA, presets, manifests, extra formats, batch,
+> CLI, and long-form guide content are parked after 1.0. The feature matrix, milestones,
+> and backlog below are authoritative for this reduced scope.
 
 ---
 
@@ -47,37 +56,39 @@ agents; it defers to this plan for *what* to build.
 
 ### 1.1 One sentence
 
-A browser-local **palette compiler** that turns images into palette-compliant,
-engine-ready assets — indexed PNG, palette strip, palette sidecar, QA report — with
-deterministic output and no uploads.
+A browser-local **palette compiler** that turns one image into palette-compliant,
+engine-ready assets — indexed PNG, palette strip, reduced PNG, and `.hex`/`.gpl`/`.json`
+palette files — with deterministic output and no uploads.
 
 ### 1.2 Target users
 
 | User | Job to be done |
 |---|---|
-| Indie pixel artist | Constrain a sprite or tileset to a locked palette, preview dithering, export an indexed PNG that imports cleanly. |
-| Technical artist / TA | Batch-check that assets use only allowed colors, produce engine lookup textures, and keep indices stable across frames. |
-| UI / brand designer | Extract a small semantic palette, check contrast, export CSS variables and design tokens. |
-| Hobbyist | Reduce a photo to N colors and export a usable palette, without an account or upload. |
+| Indie pixel artist | Constrain a sprite or tileset to a fixed palette, preview dithering, and export an indexed PNG that imports cleanly. |
+| Hobbyist / game jam developer | Match art to PICO-8, Game Boy, C64, ZX Spectrum, or EGA without installing an editor. |
+| UI / brand designer | Extract a small palette from an image and save HEX/GPL/JSON for a design system. |
 
 ### 1.3 What v1.0.0 is
 
 - A single-page, static, local-only web tool.
-- An extractor **and** a fixed-palette mapper.
-- A producer of validated artifacts: indexed PNG, palette strip, palette JSON, QA report.
-- An **in-product learning layer**: contextual hints and a Help drawer that explain the
-  theory and link to canonical sources without blocking the workflow.
+- An extractor **and** a fixed-palette mapper for one image at a time.
+- A producer of a small, validated handoff set: indexed PNG, palette strip, reduced RGBA
+  PNG, HEX copy, and palette files in `.hex`, `.gpl`, and `.json`.
 - Deterministic for a fixed browser version + parameters + seed.
 - Two complete themes, dark and light, with automatic system detection, a 3-state header
   toggle (auto / light / dark), persisted preference, and no mixed tokens.
+- A compact help layer: `?` tooltips, a Help drawer with “How it works”, references, and
+  credits. It must not block the workflow.
 
 ### 1.4 What v1.0.0 is not
 
-Batch/ZIP, CLI, server API, accounts, print/CMYK, neural quantization, animated-frame
-decoding, per-tile palette banks, palette cycling, cloud sync. See §19.
+Not a palette editor, QA dashboard, preset library, batch converter, CLI, API, manifest
+generator, or design-token platform. It does not include ΔE00/error maps/worst-pixel
+reports, contrast matrices, palette locks/roles, palette swap preview, presets, ASE/CSS/
+DTCG exports, deep links, URL state, or a 12-topic theory guide. See §19.
 
 It is also **not** a separate documentation site, a first-run tour, or a wall of permanent
-explanatory text. Learning is opt-in, contextual, and dismissible.
+explanatory text.
 
 ### 1.5 Success criteria
 
@@ -91,43 +102,42 @@ explanatory text. Learning is opt-in, contextual, and dismissible.
 | Privacy | Zero network requests after page load (verified in DevTools) |
 | Dependency count | Zero runtime dependencies, zero build step |
 | Theme parity | Every theme-sensitive token defined in both themes; auto + 3-state toggle; no FOUC; instant switch |
-| Learning layer | ≥12 guide topics; every non-obvious control has a hint; nothing auto-opens |
+| Help | Every non-obvious control has a tooltip; Help references open only on click |
+| Export safety | One export at a time; progress visible; every export validated before Save |
 
 ---
 
 ## 2. Feature matrix (v1.0.0)
 
-`MUST` items are release-blocking. `SHOULD` items ship in v1.0.0 if green, otherwise move
-to v1.0.x without changing the contracts.
+Every row below is `MUST` and release-blocking. Anything not listed is post-1.0; do not
+add it to the 1.0 release without a scope decision and a plan update.
 
 | ID | Feature | Priority | Milestone | Acceptance criterion |
 |---|---|---|---|---|
 | F-01 | Load PNG/JPEG/WebP/GIF/BMP/AVIF; drag-drop, picker, paste | MUST | M1 | Image appears with dimensions and color count; unsupported input shows a clear error |
-| F-02 | Preview with before/after slider, zoom, pan | MUST | M1 | Divider draggable; fit/100% work; no main-thread freeze |
+| F-02 | Preview with before/after slider, fit, 100%, original toggle | MUST | M1 | Divider draggable; fit/100% work; no main-thread freeze |
 | F-03 | Extraction: popularity, median cut, Wu, octree, K-means++ | MUST | M1–M2 | Each method returns a valid palette; deterministic with same seed |
-| F-04 | Working space Oklab (default) and sRGB | MUST | M1 | Space recorded in manifest; conversions match §5 |
+| F-04 | Working space Oklab (default) and sRGB | MUST | M1 | Conversions match §5; the choice is visible in the UI |
 | F-05 | Fixed-palette import (.hex/.gpl/.pal/.json/PNG strip) | MUST | M2 | 1–256 entries; invalid files rejected with a specific error |
 | F-06 | Built-in palettes (PICO-8, Game Boy, C64, ZX Spectrum, EGA) | MUST | M2 | Counts and values match Appendix C; selectable in one click |
 | F-07 | Map image → palette, documented tie-break | MUST | M2 | 100% of opaque pixels use a palette entry; lowest index wins ties |
-| F-08 | Dithering: none, FS, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2/4/8, blue noise | MUST | M2 | Palette compliance preserved; strength/serpentine/edge-stop behave per §6.5 |
-| F-09 | Palette editor: add, remove, lock, reorder, rename, role | MUST | M3 | Locked entries survive sort/removal; IDs stable |
-| F-10 | Palette ordering: source, hue ↑/↓, lightness ↑/↓ | MUST | M1/M3 | Strip and swatches follow the order; custom order and locks land in M3 |
-| F-11 | Indexed PNG export with reserved transparent index | MUST | M2 | Bit depth rule, `PLTE`/`tRNS`, round-trip equality |
-| F-12 | 1×N / N×1 palette strip export + validation | MUST | M1 | Exact dimensions, no profile, every pixel validated |
-| F-13 | Exports: .hex, .gpl, .pal, .json, .css, .ase | MUST | M3 | Parse back to the same palette (where the format is lossless) |
-| F-14 | QA: ΔE00 mean/p95/max, worst pixels, error map, compliance | MUST | M3 | Report values match independent recomputation on fixtures |
-| F-15 | Manifest with params, hashes, checks | MUST | M3 | Canonical JSON; hash stable across reruns |
-| F-16 | Presets: Photo, Pixel Art, Retro 16, Game Sprite, UI/Brand | MUST | M3 | Applying a preset sets documented parameters; user can override |
-| F-17 | Palette swap / recolor preview | MUST | M3 | Same-length palette swaps indices exactly; mismatch is rejected |
-| F-18 | WCAG contrast report | MUST | M3 | Black/white = 21; matrix values match `color.js` |
-| F-19 | Responsive layout + keyboard + ARIA | MUST | M4 | Usable at 360 px; all controls reachable by keyboard |
-| F-20 | Static deploy on GitHub Pages | MUST | M4 | HTTPS page loads; worker and all assets resolve under the repo subpath |
-| F-21 | Yliluoma ordered dithering | SHOULD | v1.1 | Deferred; not release-blocking |
-| F-22 | DTCG design-token export | SHOULD | M3 | Valid DTCG JSON for ≤64 entries |
-| F-23 | URL-hash state (params only) | SHOULD | M4 | Reload restores params; no image data in URL |
-| F-24 | Two complete themes: dark + light, auto by system + 3-state toggle, persisted | MUST | M4 | No mixed tokens; no FOUC; instant switch; light/dark parity test |
-| F-25 | In-product learning layer: contextual hints + Help drawer | MUST | M3–M4 | Every non-obvious control has a hint; ≥12 guide topics with canonical links; never auto-opens; keyboard accessible |
-| F-26 | Deep links to Help topics | SHOULD | M4 | `#help=<topic>` opens the matching topic; params hash still works |
+| F-08 | Dithering: none, FS, Atkinson, Stucki, Jarvis, Burkes, Sierra, Bayer 2/4/8, blue noise | MUST | M2 | Palette compliance preserved; strength/serpentine/edge-stop behave per §6.6 |
+| F-09 | Palette ordering: source, hue ↑/↓, lightness ↑/↓ | MUST | M1 | Strip and swatches follow the order |
+| F-10 | Indexed PNG export with reserved transparent index | MUST | M2 | Bit depth rule, `PLTE`/`tRNS`, round-trip equality |
+| F-11 | 1×N / N×1 palette strip export + validation | MUST | M1 | Exact dimensions, no profile, every pixel validated |
+| F-12 | Reduced RGBA PNG + HEX copy | MUST | M1 | Download or copy the current palette without changing order |
+| F-13 | Palette exports: `.hex`, `.gpl`, `.json` | MUST | M3 | Round-trip to the same colors; no manifest or extra formats in v1.0 |
+| F-14 | Export validation, progress, and one-at-a-time lock | MUST | M3 | Decode/compare before Save; all buttons disabled while busy; progress visible |
+| F-15 | Responsive layout + keyboard + ARIA | MUST | M4 | Usable at 360 px; all controls reachable by keyboard |
+| F-16 | Static deploy on GitHub Pages | MUST | M4 | HTTPS page loads; worker and all assets resolve under the repo subpath |
+| F-17 | Two complete themes: dark + light, auto by system + 3-state toggle, persisted | MUST | M4 | No mixed tokens; no FOUC; instant switch; light/dark parity test |
+| F-18 | Help: `?` tooltips, How-it-works, references, credits | MUST | M3–M4 | Every non-obvious control has a tooltip; references open only on click; nothing auto-opens |
+
+**Post-1.0 (not release-blocking):** palette editor/locks/roles, ΔE00/error map/worst
+pixels/contrast, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG
+exports, deep links, URL state, 12+ guide topics, batch/ZIP, CLI/WASM, animation, NES
+banks, Yliluoma, exact mapping for photos, SSIM/APCA, palette cycling, min-churn,
+print/CMYK, and neural quantization. See §19.
 
 ---
 
@@ -231,7 +241,7 @@ same network can open the tool; `--host=localhost` keeps it loopback-only.
 
 ```
 ┌───────────────────────────── UI (DOM, canvas) ─────────────────────────────┐
-│ main.js · ui/state.js · ui/controls · canvas-view · palette-view · qa-view │
+│ main.js · ui/controls · canvas-view · palette-view · export-view · tooltips │
 └───────────────────────────────────┬────────────────────────────────────────┘
                                     │ postMessage (transferables)
 ┌───────────────────────────────────▼────────────────────────────────────────┐
@@ -240,7 +250,7 @@ same network can open the tool; `--host=localhost` keeps it loopback-only.
 ┌───────────────────────────────────▼────────────────────────────────────────┐
 │ core/ (DOM-free, pure ES modules, Node-testable)                            │
 │ decode* → histogram → extract → order → map → dither → index → encode      │
-│            metrics · formats · palettes · hash · rng                        │
+│            formats · palettes · hash · rng                                  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -700,7 +710,10 @@ for each tap: accumulatedError[next] += error · weight / denominator
 - Use the same two-candidate logic as ordered: threshold `mask/255`.
 - Mask generation is not a runtime operation.
 
-#### 6.6.5 Presets and defaults
+#### 6.6.5 Defaults (presets are post-1.0)
+
+The table below is a design reference for future presets; v1.0.0 ships the individual
+controls only, with no preset picker.
 
 | Preset | Method | K | Space | Dither | Strength | Order | Transparent index |
 |---|---|---:|---|---|---:|---|---:|
@@ -740,7 +753,10 @@ Presets set controls; they do not lock them.
 - Index map length MUST equal `width * height`.
 - Every index MUST be `< K`.
 
-### 6.9 QA (`core/metrics/`)
+### 6.9 QA (`core/metrics/`) — post-1.0
+
+Not implemented in v1.0.0. Export validation and palette compliance cover the release
+contract; ΔE00, error maps, and worst-pixel reports are post-1.0 reference.
 
 - Compute ΔE00 per pixel between the source color and the mapped palette color, skipping
   transparent pixels. For preview, compute per occupied bin (weighted); for final export,
@@ -814,8 +830,8 @@ toolbar, export, canvas, palette, settings.
 │  primary PNG     │  toolbar: change · fit  │  Palette          │
 │  strip / reduced │  canvas / before-after  │   mode, algorithm │
 │  HEX / strip     │  palette strip          │  Dither           │
-│                  │  status line            │  Quality          │
-│                  │                         │  (scrolls)        │
+│                  │  status line            │  (scrolls)        │
+│                  │                         │                   │
 └──────────────────┴─────────────────────────┴───────────────────┘
 ```
 
@@ -832,7 +848,7 @@ toolbar, export, canvas, palette, settings.
 - **Export column:** a narrow left column with the primary indexed-PNG action, strip,
   reduced PNG, HEX, and strip orientation. It does not take width from the canvas.
 - **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
-  switch), Dither, Quality. Export is not in the rail.
+  switch) and Dither. Export is not in the rail; QA/Quality is not part of v1.0.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
   above it shows the palette count and a sort select: source, hue dark→light, hue
   light→dark, lightness dark→light, lightness light→dark. The selected order controls
@@ -843,8 +859,8 @@ toolbar, export, canvas, palette, settings.
 - **Export panel:** a separate left column with the primary indexed-PNG action and the
   strip/reduced/HEX actions; above the canvas below 980 px. The column spans the canvas and
   palette rows, and the palette aligns with the canvas’s left edge.
-- **QA:** summary in the status line; full ΔE/worst-pixel/contrast table in the Quality
-  section.
+- **QA:** v1.0 reports export validation and palette compliance in the status line.
+  ΔE00, error maps, worst pixels, and contrast are post-1.0.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
   with an `aria-label`/`title` carrying the full name. The document title uses the full
   name.
@@ -856,21 +872,19 @@ toolbar, export, canvas, palette, settings.
 
 The loaded UI has three control surfaces: the stage toolbar, the export column left of the
 canvas (above it on mobile), and the right settings rail. Rail sections are independently collapsible;
-**Palette** starts open and users may open **Dither** and **Quality** together. Desktop
-spacing is compact but keeps an 8 px gap between labels and controls; the rail scrolls
-only when open bodies exceed the viewport. Touch layouts keep 44 px targets.
+**Palette** starts open and **Dither** may be opened alongside it. Desktop spacing is
+compact but keeps an 8 px gap between labels and controls; the rail scrolls only when
+open bodies exceed the viewport. Touch layouts keep 44 px targets.
 
 Every non-obvious control has an 18 px `?` button. It opens a plain-language tooltip on
 hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is appended to
 `<body>` so the rail never clips it. Tooltip text also becomes the button’s `aria-label`.
 
-**Stage toolbar** (inside the stage, above the canvas)
+**Stage toolbar** (above the canvas)
 
 - "Change image" button (file picker, drag, paste).
-- Fit, 100%, zoom out/in.
+- Fit and 100%.
 - Original/result toggle.
-- Error-map toggle.
-- Palette-swap preview toggle.
 - Image info: filename, dimensions, unique colors (5-bit bins).
 
 **Palette rail section**
@@ -884,7 +898,7 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   alpha threshold.
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark; swatches, HEX list, and strip export follow it.
-- Palette rows, per-entry locks, add/remove/rename, and custom order land in M3.
+- Palette editing, locks, add/remove/rename, and custom order are post-1.0.
 
 **Dither rail section**
 
@@ -905,26 +919,19 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
 - Contract summary before download: `K`, bit depth, transparent index, dimensions.
-- Additional palette-format exports land in M3.
+- Palette-file exports: `.hex`, `.gpl`, and native `.json`.
 - After validation, show a `Save <file>` link. The actual file write is a real user
   gesture; browsers may block an async automatic download after a worker response. No
   silent auto-download.
 
-**Quality rail section** (collapsed by default)
-
-- ΔE00 mean/p95/max with pass/warn badges.
-- Compliance and transparent-index status.
-- Worst-pixels list; clicking an item centers the canvas on it.
-- Error-map preview (the toggle itself is in the stage toolbar).
-- Contrast matrix (collapsible).
-
 **Help**
 
-- Header `?` button opens the Help drawer with `Guide` and `Shortcuts` tabs.
+- Header `?` button opens the Help drawer with How it works, shortcuts, references, and
+  credits.
 - Header theme toggle cycles `auto → light → dark`; the preference persists in
   `localStorage` under `peiq.theme`; the current mode is announced.
-- A small info icon next to every non-obvious control opens a contextual popover with a
-  "Read more" link into the matching guide topic.
+- A small `?` next to every non-obvious control opens a plain-language tooltip. Tooltip
+  text is also the button’s `aria-label`.
 - Nothing auto-opens; `Esc` and outside-click close; focus returns to the trigger.
 
 ### 8.3 Canvas interactions
@@ -932,8 +939,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Before/after divider at 50%, draggable; keyboard: `role="slider"`, arrow keys ±1%.
 - Zoom: wheel at cursor, buttons, `F` fit, `1` 100%, `[`/`]` step.
 - Pan: drag (left or middle), space+drag.
-- `O` toggles original; `E` toggles error map; palette-swap preview toggle.
-- Pixelated rendering at ≥100%; smooth below (toggle under Advanced).
+- `O` toggles original.
+- Pixelated rendering at ≥100%; smooth below. Error-map and palette-swap previews are
+  post-1.0.
 - Checkerboard behind alpha.
 - Largest canvas backing store: `min(devicePixelRatio, 2)`.
 - No layout shift while processing; keep the last result visible with a progress overlay.
@@ -1028,20 +1036,19 @@ site. Learning is opt-in, contextual, and dismissible.
 
 **Content and safety**
 
-- Content lives in `js/content/learn.js` as structured data:
-  `{ id, title, summary, paragraphs: string[], links: string[] }`.
+- v1.0 Help content: How it works, shortcuts, references, and credits. There is no
+  long-form Guide, topic tabs, or deep-link routing in this release.
 - `js/content/references.js` holds canonical references:
-  `{ id, title, authors, year, url }`.
+  `{ id, title, authors, year, venue, url }`; it is the single source for UI links.
 - Rendered with `createElement`/`textContent`; no Markdown parser, no `innerHTML`, no
   iframe, no embedded video, no third-party widget.
 - Links are canonical sources (papers, specs, engine docs), `target="_blank"`,
   `rel="noopener noreferrer"`. No prefetch/preconnect. The page remains local-only; only
   an explicit click navigates away.
 - Content is static and bundled; zero runtime fetches.
-- Deep links (SHOULD): `#help=<topic>` opens the drawer at a topic. Params use
-  `#p=<encoded>`; combined as `#p=<encoded>&help=<topic>`.
 - Drawer semantics: `role="dialog"`, `aria-modal="false"`, labelled by its heading;
-  focus moves in on open and returns on close; tabs are keyboard-operable.
+  focus moves in on open and returns on close.
+- Post-1.0 only: `js/content/learn.js`, `#help=<topic>` deep links, Guide/Shortcuts tabs.
 - Non-goals: first-run tour, modal onboarding, permanent explanatory paragraphs,
   documentation site, comments/community.
 
@@ -1096,6 +1103,10 @@ site. Learning is opt-in, contextual, and dismissible.
 ---
 
 ## 10. Testing
+
+> **v1.0.0 scope:** tests for QA metrics, palette editing, presets, `.ase`/CSS/DTCG
+> exports, manifest, and deep links are post-1.0 reference. The release suite covers the
+> lean feature matrix in §2.
 
 ### 10.1 Framework
 
@@ -1174,7 +1185,7 @@ site. Learning is opt-in, contextual, and dismissible.
 4. Import each palette format; import a strip PNG; reject malformed files.
 5. Dither each method; compare visually; verify palette compliance.
 6. Export indexed PNG and strip; re-import both; compare.
-7. Aseprite: load `.gpl`, `.ase`, and the strip; verify colors.
+7. Aseprite: load `.gpl`, the indexed PNG, and the strip; verify colors.
 8. Godot: import the strip with filter off/mipmaps off; sample by index.
 9. Mobile viewport 360×800; all panels reachable.
 10. DevTools: no network requests; no console errors.
@@ -1228,6 +1239,10 @@ No error may be swallowed. Every warning is visible in the status bar and in the
 
 ## 12. Export contracts
 
+> **v1.0.0 scope:** native palette JSON, palette strip, indexed PNG, reduced RGBA PNG,
+> `.hex`, and `.gpl`. The `.pal`/`.css`/`.tokens.json`/`.ase` exports, QA report, and
+> manifest below are post-1.0 reference and are not release-blocking.
+
 ### 12.1 Native palette JSON
 
 ```json
@@ -1244,7 +1259,7 @@ No error may be swallowed. Every warning is visible in the status bar and in the
   "space": "oklab",
   "entries": [
     { "id": 1, "index": 0, "hex": "#0b0d10", "rgb": [11, 13, 16],
-      "alpha": 255, "name": "background", "role": "surface" }
+      "alpha": 255, "name": "background" }
   ],
   "hash": "sha256:…"
 }
@@ -1301,12 +1316,12 @@ Zlib:
 |---|---|
 | `.hex` | One `#rrggbb` per line, lowercase, no blank lines except an optional trailing newline |
 | `.gpl` | `GIMP Palette`, `Name:`, `Columns:`, `#`, then `R G B\tName` |
-| `.pal` | JASC: `JASC-PAL`, `0100`, count, then `R G B` |
-| `.css` | `:root { --peiq-color-1: #rrggbb; ... }` (1-based, stable order) |
-| `.tokens.json` | DTCG `color` object; names are `color-1` or sanitized entry names |
-| `.ase` | Adobe Swatch Exchange; RGB float32 entries; verify in Aseprite/Photoshop |
-| Manifest | §12.6 |
-| QA JSON | §12.5 |
+| `.pal` | JASC: `JASC-PAL`, `0100`, count, then `R G B` *(post-1.0)* |
+| `.css` | `:root { --peiq-color-1: #rrggbb; ... }` *(post-1.0)* |
+| `.tokens.json` | DTCG `color` object *(post-1.0)* |
+| `.ase` | Adobe Swatch Exchange *(post-1.0)* |
+| Manifest | §12.6 *(post-1.0)* |
+| QA JSON | §12.5 *(post-1.0)* |
 
 All text formats use LF and UTF-8. No BOM.
 
@@ -1406,6 +1421,11 @@ palette files are copied.
 ---
 
 ## 14. File-by-file implementation checklist
+
+> **v1.0.0 scope:** files for QA metrics, palette editing, presets, extra palette
+> formats, manifest, deep links, and URL state are post-1.0 reference. The lean feature
+> matrix in §2 and milestones in §15 are authoritative; do not create those files for the
+> 1.0 release.
 
 Legend: **S** = signatures/notes, **T** = required tests.
 
@@ -1569,33 +1589,33 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Indexed PNG + transparent index + validation
 - **Exit:** sprite mapped to PICO-8; compliance and round-trip green; `0.3.0`.
 
-### M3 — Production handoff (current)
+### M3 — v1.0 closure (current)
 
-- [ ] QA metrics, error map, worst pixels
-- [ ] Palette editor, locks, ordering
-- [ ] Built-in palettes, presets
-- [ ] All palette formats + manifest
-- [ ] Palette swap preview, contrast matrix
-- [x] Canonical reference list and credits in the Help drawer
-- [ ] Contextual hints + Help drawer shell + ≥12 guide topics
-- **Exit:** full feature matrix complete; all exports green; `0.4.0`.
+- [x] Core extraction, fixed palettes, mapping, dithering
+- [x] Indexed PNG, palette strip, reduced PNG, HEX copy
+- [x] Export validation, progress bar, single-export lock
+- [x] Tooltips, references, credits, version footer
+- [x] Remove the QA placeholder from the rail
+- [ ] Palette-file exports: `.hex`, `.gpl`, `.json`
+- [ ] Responsive, accessibility, browser, and performance pass against §9–§10
+- [ ] README, screenshots, and help copy aligned with the lean scope
+- [ ] GitHub Pages smoke test
+- **Exit:** lean feature matrix complete; all exports green; `0.4.0`.
 
 ### M4 — Release
 
-- [ ] Responsive + accessibility pass
-- [ ] Two themes: auto + 3-state toggle + token parity test
-- [ ] Performance tuning against §9
-- [ ] Learning layer polish, deep links, link audit
-- [ ] README, screenshots, usage
-- [ ] GitHub Pages deploy + smoke test
 - [ ] Release checklist §17
-- **Exit:** v1.0.0 tagged; `1.0.0`.
+- [ ] Both themes, mobile 360 px, keyboard-only pass
+- [ ] Version `1.0.0` in `package.json` and `APP_VERSION`
+- [ ] Annotated tag `v1.0.0`
+- **Exit:** v1.0.0 tagged and deployed.
 
-### M5 — v1.1 (not part of this release)
+### M5 — Post-1.0 (not part of this release)
 
-Batch + ZIP + manifest, NES banks/per-region palettes, animation frames, Yliluoma,
-exact mapping mode, SSIM/APCA, palette cycling, min-churn reindex, CLI/WASM, print,
-neural stylization.
+Palette editor/locks/roles, ΔE00/error map/worst pixels, contrast matrix, presets, palette
+swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG exports, batch/ZIP, CLI/WASM, animation,
+NES banks, Yliluoma, exact mapping for photos, SSIM/APCA, palette cycling, min-churn,
+print/CMYK, neural quantization, accounts/cloud.
 
 ---
 
@@ -1625,12 +1645,14 @@ A change is done only when:
 - [ ] Manual browser matrix §10.6 completed.
 - [ ] DevTools shows zero network requests after load.
 - [ ] Strip round-trip and indexed round-trip validated on the release corpus.
-- [ ] Aseprite and Godot import smoke tests pass.
+- [ ] Palette `.hex`, `.gpl`, and `.json` exports round-trip.
+- [ ] Aseprite and Godot import smoke tests pass for indexed PNG and strip.
 - [ ] Mobile 360 px and keyboard-only pass.
 - [ ] Both themes: auto follows OS, toggle cycles, persists, no FOUC; `theme.test.js` parity green.
 - [ ] Header shows only brand + theme + Help; no extra buttons.
+- [ ] Export progress appears and concurrent export clicks are ignored.
 - [ ] README complete; screenshots current.
-- [ ] `APP_VERSION`, `package.json`, manifest = `1.0.0`.
+- [ ] `APP_VERSION` and `package.json` = `1.0.0`.
 - [ ] `LICENSE` = GPL-3.0; README states it.
 - [ ] GitHub Pages deployed and smoke-tested at the project URL.
 - [ ] Annotated tag `v1.0.0` on the version-bump commit.
@@ -1683,25 +1705,31 @@ A change is done only when:
 | 2026-11-13 | Release 0.3.1 with the version shown in the footer | Makes the running build identifiable; the tag marks this UI batch |
 | 2026-11-13 | Add an indeterminate export progress bar and a single-export busy lock | Users should not mistake a slow export for a frozen page; concurrent export clicks must not race |
 | 2026-11-13 | Release 0.3.2 with export progress and the busy lock | Tagged patch release for the export UX fix |
+| 2026-11-14 | v1.0.0 scope reset: single-image extraction + fixed-palette mapping + validated indexed/strip handoff; park editor, QA, presets, manifests, extra formats, batch, CLI | Landscape refresh shows extraction, dithering, formats, and batch are commodity; the remaining wedge is the validated handoff, and the full compiler scope was overkill |
 
 ---
 
-## 19. Deferred backlog (v1.x)
+## 19. Post-1.0 backlog (explicitly out of v1.0.0)
 
-| Item | Why deferred |
-|---|---|
-| Batch + ZIP + manifest per file | Needs queue UI, concurrency, error isolation |
-| NES banks / per-region palettes | Bank data model + per-tile optimization |
-| Animation frames | Cross-browser frame decoding without deps |
-| Yliluoma dithering | Complex; not release-blocking |
-| Exact mapping for photos | LUT quality is sufficient; measure first |
-| SSIM / banding / APCA | QA already reports ΔE; add after field feedback |
-| Palette cycling metadata | Needs index-range model |
-| Min-churn reindex (Hungarian) | Useful after palette editing exists in the field |
-| CLI / WASM | Requires a second runtime; revisit if batch demand is proven |
-| Print/CMYK/spot | Different color science and formats |
-| Neural quantization | Model licensing, determinism, palette compliance |
-| Accounts/cloud | Contradicts local-first |
+Nothing in this table is release-blocking for `1.0.0`. Do not start these without a new
+scope decision and a matching plan update.
+
+| Item | Status after 1.0 | Why parked |
+|---|---|---|
+| Palette editor: add/remove/lock/rename/role | Candidate 1.1 | Useful, but expands the palette model and UI; extraction + import cover the core |
+| ΔE00, error map, worst pixels, contrast matrix | Candidate 1.1 | Reporting layer; export validation already protects compliance |
+| Presets (Photo, Pixel Art, Retro, Game Sprite, UI) | Candidate 1.1 | Convenience; users can set the same controls manually |
+| Palette swap / recolor preview | Candidate 1.1 | Needs a second palette and index contract; not core to extraction/mapping |
+| Manifest + QA JSON | Candidate 1.1 | Only valuable with batch/CI, which is not v1.0 |
+| `.pal`, `.css`, `.ase`, DTCG exports | Candidate 1.1 | `.hex`, `.gpl`, `.json` cover the common palette handoff |
+| Help guide with 12+ topics, deep links | Candidate 1.1 | Tooltips + references already cover the controls; long-form content is a separate project |
+| URL-hash state | Candidate 1.1 | Convenience; no image data in URL |
+| Batch/ZIP, CLI, WASM, API | Not planned for v1.x | The landscape refresh shows batch/API is already served by free tools; conflicts with local-first simplicity |
+| Animation frames, NES banks, palette cycling, min-churn | Not planned for v1.x | Needs a different data model and asset pipeline |
+| Yliluoma, exact mapping for photos, SSIM/APCA | Not planned for v1.x | Existing dithering/LUT/validation is sufficient; measure demand first |
+| Print/CMYK/spot | Not planned | Different color science and file contracts |
+| Neural quantization | Not planned | Model licensing, determinism, palette compliance |
+| Accounts/cloud | Never | Contradicts the local-first product |
 
 ---
 
