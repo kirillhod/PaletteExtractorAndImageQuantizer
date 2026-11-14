@@ -3,8 +3,8 @@
 **Turn any image into a clean, usable palette — right in your browser.**
 
 Extract colors, map an image to a fixed palette, dither the result, and export
-engine-ready indexed PNGs and palette strips. Everything runs on your device: no uploads,
-no accounts, no dependencies, no build step.
+engine-ready indexed PNGs, palette strips, and palette files. Everything runs on your
+device: no uploads, no accounts, no dependencies, no build step.
 
 ![PEIQ workspace with a sunset image, a 24-color palette, and the export panel](assets/screenshots/workspace-dark.png)
 
@@ -51,10 +51,11 @@ Constrain artwork to the palette your engine or hardware expects.
   palette (1, 2, 4, or 8 bits).
 - **Palette strip** as an exact `N×1` or `1×N` PNG.
 - **Reduced RGBA PNG** for quick previews and sharing.
+- **Palette files** in `.hex`, `.gpl`, or `.json`.
 - **HEX list** copied to the clipboard.
 
-Every export is decoded again and compared with the expected pixel data before the Save
-link appears. If something does not match, the download is blocked.
+Indexed PNGs, strips, and palette files are parsed/decoded again and checked before the
+Save link appears. A mismatch blocks the download.
 
 ### Work comfortably
 

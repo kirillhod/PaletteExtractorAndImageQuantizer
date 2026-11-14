@@ -1,7 +1,10 @@
 // @ts-check
 import { parseHex } from '../color.js';
+import { paletteHash } from '../palette.js';
+import { ALGORITHM_VERSION, APP_VERSION } from '../version.js';
 
 /** @typedef {import('../types.js').RGBA8} RGBA8 */
+/** @typedef {import('../types.js').Palette} Palette */
 
 /**
  * Parse the native palette JSON. Also accepts a plain array of hex strings or
@@ -66,4 +69,39 @@ function parseEntry(entry) {
     return { color: { r, g, b, a }, name: value.name ?? null };
   }
   throw new Error('palette entry needs hex or rgb');
+}
+
+/**
+ * Serialize the native palette JSON. Async because the palette hash uses WebCrypto
+ * when available.
+ *
+ * @param {Palette} palette
+ * @param {{ name?: string, order?: string, space?: string }} [options]
+ * @returns {Promise<string>}
+ */
+export async function formatPaletteJson(palette, options = {}) {
+  const order = options.order ?? 'source';
+  const space = options.space ?? 'oklab';
+  const entries = palette.map((entry) => ({
+    id: entry.id,
+    index: entry.index,
+    hex: entry.hex,
+    rgb: [entry.color.r, entry.color.g, entry.color.b],
+    alpha: entry.color.a,
+    ...(entry.name ? { name: entry.name } : {}),
+  }));
+  const payload = {
+    format: 'peiq/palette',
+    version: 1,
+    meta: {
+      name: options.name ?? 'palette',
+      tool: APP_VERSION,
+      algorithmVersion: ALGORITHM_VERSION,
+    },
+    order,
+    space,
+    entries,
+    hash: await paletteHash(palette, { order, space }),
+  };
+  return `${JSON.stringify(payload, null, 2)}\n`;
 }

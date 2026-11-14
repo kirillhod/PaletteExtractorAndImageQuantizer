@@ -37,7 +37,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 86 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, alpha, references |
+| Tests | 90 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
 | Version | `js/core/version.js`; `v0.3.3` tagged; M2 complete |
 | Next | M3: finish the lean v1.0.0 handoff (palette exports, final polish, release) |
 
@@ -133,11 +133,12 @@ add it to the 1.0 release without a scope decision and a plan update.
 | F-17 | Two complete themes: dark + light, auto by system + 3-state toggle, persisted | MUST | M4 | No mixed tokens; no FOUC; instant switch; light/dark parity test |
 | F-18 | Help: `?` tooltips, How-it-works, references, credits | MUST | M3–M4 | Every non-obvious control has a tooltip; references open only on click; nothing auto-opens |
 
-**Post-1.0 (not release-blocking):** palette editor/locks/roles, ΔE00/error map/worst
-pixels/contrast, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG
-exports, deep links, URL state, 12+ guide topics, batch/ZIP, CLI/WASM, animation, NES
-banks, Yliluoma, exact mapping for photos, SSIM/APCA, palette cycling, min-churn,
-print/CMYK, and neural quantization. See §19.
+**v1.1 (planned after 1.0):** minimal palette editor + locks, ΔE00 summary/error
+map/worst pixels, URL state. **Later/not planned for v1.x:** palette roles, contrast
+matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG exports, deep
+links, 12+ guide topics, batch/ZIP, CLI/WASM, animation, NES banks, Yliluoma, exact
+mapping for photos, SSIM/APCA, palette cycling, min-churn, print/CMYK, neural
+quantization, accounts/cloud. See §19.
 
 ---
 
@@ -1596,7 +1597,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Export validation, progress bar, single-export lock
 - [x] Tooltips, references, credits, version footer
 - [x] Remove the QA placeholder from the rail
-- [ ] Palette-file exports: `.hex`, `.gpl`, `.json`
+- [x] Palette-file exports: `.hex`, `.gpl`, `.json`
 - [ ] Responsive, accessibility, browser, and performance pass against §9–§10
 - [ ] README, screenshots, and help copy aligned with the lean scope
 - [ ] GitHub Pages smoke test
@@ -1610,12 +1611,23 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [ ] Annotated tag `v1.0.0`
 - **Exit:** v1.0.0 tagged and deployed.
 
-### M5 — Post-1.0 (not part of this release)
+### M5 — v1.1: editing and quality (after 1.0.0)
 
-Palette editor/locks/roles, ΔE00/error map/worst pixels, contrast matrix, presets, palette
-swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG exports, batch/ZIP, CLI/WASM, animation,
-NES banks, Yliluoma, exact mapping for photos, SSIM/APCA, palette cycling, min-churn,
-print/CMYK, neural quantization, accounts/cloud.
+- [ ] Minimal palette editor: remove, edit HEX, add, and keep a stable manual order.
+      No semantic roles in this release.
+- [ ] Locks: locked entries survive sorting/removal and keep their palette identity;
+      removal renumbers deterministically.
+- [ ] ΔE00 summary (mean/p95/max), error map, and worst-pixel list. No contrast matrix.
+- [ ] URL state: serialize normalized parameters in the hash, restore on reload, never
+      put image data in the URL.
+- **Exit:** `1.1.0` tagged; editor, locks, QA summary, and URL restore tested.
+
+### M6 — Later / not planned for v1.x
+
+Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
+`.ase`/DTCG exports, batch/ZIP, CLI/WASM, animation, NES banks, Yliluoma, exact mapping
+for photos, SSIM/APCA, palette cycling, min-churn, print/CMYK, neural quantization,
+accounts/cloud.
 
 ---
 
@@ -1709,6 +1721,8 @@ A change is done only when:
 | 2026-11-14 | Reduced RGBA export preserves source alpha; transparent index applies only to indexed/strip output; tooltips corrected | Matches the existing alpha contract and removes a misleading hint about RGBA alpha |
 | 2026-11-14 | Add zoom buttons and pinch-to-zoom on canvas | Mobile users could only Fit/100%; two-finger zoom is expected on touch |
 | 2026-11-14 | Release 0.3.3 for the mobile zoom/toolbar, alpha, tooltip, background, and Help fixes | Patch release for the post-0.3.2 batch; tag the version-bump commit |
+| 2026-11-14 | Plan v1.1: minimal palette editor + locks, ΔE00 summary/error map, URL state | Owner selected the few post-1.0 features with direct workflow value; roles, presets, swap, and manifest remain later |
+| 2026-11-14 | Add `.hex`, `.gpl`, and `.json` palette-file exports with parse-back validation | Completes the v1.0 palette handoff without adding the deferred format set |
 
 ---
 
@@ -1719,11 +1733,13 @@ scope decision and a matching plan update.
 
 | Item | Status after 1.0 | Why parked |
 |---|---|---|
-| Palette editor: add/remove/lock/rename/role | Candidate 1.1 | Useful, but expands the palette model and UI; extraction + import cover the core |
-| ΔE00, error map, worst pixels, contrast matrix | Candidate 1.1 | Reporting layer; export validation already protects compliance |
-| Presets (Photo, Pixel Art, Retro, Game Sprite, UI) | Candidate 1.1 | Convenience; users can set the same controls manually |
-| Palette swap / recolor preview | Candidate 1.1 | Needs a second palette and index contract; not core to extraction/mapping |
-| Manifest + QA JSON | Candidate 1.1 | Only valuable with batch/CI, which is not v1.0 |
+| Minimal palette editor: remove/edit/add + locks | Planned v1.1 | Expands the palette model and UI; roles stay out |
+| ΔE00 summary, error map, worst pixels | Planned v1.1 | Reporting layer; strengthens the validated-handoff story; contrast stays out |
+| URL state (params only) | Planned v1.1 | Cheap reproducibility/shareability; no image data |
+| Palette roles | Candidate 1.2 | Design-token semantics are outside the game/art core |
+| Presets (Photo, Pixel Art, Retro, Game Sprite, UI) | Candidate 1.2 | Convenience; users can set the same controls manually |
+| Palette swap / recolor preview | Candidate 1.2 | Needs a second palette and index contract |
+| Manifest + QA JSON | Candidate 1.2 | Only valuable with batch/CI, which is not v1.0 |
 | `.pal`, `.css`, `.ase`, DTCG exports | Candidate 1.1 | `.hex`, `.gpl`, `.json` cover the common palette handoff |
 | Help guide with 12+ topics, deep links | Candidate 1.1 | Tooltips + references already cover the controls; long-form content is a separate project |
 | URL-hash state | Candidate 1.1 | Convenience; no image data in URL |

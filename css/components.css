@@ -549,6 +549,19 @@
   min-height: 30px;
 }
 
+.peiq-export-palette {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.peiq-export-palette .peiq-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+}
+
 .peiq-export-progress {
   display: grid;
   gap: 6px;
