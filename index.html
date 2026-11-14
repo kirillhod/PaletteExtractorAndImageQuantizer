@@ -137,11 +137,12 @@
           <div class="peiq-palette-editor" id="palette-editor" hidden>
             <label class="peiq-label" for="palette-hex">HEX</label>
             <input class="peiq-input" id="palette-hex" type="text" autocomplete="off" spellcheck="false" placeholder="#rrggbb" aria-describedby="palette-edit-hint">
+            <button class="peiq-btn peiq-btn--small" id="palette-pick" type="button" aria-pressed="false" disabled>Pick</button>
             <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" disabled>Apply</button>
             <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" disabled>Add</button>
             <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" disabled>Remove</button>
             <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" disabled>Lock</button>
-            <p class="peiq-hint" id="palette-edit-hint">Select a swatch to edit it. Locked colors keep their position when sorting.</p>
+            <p class="peiq-hint" id="palette-edit-hint">Select a swatch to edit it. Pick samples the canvas. Locked colors keep their position when sorting.</p>
           </div>
         </div>
 
@@ -301,7 +302,7 @@
       <button class="peiq-icon-btn" id="help-close" type="button" aria-label="Close help">×</button>
     </div>
     <div class="peiq-drawer__body">
-      <p>Load an image, choose a color count or a fixed palette, and compare the original with the reduced result. Edit the palette with HEX changes, add/remove, and locks, then export a validated indexed PNG, a palette strip, a reduced PNG, or a palette file.</p>
+      <p>Load an image, choose a color count or a fixed palette, and compare the original with the reduced result. Edit the palette with HEX changes, canvas picks, add/remove, and locks, then export a validated indexed PNG, a palette strip, a reduced PNG, or a palette file.</p>
       <div class="peiq-learn-note">
         <p><strong>v1.1 focus.</strong> Five extractors, fixed palettes (built-in and import), exact/LUT mapping, error diffusion, Bayer and blue-noise dithering, indexed PNG with <code>tRNS</code>, strip/reduced export, palette files in <code>.hex</code>, <code>.gpl</code>, and <code>.json</code>, and a minimal palette editor with locks. ΔE00 QA and URL state are next; presets and the long-form theory guide remain out of scope.</p>
       </div>

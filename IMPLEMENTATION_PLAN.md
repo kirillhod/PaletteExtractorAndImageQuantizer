@@ -908,8 +908,11 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark; swatches, HEX list, and strip export follow it.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds **Apply / Add / Remove / Lock**. Locks pin an entry to its current slot during
-  sorting and block removal. Rename, roles, and drag reordering remain post-1.1.
+  adds **Pick / Apply / Add / Remove / Lock**. **Pick** arms a canvas eyedropper: the next
+  click samples the visible preview (the reduced side when the click is right of the
+  divider), applies it to the selected entry, or fills the HEX field for **Add**. `Esc`
+  cancels. Locks pin an entry to its current slot during sorting and block removal.
+  Rename, roles, and drag reordering remain post-1.1.
 
 **Dither rail section**
 
@@ -1742,6 +1745,7 @@ A change is done only when:
 | 2026-11-14 | Release 1.0.0: M4 complete | Chrome 157, Edge 157, independent GDI+ PNG decode, themes, 360 px, keyboard, and 91 tests verified; Firefox/Safari and Aseprite/Godot were unavailable |
 | 2026-11-14 | Default extractor is Wu with K=16 | Balanced quality across photos and pixel art; every other method stays selectable |
 | 2026-11-14 | Locks pin entries to their current slot; locked colors cannot be removed; HEX edits keep the lock | Minimal v1.1 rule that preserves palette identity and deterministic indices without drag reordering |
+| 2026-11-14 | Canvas eyedropper samples the visible preview | Works in every supported browser without a platform API; sampling the reduced side lets users pull mapped colors back into the palette |
 
 ---
 

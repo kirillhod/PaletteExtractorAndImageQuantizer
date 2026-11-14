@@ -511,6 +511,9 @@
   gap: var(--peiq-space-1);
   min-height: 32px;
   max-height: 196px;
+  /* Hover scale and focus rings extend past the swatch box; padding keeps them
+     inside the scroll container instead of clipping the first row. */
+  padding: 6px;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -554,6 +557,11 @@
   border-style: dashed;
   border-width: 2px;
   border-color: var(--peiq-text-strong);
+}
+
+.peiq-canvas-frame.is-picking,
+.peiq-canvas-frame.is-picking canvas {
+  cursor: crosshair;
 }
 
 .peiq-export-panel {

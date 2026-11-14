@@ -291,6 +291,43 @@ export function createCanvasView(options) {
     }
   });
 
+  /**
+   * Sample the preview under a client point. The reduced side is sampled when the
+   * point is right of the divider, so the eyedropper can also pick mapped colors.
+   * Returns null outside the image or when the point is transparent.
+   *
+   * @param {number} clientX
+   * @param {number} clientY
+   * @returns {{ r:number, g:number, b:number, a:number }|null}
+   */
+  function pickColor(clientX, clientY) {
+    if (!original) return null;
+    const rect = frame.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    const imageX = Math.floor((localX - offsetX) / scale);
+    const imageY = Math.floor((localY - offsetY) / scale);
+    if (
+      imageX < 0 ||
+      imageY < 0 ||
+      imageX >= original.width ||
+      imageY >= original.height
+    ) {
+      return null;
+    }
+    const useReduced =
+      !showOriginal && reduced !== null && localX >= rect.width * dividerFraction;
+    const source = useReduced ? reduced : original;
+    if (!source || imageX >= source.width || imageY >= source.height) return null;
+    const offset = (imageY * source.width + imageX) * 4;
+    return {
+      r: source.data[offset],
+      g: source.data[offset + 1],
+      b: source.data[offset + 2],
+      a: source.data[offset + 3],
+    };
+  }
+
   const narrowViewport = window.matchMedia('(max-width: 979px)');
   let lastFrameWidth = 0;
   const resizeObserver = new ResizeObserver(() => {
@@ -333,5 +370,6 @@ export function createCanvasView(options) {
     zoomIn: () => zoomBy(1.25),
     zoomOut: () => zoomBy(1 / 1.25),
     setDivider,
+    pickColor,
   };
 }

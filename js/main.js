@@ -1,5 +1,5 @@
 // @ts-check
-import { parseHex } from './core/color.js';
+import { formatHex, parseHex } from './core/color.js';
 import { formatHexPalette, parseHexPalette } from './core/formats/hex.js';
 import { formatGplPalette, parseGplPalette } from './core/formats/gpl.js';
 import { formatPaletteJson, parsePaletteJson } from './core/formats/json.js';
@@ -53,6 +53,11 @@ const paletteApply = /** @type {HTMLButtonElement|null} */ (document.getElementB
 const paletteAdd = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-add'));
 const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
+const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
+const paletteEditHint = document.getElementById('palette-edit-hint');
+const PALETTE_EDIT_HINT =
+  'Select a swatch to edit it. Pick samples the canvas. Locked colors keep their position when sorting.';
+const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
 const extractControls = document.getElementById('extract-controls');
@@ -106,6 +111,7 @@ let mode = 'extract';
 let paletteEditMode = false;
 /** @type {number|null} */
 let selectedPaletteId = null;
+let pickingColor = false;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -245,6 +251,7 @@ function beginExport(label) {
   app.exportRequestId = id;
   app.exportBusy = true;
   setExportEnabled(false);
+  stopPickMode();
   updatePaletteEditor();
   clearDownloadLinks();
   setExportProgress(label);
@@ -309,6 +316,7 @@ function updatePaletteEditor() {
   }
   if (paletteEditor) paletteEditor.hidden = !active;
   if (paletteHex) paletteHex.disabled = app.exportBusy;
+  if (palettePick) palettePick.disabled = !active || app.exportBusy;
   if (paletteApply) paletteApply.disabled = !selected || app.exportBusy;
   if (paletteAdd) paletteAdd.disabled = !active || app.exportBusy || app.palette.length >= 256;
   if (paletteRemove) {
@@ -326,10 +334,53 @@ function updatePaletteEditor() {
 function setPaletteEditMode(active) {
   paletteEditMode = active;
   if (!active) {
+    stopPickMode();
     selectedPaletteId = null;
     if (paletteHex) paletteHex.value = '';
   }
   renderCurrentPalette();
+}
+
+function startPickMode() {
+  if (!paletteEditMode || !app.hasResult || app.exportBusy) return;
+  pickingColor = true;
+  palettePick?.setAttribute('aria-pressed', 'true');
+  frame.classList.add('is-picking');
+  if (paletteEditHint) paletteEditHint.textContent = PALETTE_PICK_HINT;
+  updatePaletteEditor();
+}
+
+function stopPickMode() {
+  if (!pickingColor) return;
+  pickingColor = false;
+  palettePick?.setAttribute('aria-pressed', 'false');
+  frame.classList.remove('is-picking');
+  if (paletteEditHint) paletteEditHint.textContent = PALETTE_EDIT_HINT;
+  updatePaletteEditor();
+}
+
+/** @param {PointerEvent} event */
+function handleCanvasPick(event) {
+  if (!pickingColor) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const color = canvasView.pickColor(event.clientX, event.clientY);
+  if (!color) {
+    toast('Click a visible part of the image', 'error');
+    return;
+  }
+  if (color.a === 0) {
+    toast('That pixel is transparent', 'error');
+    return;
+  }
+  stopPickMode();
+  if (paletteHex) paletteHex.value = formatHex(color);
+  if (selectedPaletteEntry()) {
+    applyPaletteHex();
+  } else {
+    toast(`Picked ${formatHex(color)}. Press Add to append it.`, 'success');
+  }
 }
 
 function markPaletteEdited() {
@@ -340,6 +391,7 @@ function markPaletteEdited() {
 }
 
 function resetPaletteEdits() {
+  stopPickMode();
   app.paletteEdited = false;
   paletteEditMode = false;
   selectedPaletteId = null;
@@ -879,6 +931,17 @@ paletteApply?.addEventListener('click', applyPaletteHex);
 paletteAdd?.addEventListener('click', addPaletteColor);
 paletteRemove?.addEventListener('click', removePaletteColor);
 paletteLock?.addEventListener('click', togglePaletteLock);
+palettePick?.addEventListener('click', () => {
+  if (pickingColor) stopPickMode();
+  else startPickMode();
+});
+canvas.addEventListener('pointerdown', handleCanvasPick, { capture: true });
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && pickingColor) {
+    event.preventDefault();
+    stopPickMode();
+  }
+});
 paletteHex?.addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return;
   event.preventDefault();
