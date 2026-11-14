@@ -1121,11 +1121,12 @@ document.addEventListener('keydown', (event) => {
     return;
   }
   const key = event.key.toLowerCase();
-  if (key === 'z') {
+  const code = event.code;
+  if (code === 'KeyZ' || key === 'z') {
     event.preventDefault();
     if (event.shiftKey) redoPaletteEdit();
     else undoPaletteEdit();
-  } else if (key === 'y') {
+  } else if (code === 'KeyY' || key === 'y') {
     event.preventDefault();
     redoPaletteEdit();
   }

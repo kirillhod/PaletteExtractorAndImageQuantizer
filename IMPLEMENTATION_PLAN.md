@@ -916,7 +916,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   samples the visible preview (the reduced side when the click is right of the divider),
   applies it to the selected entry, or fills the HEX field for **Add**. `Esc` cancels.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
-  the preview. Locks pin an entry to its current slot during sorting and block removal.
+  the preview. Moving changes export indices, not the set of mapped colors, so the preview
+  normally looks identical; the transparent index follows the entry. Locked entries keep
+  their slot, and a move that would cross one is blocked. Locks pin an entry to its current
+  slot during sorting and block removal.
   **Undo / Redo** keep up to 50 palette snapshots (colors, order, locks, selection, sort,
   and transparent index); `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z` work outside text fields.
   Rename, roles, and drag reordering remain post-1.1.
