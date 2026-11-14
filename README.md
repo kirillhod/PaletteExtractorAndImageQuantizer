@@ -24,8 +24,9 @@ Choose the colors that define your image.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
   their place when sorting, move colors left/right in Manual order, pick colors straight
   from the canvas, and undo or redo edits with `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z`.
-  Reordering changes the exported index order; the preview colors stay the same, and a
-  move cannot cross a locked entry.
+  Reordering changes the exported index order; the preview and Reduced PNG stay the same
+  because the color set is unchanged. Adding, removing, or editing a color changes the
+  mapping. A move cannot cross a locked entry.
 - See the original and the reduced image side by side with a draggable divider.
 
 ### Map to a fixed palette

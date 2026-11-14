@@ -145,7 +145,7 @@
             <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" aria-label="Move color right" title="Move color right" disabled>→</button>
             <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" disabled>Remove</button>
             <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" disabled>Lock</button>
-            <p class="peiq-hint" id="palette-edit-hint">Select a swatch to edit it. Pick samples the canvas. ← / → move it; Ctrl+Z undoes.</p>
+            <p class="peiq-hint" id="palette-edit-hint">Select a swatch. Pick samples the canvas. ← / → change export order only; add, remove, or edit changes the preview.</p>
           </div>
         </div>
 
@@ -317,6 +317,9 @@
         <li>Optionally dither with error diffusion, Bayer, or blue noise.</li>
         <li>Encode the output, decode it back, and compare with the expected pixels.</li>
       </ol>
+      <h2>Palette order and the preview</h2>
+      <p>The preview and the Reduced PNG map every pixel to the available palette colors (nearest color, or a dithered mix). Moving a swatch changes the export order and index values, but not the set of colors, so the image looks the same. Adding, removing, or editing a color changes the available colors, so pixels may choose differently. Exact distance ties go to the lowest palette index, which is the only case where reordering can change the result.</p>
+      <p>Indexed PNG keeps the same visible colors after a move, but its <code>PLTE</code> order and index map change. The transparent index follows the color that was chosen, not the slot.</p>
       <h2>Shortcuts</h2>
       <table class="peiq-shortcuts">
         <thead>
