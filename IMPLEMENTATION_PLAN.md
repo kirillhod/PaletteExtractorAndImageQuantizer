@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 86 passing (`node --test`), including golden hashes, dithering, palettes, indexed PNG, alpha, references |
-| Version | `js/core/version.js`; `v0.3.2` tagged; M2 complete |
+| Version | `js/core/version.js`; `v0.3.3` tagged; M2 complete |
 | Next | M3: finish the lean v1.0.0 handoff (palette exports, final polish, release) |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
@@ -1708,6 +1708,7 @@ A change is done only when:
 | 2026-11-14 | v1.0.0 scope reset: single-image extraction + fixed-palette mapping + validated indexed/strip handoff; park editor, QA, presets, manifests, extra formats, batch, CLI | Landscape refresh shows extraction, dithering, formats, and batch are commodity; the remaining wedge is the validated handoff, and the full compiler scope was overkill |
 | 2026-11-14 | Reduced RGBA export preserves source alpha; transparent index applies only to indexed/strip output; tooltips corrected | Matches the existing alpha contract and removes a misleading hint about RGBA alpha |
 | 2026-11-14 | Add zoom buttons and pinch-to-zoom on canvas | Mobile users could only Fit/100%; two-finger zoom is expected on touch |
+| 2026-11-14 | Release 0.3.3 for the mobile zoom/toolbar, alpha, tooltip, background, and Help fixes | Patch release for the post-0.3.2 batch; tag the version-bump commit |
 
 ---
 
