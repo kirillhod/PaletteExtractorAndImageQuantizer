@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.0.0
-**Product version at completion:** 1.0.0
+**Plan version:** 1.1.0
+**Product version at completion:** 1.1.0
 **Status:** Approved for implementation
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -38,8 +38,8 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 116 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, references |
-| Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete; M5 in progress |
-| Next | M5: v1.1 editing and quality (palette editor + locks, ΔE00 summary/error map, URL state) |
+| Version | `js/core/version.js`; `v1.1.0` tagged; M5 complete |
+| Next | M6: post-1.x backlog (roles, contrast, presets, extra formats, batch/CLI, and the rest) |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -133,7 +133,7 @@ add it to the 1.0 release without a scope decision and a plan update.
 | F-17 | Two complete themes: dark + light, auto by system + 3-state toggle, persisted | MUST | M4 | No mixed tokens; no FOUC; instant switch; light/dark parity test |
 | F-18 | Help: `?` tooltips, How-it-works, references, credits | MUST | M3–M4 | Every non-obvious control has a tooltip; references open only on click; nothing auto-opens |
 
-**v1.1 (in progress):** minimal palette editor + locks, ΔE00 summary/error
+**v1.1 (complete):** minimal palette editor + locks, ΔE00 summary/error
 map/worst pixels, URL state. **Later/not planned for v1.x:** palette roles, contrast
 matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/`.ase`/DTCG exports, deep
 links, 12+ guide topics, batch/ZIP, CLI/WASM, animation, NES banks, Yliluoma, exact
@@ -1634,7 +1634,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Annotated tag `v1.0.0`
 - **Exit:** v1.0.0 tagged; Pages deploys from the same commit on push.
 
-### M5 — v1.1: editing and quality (after 1.0.0)
+### M5 — v1.1: editing and quality (complete)
 
 - [x] Minimal palette editor: remove, edit HEX, add, and keep a stable manual order.
       No semantic roles in this release.
@@ -1761,6 +1761,7 @@ A change is done only when:
 | 2026-11-14 | Palette editor keeps a 50-step undo/redo history | Covers colors, order, locks, selection, sort, and transparent index; Ctrl/Cmd+Z stays native inside text fields |
 | 2026-11-14 | QA measures the preview per pixel with CIEDE2000; p95 uses 0.1 buckets, worst list is top 20, error map clamps at 20 ΔE00 | Keeps measurement responsive and aligned with the preview; contrast and full QA reports stay out of v1.1 |
 | 2026-11-14 | URL state stores normalized v1 settings in the hash; defaults omitted; imported palettes, edits, and QA results excluded | Shareable and reproducible without image data or a backend |
+| 2026-11-14 | Release 1.1.0: M5 complete | Palette editor, locks, manual order, eyedropper, quality report, and URL state tested; 116 tests |
 
 ---
 
