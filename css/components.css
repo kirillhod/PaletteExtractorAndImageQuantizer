@@ -696,12 +696,15 @@
   background: var(--peiq-bg);
   color: var(--peiq-text);
   border-left: 1px solid var(--peiq-border-strong);
-  box-shadow: var(--peiq-shadow-drawer);
+  box-shadow: none;
   transform: translateX(100%);
-  transition: transform var(--peiq-dur-slow) var(--peiq-ease);
+  transition:
+    transform var(--peiq-dur-slow) var(--peiq-ease),
+    box-shadow var(--peiq-dur) var(--peiq-ease);
 }
 
 .peiq-drawer[data-open="true"] {
+  box-shadow: var(--peiq-shadow-drawer);
   transform: translateX(0);
 }
 
