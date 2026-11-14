@@ -6,6 +6,7 @@ import { formatPaletteJson, parsePaletteJson } from './core/formats/json.js';
 import {
   addPaletteEntry,
   createPalette,
+  movePaletteEntry,
   paletteHexList,
   removePaletteEntry,
   setPaletteLock,
@@ -51,6 +52,8 @@ const paletteEditor = document.getElementById('palette-editor');
 const paletteHex = /** @type {HTMLInputElement|null} */ (document.getElementById('palette-hex'));
 const paletteApply = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-apply'));
 const paletteAdd = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-add'));
+const paletteMoveLeft = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-move-left'));
+const paletteMoveRight = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-move-right'));
 const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
@@ -59,7 +62,7 @@ const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
 const PALETTE_EDIT_HINT =
-  'Select a swatch to edit it. Pick samples the canvas. Locked colors keep their position when sorting.';
+  'Select a swatch to edit it. Pick samples the canvas. ← / → move it in Manual order.';
 const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
@@ -322,6 +325,22 @@ function updatePaletteEditor() {
   if (palettePick) palettePick.disabled = !active || app.exportBusy;
   if (paletteApply) paletteApply.disabled = !selected || app.exportBusy;
   if (paletteAdd) paletteAdd.disabled = !active || app.exportBusy || app.palette.length >= 256;
+  const position = selected ? app.palette.findIndex((entry) => entry.id === selected.id) : -1;
+  const canMoveLeft =
+    Boolean(selected) &&
+    !selected.locked &&
+    position > 0 &&
+    !app.palette[position - 1].locked &&
+    !app.exportBusy;
+  const canMoveRight =
+    Boolean(selected) &&
+    !selected.locked &&
+    position >= 0 &&
+    position < app.palette.length - 1 &&
+    !app.palette[position + 1].locked &&
+    !app.exportBusy;
+  if (paletteMoveLeft) paletteMoveLeft.disabled = !canMoveLeft;
+  if (paletteMoveRight) paletteMoveRight.disabled = !canMoveRight;
   if (paletteRemove) {
     paletteRemove.disabled =
       !selected || selected.locked || app.palette.length <= 1 || app.exportBusy;
@@ -507,6 +526,31 @@ function togglePaletteLock() {
     app.palette = setPaletteLock(app.palette, selected.id, !selected.locked);
     renderCurrentPalette();
     toast(selected.locked ? `Unlocked ${selected.hex}` : `Locked ${selected.hex}`, 'success');
+  } catch (error) {
+    toast(error instanceof Error ? error.message : String(error), 'error');
+  }
+}
+
+/** @param {'left'|'right'} direction */
+function moveSelectedPaletteEntry(direction) {
+  const selected = selectedPaletteEntry();
+  if (!selected) return;
+  const transparentPosition = Number(transparentIndex?.value ?? -1);
+  const transparentId =
+    transparentPosition >= 0 ? app.palette[transparentPosition]?.id ?? null : null;
+  try {
+    const moved = movePaletteEntry(app.palette, selected.id, direction);
+    sortOrder = 'manual';
+    if (sortSelect) sortSelect.value = 'manual';
+    app.palette = moved;
+    markPaletteEdited();
+    renderCurrentPalette();
+    if (transparentId !== null && transparentIndex) {
+      const nextPosition = app.palette.findIndex((entry) => entry.id === transparentId);
+      if (nextPosition >= 0) transparentIndex.value = String(nextPosition);
+    }
+    clearDownloadLinks();
+    updatePaletteEditor();
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
   }
@@ -967,6 +1011,8 @@ sortSelect?.addEventListener('change', () => {
 paletteEdit?.addEventListener('click', () => setPaletteEditMode(!paletteEditMode));
 paletteApply?.addEventListener('click', applyPaletteHex);
 paletteAdd?.addEventListener('click', addPaletteColor);
+paletteMoveLeft?.addEventListener('click', () => moveSelectedPaletteEntry('left'));
+paletteMoveRight?.addEventListener('click', () => moveSelectedPaletteEntry('right'));
 paletteRemove?.addEventListener('click', removePaletteColor);
 paletteLock?.addEventListener('click', togglePaletteLock);
 palettePick?.addEventListener('click', () => {

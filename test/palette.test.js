@@ -6,6 +6,7 @@ import { parseHex, rgb8ToOklab } from '../js/core/color.js';
 import {
   addPaletteEntry,
   createPalette,
+  movePaletteEntry,
   removePaletteEntry,
   setPaletteLock,
   sortPalette,
@@ -157,4 +158,31 @@ test('removing refuses locked colors and the last color', () => {
   assert.throws(() => removePaletteEntry(locked, 1), /locked/);
   const single = createPalette([{ r: 1, g: 2, b: 3 }]);
   assert.throws(() => removePaletteEntry(single, 1), /at least one/);
+});
+
+test('manual order keeps the current array order', () => {
+  const manual = [palette[2], palette[0], palette[1], palette[3], palette[4], palette[5]];
+  const sorted = sortPalette(manual, 'manual');
+  assert.deepEqual(sorted.map((entry) => entry.hex), manual.map((entry) => entry.hex));
+  assert.deepEqual(sorted.map((entry) => entry.index), [0, 1, 2, 3, 4, 5]);
+});
+
+test('moving an entry swaps neighbors and renumbers indices', () => {
+  const moved = movePaletteEntry(palette, 2, 'right');
+  assert.deepEqual(moved.map((entry) => entry.id), [1, 3, 2, 4, 5, 6]);
+  assert.deepEqual(moved.map((entry) => entry.index), [0, 1, 2, 3, 4, 5]);
+  const back = movePaletteEntry(moved, 2, 'left');
+  assert.deepEqual(back.map((entry) => entry.id), [1, 2, 3, 4, 5, 6]);
+});
+
+test('moving refuses locked entries and moves blocked by a locked neighbor', () => {
+  const locked = setPaletteLock(palette, 1, true);
+  assert.throws(() => movePaletteEntry(locked, 1, 'right'), /locked color cannot be moved/);
+  const blocked = setPaletteLock(palette, 2, true);
+  assert.throws(() => movePaletteEntry(blocked, 1, 'right'), /locked color blocks/);
+});
+
+test('moving at a palette edge is a no-op', () => {
+  assert.deepEqual(movePaletteEntry(palette, 1, 'left'), palette);
+  assert.deepEqual(movePaletteEntry(palette, 6, 'right'), palette);
 });

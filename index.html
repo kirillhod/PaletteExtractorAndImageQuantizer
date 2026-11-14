@@ -118,12 +118,13 @@
           <div class="peiq-palette-bar">
             <div class="peiq-palette-label">
               <span class="peiq-label">Palette</span>
-              <button class="peiq-help" type="button" data-tooltip="Reorders the swatches, the HEX list, and the exported strip. Exported indices follow the displayed order. Locked colors keep their position.">?</button>
+              <button class="peiq-help" type="button" data-tooltip="Reorders the swatches, the HEX list, and the exported strip. Exported indices follow the displayed order. Locked colors keep their position; use the editor arrows in Manual order.">?</button>
             </div>
             <label class="peiq-palette-sort" for="palette-sort">
               <span class="peiq-label">Sort</span>
               <select class="peiq-select peiq-select--compact" id="palette-sort" disabled>
                 <option value="source">Source order</option>
+                <option value="manual">Manual order</option>
                 <option value="hue-asc">Hue · dark → light</option>
                 <option value="hue-desc">Hue · light → dark</option>
                 <option value="lightness-asc">Lightness · dark → light</option>
@@ -140,9 +141,11 @@
             <button class="peiq-btn peiq-btn--small" id="palette-pick" type="button" aria-pressed="false" disabled>Pick</button>
             <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" disabled>Apply</button>
             <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" disabled>Add</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-move-left" type="button" aria-label="Move color left" title="Move color left" disabled>←</button>
+            <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" aria-label="Move color right" title="Move color right" disabled>→</button>
             <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" disabled>Remove</button>
             <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" disabled>Lock</button>
-            <p class="peiq-hint" id="palette-edit-hint">Select a swatch to edit it. Pick samples the canvas. Locked colors keep their position when sorting.</p>
+            <p class="peiq-hint" id="palette-edit-hint">Select a swatch to edit it. Pick samples the canvas. ← / → move it in Manual order.</p>
           </div>
         </div>
 
@@ -302,7 +305,7 @@
       <button class="peiq-icon-btn" id="help-close" type="button" aria-label="Close help">×</button>
     </div>
     <div class="peiq-drawer__body">
-      <p>Load an image, choose a color count or a fixed palette, and compare the original with the reduced result. Edit the palette with HEX changes, canvas picks, add/remove, and locks, then export a validated indexed PNG, a palette strip, a reduced PNG, or a palette file.</p>
+      <p>Load an image, choose a color count or a fixed palette, and compare the original with the reduced result. Edit the palette with HEX changes, canvas picks, add/remove, locks, and manual reordering, then export a validated indexed PNG, a palette strip, a reduced PNG, or a palette file.</p>
       <div class="peiq-learn-note">
         <p><strong>v1.1 focus.</strong> Five extractors, fixed palettes (built-in and import), exact/LUT mapping, error diffusion, Bayer and blue-noise dithering, indexed PNG with <code>tRNS</code>, strip/reduced export, palette files in <code>.hex</code>, <code>.gpl</code>, and <code>.json</code>, and a minimal palette editor with locks. ΔE00 QA and URL state are next; presets and the long-form theory guide remain out of scope.</p>
       </div>

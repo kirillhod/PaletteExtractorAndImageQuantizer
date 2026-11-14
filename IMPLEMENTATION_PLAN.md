@@ -37,7 +37,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 102 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
+| Tests | 107 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
 | Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete; M5 in progress |
 | Next | M5: v1.1 editing and quality (palette editor + locks, ΔE00 summary/error map, URL state) |
 
@@ -730,9 +730,9 @@ Presets set controls; they do not lock them.
 ### 6.7 Palette model (`core/palette.js`)
 
 - `createPalette(colors)` assigns stable IDs 1..N and indices 0..N-1 in extraction order.
-- `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, and `setPaletteLock`
-  return new palettes; IDs survive, indices are reassigned, and exact duplicate colors
-  are rejected in the editor.
+- `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, `setPaletteLock`, and
+  `movePaletteEntry` return new palettes; IDs survive, indices are reassigned, and exact
+  duplicate colors are rejected in the editor.
 - Locks pin an entry to its current display slot. Unlocked entries fill the remaining
   slots in the requested order, so a locked color never moves. Locked colors cannot be
   removed; HEX edits keep the lock.
@@ -740,12 +740,14 @@ Presets set controls; they do not lock them.
   The strip export and HEX list use this order.
 - Sort keys:
   - `source`: ID ascending, restoring extraction order after any other sort.
+  - `manual`: keep the current array order; the editor’s ← / → buttons move an unlocked
+    entry one slot and switch the sort to Manual. A locked entry keeps its slot, so a move
+    that would cross it is refused.
   - `lightness-asc` / `lightness-desc`: Oklab L, then hue, then C descending, then ID.
   - `hue-asc` / `hue-desc`: achromatic (`C < 0.02`) first by L in the requested
     direction; chromatic entries in a **circular hue order** (the largest hue gap becomes
     the boundary, so reds near 0°/360° stay adjacent), then L in the requested direction,
     C descending, ID.
-  - `custom`: M3, with lock-aware reordering.
 - `dedupePalette` folds exact RGB duplicates into the first entry and records aliases;
   a “keep duplicates” option is out of scope for v1.
 - `paletteHash` covers canonical `{order, space, entries:[{index,rgb,alpha}]}`.
@@ -908,12 +910,13 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark; swatches, HEX list, and strip export follow it.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds **Pick / Apply / Add / Remove / Lock**. **Pick** arms a canvas eyedropper with a
-  floating color/HEX preview under the pointer: the next click samples the visible preview
-  (the reduced side when the click is right of the divider), applies it to the selected
-  entry, or fills the HEX field for **Add**. `Esc` cancels. Locks pin an entry to its
-  current slot during sorting and block removal. Rename, roles, and drag reordering remain
-  post-1.1.
+  adds **Pick / Apply / Add / ← / → / Remove / Lock**. **Pick** arms a canvas eyedropper
+  with a floating color/HEX preview under the pointer: the next click samples the visible
+  preview (the reduced side when the click is right of the divider), applies it to the
+  selected entry, or fills the HEX field for **Add**. `Esc` cancels. **← / →** move the
+  selected unlocked color one slot and switch to Manual order; locked colors and locked
+  neighbors block a move. Locks pin an entry to its current slot during sorting and block
+  removal. Rename, roles, and drag reordering remain post-1.1.
 
 **Dither rail section**
 
@@ -1747,6 +1750,7 @@ A change is done only when:
 | 2026-11-14 | Default extractor is Wu with K=16 | Balanced quality across photos and pixel art; every other method stays selectable |
 | 2026-11-14 | Locks pin entries to their current slot; locked colors cannot be removed; HEX edits keep the lock | Minimal v1.1 rule that preserves palette identity and deterministic indices without drag reordering |
 | 2026-11-14 | Canvas eyedropper samples the visible preview and shows a floating color/HEX chip | Works in every supported browser without a platform API; sampling the reduced side lets users pull mapped colors back into the palette |
+| 2026-11-14 | Manual palette order uses ← / → buttons instead of drag-and-drop | Keyboard, touch, and screen-reader friendly; locked slots and neighbors block moves deterministically |
 
 ---
 

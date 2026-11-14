@@ -107,6 +107,28 @@ export function setPaletteLock(palette, id, locked) {
 }
 
 /**
+ * Move an unlocked entry one slot left or right. Locked entries keep their slot, so
+ * a move that would cross a locked entry is refused. IDs survive; indices are
+ * reassigned after a successful move.
+ *
+ * @param {Palette} palette
+ * @param {number} id
+ * @param {'left'|'right'} direction
+ * @returns {Palette}
+ */
+export function movePaletteEntry(palette, id, direction) {
+  const position = palette.findIndex((entry) => entry.id === id);
+  if (position < 0) throw new Error('palette entry not found');
+  if (palette[position].locked) throw new Error('locked color cannot be moved');
+  const target = position + (direction === 'left' ? -1 : 1);
+  if (target < 0 || target >= palette.length) return palette;
+  if (palette[target].locked) throw new Error('locked color blocks this move');
+  const next = palette.slice();
+  [next[position], next[target]] = [next[target], next[position]];
+  return next.map((entry, index) => ({ ...entry, index }));
+}
+
+/**
  * @param {Palette} palette
  * @param {{ r:number,g:number,b:number,a:number }} color
  * @param {number} skipPosition
@@ -133,12 +155,13 @@ function assertUniqueColor(palette, color, skipPosition) {
  *
  * Orders:
  * - `source`
+ * - `manual` — keep the current array order (used by the move buttons)
  * - `hue-asc` / `hue-desc` — achromatic first, then hue groups in a circular order,
  *   with lightness ascending/descending inside each group.
  * - `lightness-asc` / `lightness-desc`
  *
  * @param {Palette} palette
- * @param {'source'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
+ * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
  * @returns {Palette}
  */
 export function sortPalette(palette, order = 'source') {
@@ -159,10 +182,11 @@ export function sortPalette(palette, order = 'source') {
  * `sortPalette` assigns indices after merging with locked slots.
  *
  * @param {Palette} entries
- * @param {'source'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
+ * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
  * @returns {Palette}
  */
 function sortUnlockedEntries(entries, order) {
+  if (order === 'manual') return entries.slice();
   if (order === 'source') {
     return entries.slice().sort((a, b) => a.id - b.id);
   }

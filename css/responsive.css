@@ -122,6 +122,10 @@
     min-height: 44px;
   }
 
+  .peiq-palette-editor .peiq-btn {
+    min-width: 44px;
+  }
+
   .peiq-swatch {
     width: 44px;
     height: 44px;

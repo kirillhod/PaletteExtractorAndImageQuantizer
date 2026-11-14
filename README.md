@@ -22,7 +22,8 @@ Choose the colors that define your image.
 - Median cut and Wu get a Lloyd refinement pass for cleaner clusters.
 - Sort the result by source order, hue, or lightness — both directions.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
-  their place when sorting, and pick colors straight from the canvas.
+  their place when sorting, move colors left/right in Manual order, and pick colors
+  straight from the canvas.
 - See the original and the reduced image side by side with a draggable divider.
 
 ### Map to a fixed palette
