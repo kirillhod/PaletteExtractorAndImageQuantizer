@@ -841,8 +841,8 @@ toolbar, export, canvas, palette, settings.
   the stage and the rail appears.
 - **≥ 1220 px:** export `clamp(180–220 px)` + stage `1fr` + rail **360 px**.
   **980–1219 px:** export **180 px** + stage `1fr` + rail **340 px**.
-  **< 980 px:** stacked; toolbar, export, canvas, palette, settings; canvas sticky at the
-  top. **< 600 px:** single column, 44 px touch targets.
+  **< 980 px:** stacked; export, toolbar, canvas, palette, settings. **< 600 px:** single
+  column, 44 px touch targets, canvas `55svh`.
 - **Stage:** toolbar, canvas, palette strip, usage bar, and a compact status line.
   "Change image" lives in the stage toolbar, not the header.
 - **Export column:** a narrow left column with the primary indexed-PNG action, strip,

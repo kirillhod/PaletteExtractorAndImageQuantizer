@@ -67,7 +67,7 @@
   justify-content: center;
   min-height: 480px;
   max-height: 560px;
-  height: calc(100dvh - 64px);
+  height: calc(100svh - 64px);
   margin-inline: calc(var(--peiq-space-3) * -1);
   padding: var(--peiq-space-5) var(--peiq-space-3);
   text-align: center;
@@ -108,15 +108,15 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "toolbar"
     "export"
+    "toolbar"
     "canvas"
     "palette"
     "status"
     "rail";
   gap: var(--peiq-space-3);
   align-items: start;
-  min-height: calc(100dvh - 64px);
+  min-height: calc(100svh - 64px);
   padding-block: var(--peiq-space-4);
 }
 
@@ -149,6 +149,10 @@
   margin-left: auto;
 }
 
+.peiq-toolbar-short {
+  display: none;
+}
+
 .peiq-rail {
   grid-area: rail;
   position: sticky;
@@ -156,7 +160,7 @@
   display: grid;
   gap: var(--peiq-space-3);
   min-width: 0;
-  max-height: calc(100dvh - 96px);
+  max-height: calc(100svh - 96px);
   overflow: auto;
   padding-right: 4px;
   align-content: start;

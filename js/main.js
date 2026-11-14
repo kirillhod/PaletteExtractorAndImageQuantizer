@@ -539,7 +539,10 @@ function copyHex() {
 function toggleOriginalState() {
   const next = toggleOriginal.getAttribute('aria-pressed') !== 'true';
   toggleOriginal.setAttribute('aria-pressed', String(next));
-  toggleOriginal.textContent = next ? 'Reduced' : 'Original';
+  const longLabel = document.getElementById('toggle-original-label');
+  const shortLabel = document.getElementById('toggle-original-short');
+  if (longLabel) longLabel.textContent = next ? 'Reduced' : 'Original';
+  if (shortLabel) shortLabel.textContent = next ? 'Red.' : 'Orig.';
   canvasView.setShowOriginal(next);
 }
 
