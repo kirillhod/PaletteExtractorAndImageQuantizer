@@ -264,14 +264,15 @@ and the change is committed locally with a descriptive body (plan §16).
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
   M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; M3 ✅ `v0.4.0`; M4 ✅ `v1.0.0`
-  (112 tests).
+  (116 tests).
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, canvas picking,
   add/remove, locks, and ←/→ manual order, CIEDE2000 quality stats/error map/worst pixels,
-  themes, fixed desktop frame with a scrollable rail, left export column, contextual
-  tooltips, Help drawer with references and credits, LAN dev-server URLs.
-- Next: M5 — URL state, then `1.1.0`.
+  versioned URL settings, themes, fixed desktop frame with a scrollable rail, left export
+  column, contextual tooltips, Help drawer with references and credits, LAN dev-server
+  URLs.
+- Next: M5 — release `1.1.0`: version bump, browser pass, tag `v1.1.0`.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 

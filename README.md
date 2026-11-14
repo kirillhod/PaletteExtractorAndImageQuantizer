@@ -77,7 +77,9 @@ Save link appears. A mismatch blocks the download.
 - Before/after divider, fit, 100% zoom, `+`/`−` buttons, pinch-to-zoom on touch, and
   original toggle.
 - Helpful tooltips and a Help drawer with a reference list.
-- Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `T` theme, `?` Help.
+- Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help.
+- Settings live in the URL hash: a reload restores the method, colors, dither, sort, and
+  built-in palette. The image itself is never stored or uploaded.
 - Everything stays responsive down to phone width.
 
 ## How it works

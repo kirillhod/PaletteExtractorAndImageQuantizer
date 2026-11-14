@@ -3,6 +3,7 @@ import { formatHex, parseHex } from './core/color.js';
 import { formatHexPalette, parseHexPalette } from './core/formats/hex.js';
 import { formatGplPalette, parseGplPalette } from './core/formats/gpl.js';
 import { formatPaletteJson, parsePaletteJson } from './core/formats/json.js';
+import { decodeUrlState, encodeUrlState } from './core/url-state.js';
 import {
   addPaletteEntry,
   createPalette,
@@ -133,6 +134,10 @@ const paletteHistory = { past: [], future: [], limit: 50 };
 let qaResult = null;
 let qaRequestId = 0;
 let qaBusy = false;
+let applyingUrlState = false;
+/** @type {number|null} */
+let pendingTransparentIndex = null;
+let pendingTransparentRemap = false;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -204,6 +209,10 @@ function onWorkerMessage(event) {
         { value: 'Warning', label: 'fully transparent image · no palette to export' },
         { value: `${app.width}×${app.height}`, label: 'source' },
       ]);
+    }
+    if (pendingTransparentRemap) {
+      pendingTransparentRemap = false;
+      processPreview();
     }
     return;
   }
@@ -603,6 +612,7 @@ function restorePaletteSnapshot(snapshot) {
     transparentIndex.value = position >= 0 ? String(position) : '-1';
   }
   processPreview();
+  syncUrlState();
 }
 
 function undoPaletteEdit() {
@@ -772,6 +782,7 @@ function moveSelectedPaletteEntry(direction) {
     processPreview();
     pushPaletteHistory(before);
     updatePaletteEditor();
+    syncUrlState();
     toast(`Moved ${selected.hex} ${direction}`, 'success');
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
@@ -796,6 +807,14 @@ function populateTransparentIndex(palette, preferred) {
     transparentIndex.append(option);
   });
   transparentIndex.disabled = palette.length === 0;
+  if (pendingTransparentIndex !== null && palette.length > 0) {
+    const pending = pendingTransparentIndex;
+    pendingTransparentIndex = null;
+    transparentIndex.value =
+      pending >= 0 && pending < palette.length ? String(pending) : '-1';
+    if (app.hasResult) pendingTransparentRemap = true;
+    return;
+  }
   const valid = preferred >= 0 && preferred < palette.length;
   transparentIndex.value = valid ? String(preferred) : '-1';
 }
@@ -826,6 +845,70 @@ function getProcessParams() {
   };
 }
 
+function buildUrlState() {
+  const params = controls.getParams();
+  const selectedPalette = paletteSelect?.value ?? 'pico-8';
+  const palette = BUILTIN_PALETTES.some((entry) => entry.id === selectedPalette)
+    ? selectedPalette
+    : 'pico-8';
+  return {
+    mode,
+    method: params.method,
+    colors: params.colors,
+    space: params.space,
+    palette,
+    dither: ditherMethod?.value || 'none',
+    strength: Number(ditherStrength?.value ?? 80),
+    serpentine: ditherSerpentine?.checked ?? true,
+    edgeStop: Number(edgeStop?.value ?? 50),
+    alphaThreshold: Number(alphaThreshold?.value ?? 128),
+    transparentIndex: Number(transparentIndex?.value ?? -1),
+    sortOrder,
+  };
+}
+
+function syncUrlState() {
+  if (applyingUrlState) return;
+  const hash = encodeUrlState(buildUrlState());
+  const next = `${location.pathname}${location.search}#${hash}`;
+  if (`${location.pathname}${location.search}${location.hash}` !== next) {
+    window.history.replaceState(null, '', next);
+  }
+}
+
+function applyUrlState(state) {
+  applyingUrlState = true;
+  try {
+    const method = /** @type {HTMLSelectElement|null} */ (document.getElementById('method'));
+    const colors = /** @type {HTMLInputElement|null} */ (document.getElementById('colors'));
+    const colorsNumber = /** @type {HTMLInputElement|null} */ (
+      document.getElementById('colors-number')
+    );
+    const space = /** @type {HTMLSelectElement|null} */ (document.getElementById('space'));
+    if (method) method.value = state.method;
+    if (colors) colors.value = String(state.colors);
+    if (colorsNumber) colorsNumber.value = String(state.colors);
+    if (space) space.value = state.space;
+    if (ditherMethod) ditherMethod.value = state.dither;
+    if (ditherStrength) ditherStrength.value = String(state.strength);
+    if (ditherSerpentine) ditherSerpentine.checked = state.serpentine;
+    if (edgeStop) edgeStop.value = String(state.edgeStop);
+    if (alphaThreshold) alphaThreshold.value = String(state.alphaThreshold);
+    if (sortSelect) sortSelect.value = state.sortOrder;
+    sortOrder = state.sortOrder;
+    if (paletteSelect) paletteSelect.value = state.palette;
+
+    setMode(state.mode);
+    pendingTransparentIndex =
+      state.mode === 'map' || state.transparentIndex >= 0 ? state.transparentIndex : null;
+    renderCurrentPalette();
+    updateDitherLabels();
+    updateDitherControls();
+  } finally {
+    applyingUrlState = false;
+  }
+}
+
 /**
  * @param {'extract'|'map'} next
  */
@@ -852,6 +935,7 @@ function setMode(next) {
     transparentIndex.value = '0';
   }
   if (app.preview) processPreview();
+  syncUrlState();
 }
 
 /**
@@ -1208,6 +1292,7 @@ const controls = initControls({
   onChange: () => {
     if (mode === 'extract') resetPaletteEdits();
     processPreview();
+    syncUrlState();
   },
 });
 initTooltips();
@@ -1234,6 +1319,7 @@ sortSelect?.addEventListener('change', () => {
   sortOrder = sortSelect.value || 'source';
   renderCurrentPalette();
   clearDownloadLinks();
+  syncUrlState();
 });
 
 paletteEdit?.addEventListener('click', () => setPaletteEditMode(!paletteEditMode));
@@ -1290,11 +1376,18 @@ paletteHex?.addEventListener('keydown', (event) => {
 });
 
 const scheduleProcess = debounce(processPreview, 150);
+const syncUrlStateDebounced = debounce(syncUrlState, 150);
 
 populateBuiltinPalettes();
 updateDitherLabels();
 updateDitherControls();
 updatePaletteEditor();
+
+applyUrlState(decodeUrlState(location.hash));
+window.addEventListener('hashchange', () => {
+  if (applyingUrlState) return;
+  applyUrlState(decodeUrlState(location.hash));
+});
 
 modeExtract?.addEventListener('click', () => setMode('extract'));
 modeMap?.addEventListener('click', () => setMode('map'));
@@ -1302,6 +1395,7 @@ modeMap?.addEventListener('click', () => setMode('map'));
 paletteSelect?.addEventListener('change', () => {
   if (!loadTargetPalette(paletteSelect.value)) return;
   if (mode === 'map' && app.preview) processPreview();
+  syncUrlState();
 });
 
 importPalette?.addEventListener('click', () => paletteInput?.click());
@@ -1343,21 +1437,31 @@ paletteInput?.addEventListener('change', async () => {
 ditherMethod?.addEventListener('change', () => {
   updateDitherControls();
   scheduleProcess();
+  syncUrlState();
 });
 ditherStrength?.addEventListener('input', () => {
   updateDitherLabels();
   scheduleProcess();
+  syncUrlStateDebounced();
 });
-ditherSerpentine?.addEventListener('change', scheduleProcess);
+ditherSerpentine?.addEventListener('change', () => {
+  scheduleProcess();
+  syncUrlState();
+});
 edgeStop?.addEventListener('input', () => {
   updateDitherLabels();
   scheduleProcess();
+  syncUrlStateDebounced();
 });
 alphaThreshold?.addEventListener('input', () => {
   updateDitherLabels();
   scheduleProcess();
+  syncUrlStateDebounced();
 });
-transparentIndex?.addEventListener('change', scheduleProcess);
+transparentIndex?.addEventListener('change', () => {
+  scheduleProcess();
+  syncUrlState();
+});
 
 function updateDitherLabels() {
   if (ditherStrengthValue && ditherStrength) {

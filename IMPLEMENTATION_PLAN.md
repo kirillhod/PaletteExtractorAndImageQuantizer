@@ -37,7 +37,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 112 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, references |
+| Tests | 116 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, references |
 | Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete; M5 in progress |
 | Next | M5: v1.1 editing and quality (palette editor + locks, ΔE00 summary/error map, URL state) |
 
@@ -1072,6 +1072,16 @@ site. Learning is opt-in, contextual, and dismissible.
 
 ---
 
+### 8.9 URL state
+
+- The hash stores normalized settings only: mode, extractor, color count, space, built-in
+  palette id, dither settings, alpha threshold, transparent index, and sort order.
+- Defaults are omitted; `v=1` versions the format. Image bytes, palette edits, imported
+  palette contents, and QA results are never serialized.
+- User changes rewrite the hash with `history.replaceState`; loading a URL or editing the
+  hash restores the controls. A pending transparent index is applied after the palette
+  exists.
+
 ## 9. Performance
 
 ### 9.1 Budgets (desktop, worker, 1024² unless stated)
@@ -1490,7 +1500,6 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
 | `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |
 | `js/ui/shortcuts.js` | Keyboard map; opens the Help drawer’s Shortcuts tab |
-| `js/ui/url-state.js` | Serialize/restore params in `location.hash` (no image data) |
 
 ### Content
 
@@ -1546,6 +1555,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/palettes/builtin.js` | Built-in palette data | `palettes.test.js` |
 | `js/core/palettes/import.js` | Format detection + dispatch | `palettes.test.js` |
 | `js/core/metrics/index.js` | `computeQuality`: per-pixel ΔE00 stats, p95, top 20, error map | `metrics.test.js` |
+| `js/core/url-state.js` | Versioned hash encode/decode for settings; no image data | `url-state.test.js` |
 | `js/core/pipeline.js` | `runPipeline(job)` stage composition | `pipeline.test.js`, `determinism.test.js` |
 | `js/core/log.js` | Optional debug logger; disabled in production | — |
 
@@ -1631,7 +1641,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Locks: locked entries survive sorting/removal and keep their palette identity;
       removal renumbers deterministically.
 - [x] ΔE00 summary (mean/p95/max), error map, and worst-pixel list. No contrast matrix.
-- [ ] URL state: serialize normalized parameters in the hash, restore on reload, never
+- [x] URL state: serialize normalized parameters in the hash, restore on reload, never
       put image data in the URL.
 - **Exit:** `1.1.0` tagged; editor, locks, QA summary, and URL restore tested.
 
@@ -1750,6 +1760,7 @@ A change is done only when:
 | 2026-11-14 | Preview renders the transparent index as transparent for nearest-color mapping; Map mode can also select None | Matches the tRNS export; the reduced side clears the original beneath it so the checkerboard shows through |
 | 2026-11-14 | Palette editor keeps a 50-step undo/redo history | Covers colors, order, locks, selection, sort, and transparent index; Ctrl/Cmd+Z stays native inside text fields |
 | 2026-11-14 | QA measures the preview per pixel with CIEDE2000; p95 uses 0.1 buckets, worst list is top 20, error map clamps at 20 ΔE00 | Keeps measurement responsive and aligned with the preview; contrast and full QA reports stay out of v1.1 |
+| 2026-11-14 | URL state stores normalized v1 settings in the hash; defaults omitted; imported palettes, edits, and QA results excluded | Shareable and reproducible without image data or a backend |
 
 ---
 
@@ -1762,7 +1773,7 @@ scope decision and a matching plan update.
 |---|---|---|
 | Minimal palette editor: remove/edit/add + locks | Implemented in v1.1 | Expands the palette model and UI; roles stay out |
 | ΔE00 summary, error map, worst pixels | Implemented in v1.1 | Reporting layer; strengthens the validated-handoff story; contrast stays out |
-| URL state (params only) | Planned v1.1 | Cheap reproducibility/shareability; no image data |
+| URL state (params only) | Implemented in v1.1 | Cheap reproducibility/shareability; no image data |
 | Palette roles | Candidate 1.2 | Design-token semantics are outside the game/art core |
 | Presets (Photo, Pixel Art, Retro, Game Sprite, UI) | Candidate 1.2 | Convenience; users can set the same controls manually |
 | Palette swap / recolor preview | Candidate 1.2 | Needs a second palette and index contract |
