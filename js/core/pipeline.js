@@ -124,7 +124,15 @@ export async function exportStrip(job) {
  */
 export async function exportReduced(job) {
   const { image, params, name } = job;
-  const result = await runPreview({ image, params });
+  // RGBA output preserves the source alpha exactly. Do not let the indexed
+  // transparent-index rule flatten semi-transparent pixels in this export.
+  const result = await runPreview({
+    image,
+    params: { ...params, transparentIndex: -1 },
+  });
+  for (let i = 3; i < result.preview.data.length; i += 4) {
+    result.preview.data[i] = image.data[i];
+  }
   const png = await encodeRgbaPng(image.width, image.height, result.preview.data);
   const decoded = await decodePng(png);
   const validation = validateReduced(decoded, result.palette);

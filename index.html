@@ -141,7 +141,7 @@
               <div class="peiq-field">
                 <div class="peiq-label-row">
                   <label class="peiq-label" for="method">Method</label>
-                  <button class="peiq-help" type="button" data-tooltip="Popularity keeps the most frequent colors. Median cut and Wu split color space; K-means++ refines iteratively for the best quality.">?</button>
+                  <button class="peiq-help" type="button" data-tooltip="Popularity keeps the most frequent colors. Median cut and Wu split color space. K-means++ seeds and iterates cluster centers; it is usually the slowest and smoothest.">?</button>
                 </div>
                 <select class="peiq-select" id="method">
                   <option value="median-cut">Median cut</option>
@@ -154,7 +154,7 @@
               <div class="peiq-field">
                 <div class="peiq-label-row">
                   <label class="peiq-label" for="colors">Colors</label>
-                  <button class="peiq-help" type="button" data-tooltip="Palette size from 2 to 256. Use the slider for a quick scan or type an exact number.">?</button>
+                  <button class="peiq-help" type="button" data-tooltip="Palette size from 2 to 256. Fewer colors may be returned when the image has fewer distinct colors. Use the slider for a quick scan or type an exact number.">?</button>
                 </div>
                 <div class="peiq-range-row">
                   <input class="peiq-range" id="colors" type="range" min="2" max="256" step="1" value="16">
@@ -201,7 +201,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="alpha-threshold">Alpha threshold <span id="alpha-threshold-value">128</span></label>
-                <button class="peiq-help" type="button" data-tooltip="Pixels with alpha below this value use the transparent index. Indexed PNGs have binary transparency; RGBA exports keep the original alpha.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="Pixels below this alpha use the transparent index in indexed and strip output. Indexed PNGs have binary transparency; the reduced RGBA PNG keeps the original alpha.">?</button>
               </div>
               <input class="peiq-range" id="alpha-threshold" type="range" min="1" max="254" value="128">
             </div>
@@ -234,7 +234,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="dither-strength">Strength <span id="dither-strength-value">80%</span></label>
-                <button class="peiq-help" type="button" data-tooltip="How much quantization error is passed to neighboring pixels. 0% is nearest-color mapping; 100% is full diffusion.">?</button>
+                <button class="peiq-help" type="button" data-tooltip="Strength of the selected dither. 0% is nearest-color mapping; higher values mix in more of the second-nearest color. Error diffusion passes that error to neighboring pixels.">?</button>
               </div>
               <input class="peiq-range" id="dither-strength" type="range" min="0" max="100" value="80">
             </div>
