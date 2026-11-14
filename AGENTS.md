@@ -214,7 +214,10 @@ and the change is committed locally with a descriptive body (plan §16).
 - **Do not push**, add/change remotes, publish branches, tags, releases, or PRs.
 - Commit messages: English, plain imperative, **no conventional prefixes** (`feat:`,
   `fix:`, etc.). Start with a verb and always include a non-empty body explaining why,
-  scope, and plan/milestone references.
+  scope, and plan/milestone references. Describe the product change, not the machine:
+  keep browser versions, OS, local paths, installed-tool availability, and other
+  environment details out of commits. Verification evidence belongs in the task report
+  and, when it is a release record, in the plan checklist.
 
   ```text
   Add Wu quantizer and its moment tests
@@ -260,14 +263,14 @@ and the change is committed locally with a descriptive body (plan §16).
 ## 12. Current state and next task
 
 - Plan: ✅ `1.0.0`; `DESIGN.md` ✅ (dark + light themes, auto + 3-state toggle);
-  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; latest `v0.4.0` (90 tests).
+  M0 ✅ `v0.1.0`; M1 ✅ `v0.2.2`; M2 ✅ `v0.3.0`; M3 ✅ `v0.4.0`; M4 ✅ `v1.0.0`
+  (91 tests).
 - Working: five extractors, fixed palettes + import, exact/LUT mapping, ED/Bayer/blue-noise
   dithering, indexed PNG with `tRNS`, strip/reduced and `.hex`/`.gpl`/`.json` exports,
   themes, fixed desktop
   frame with a scrollable rail, left export column, contextual tooltips, Help drawer with
   references and credits, LAN dev-server URLs.
-- Next: M4 — release checklist, both themes/mobile/keyboard pass, version `1.0.0`,
-  tag `v1.0.0`.
+- Next: M5 — v1.1 palette editor + locks, ΔE00 summary/error map, URL state.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 

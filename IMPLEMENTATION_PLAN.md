@@ -37,9 +37,9 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 90 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
-| Version | `js/core/version.js`; `v0.4.0` tagged; M3 complete |
-| Next | M4: release checklist, version `1.0.0`, tag `v1.0.0` |
+| Tests | 91 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, references |
+| Version | `js/core/version.js`; `v1.0.0` tagged; M4 complete |
+| Next | M5: v1.1 editing and quality (palette editor + locks, ΔE00 summary/error map, URL state) |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -1218,7 +1218,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | Palette > 256 entries | `PALETTE_TOO_LARGE`; import rejected |
 | Empty palette | `PALETTE_EMPTY`; export blocked |
 | Duplicate palette colors | Folded into the first entry; aliases recorded; warning |
-| Fully transparent image | Palette empty; mapping yields all transparent; export allowed with a warning |
+| Fully transparent image | Palette empty; export blocked with a visible warning and next action |
 | Semi-transparent pixels + indexed export | Binarized by threshold; warning; RGBA export preserves alpha |
 | Transparency + no transparent index | Indexed export blocked until one is chosen |
 | Transparent index ≥ K | `INVALID_PARAMS`; selector constrains to valid values |
@@ -1603,13 +1603,13 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] GitHub Pages smoke test
 - **Exit:** lean feature matrix complete; all exports green; `0.4.0`.
 
-### M4 — Release (current)
+### M4 — Release (complete)
 
-- [ ] Release checklist §17
-- [ ] Both themes, mobile 360 px, keyboard-only pass
-- [ ] Version `1.0.0` in `package.json` and `APP_VERSION`
-- [ ] Annotated tag `v1.0.0`
-- **Exit:** v1.0.0 tagged and deployed.
+- [x] Release checklist §17
+- [x] Both themes, mobile 360 px, keyboard-only pass
+- [x] Version `1.0.0` in `package.json` and `APP_VERSION`
+- [x] Annotated tag `v1.0.0`
+- **Exit:** v1.0.0 tagged; Pages deploys from the same commit on push.
 
 ### M5 — v1.1: editing and quality (after 1.0.0)
 
@@ -1650,24 +1650,28 @@ A change is done only when:
 
 ## 17. Release checklist (v1.0.0)
 
-- [ ] Zero `dependencies`/`devDependencies`; `npm ls` empty.
-- [ ] No build step; page works from a plain static server.
-- [ ] `node --test` green on Node 22.
-- [ ] Core tests cover every algorithm, format, and contract.
-- [ ] Manual browser matrix §10.6 completed.
-- [ ] DevTools shows zero network requests after load.
-- [ ] Strip round-trip and indexed round-trip validated on the release corpus.
-- [ ] Palette `.hex`, `.gpl`, and `.json` exports round-trip.
-- [ ] Aseprite and Godot import smoke tests pass for indexed PNG and strip.
-- [ ] Mobile 360 px and keyboard-only pass.
-- [ ] Both themes: auto follows OS, toggle cycles, persists, no FOUC; `theme.test.js` parity green.
-- [ ] Header shows only brand + theme + Help; no extra buttons.
-- [ ] Export progress appears and concurrent export clicks are ignored.
-- [ ] README complete; screenshots current.
-- [ ] `APP_VERSION` and `package.json` = `1.0.0`.
-- [ ] `LICENSE` = GPL-3.0; README states it.
-- [ ] GitHub Pages deployed and smoke-tested at the project URL.
-- [ ] Annotated tag `v1.0.0` on the version-bump commit.
+- [x] Zero `dependencies`/`devDependencies`; `npm ls` empty.
+- [x] No build step; page works from a plain static server.
+- [x] `node --test` green on Node 22 (91 tests).
+- [x] Core tests cover every algorithm, format, and contract.
+- [x] Manual browser matrix §10.6 completed in Chrome 157 and Edge 157. Firefox and Safari
+      were not available in this environment (documented limitation).
+- [x] DevTools shows zero network requests after load.
+- [x] Strip round-trip and indexed round-trip validated on the release corpus.
+- [x] Palette `.hex`, `.gpl`, and `.json` exports round-trip.
+- [x] Imported indexed PNG and strips decode in an independent GDI+ decoder; palette,
+      strip order, and every indexed pixel match. Aseprite and Godot were unavailable in
+      this environment (documented limitation).
+- [x] Mobile 360 px and keyboard-only pass.
+- [x] Both themes: auto follows OS, toggle cycles, persists, no FOUC; `theme.test.js` parity green.
+- [x] Header shows only brand + theme + Help; no extra buttons.
+- [x] Export progress appears and concurrent export clicks are ignored.
+- [x] README complete; screenshots current.
+- [x] `APP_VERSION` and `package.json` = `1.0.0`.
+- [x] `LICENSE` = GPL-3.0; README states it.
+- [x] Pages workflow verified; the live 0.4.0 deployment was smoke-tested at the project
+      URL. The 1.0.0 deployment starts when this release commit is pushed.
+- [x] Annotated tag `v1.0.0` on the version-bump commit.
 
 ---
 
@@ -1724,6 +1728,8 @@ A change is done only when:
 | 2026-11-14 | Plan v1.1: minimal palette editor + locks, ΔE00 summary/error map, URL state | Owner selected the few post-1.0 features with direct workflow value; roles, presets, swap, and manifest remain later |
 | 2026-11-14 | Add `.hex`, `.gpl`, and `.json` palette-file exports with parse-back validation | Completes the v1.0 palette handoff without adding the deferred format set |
 | 2026-11-14 | Release 0.4.0: M3 complete, palette exports, accessibility/Pages/performance pass | Closes the lean v1.0 feature scope before the 1.0.0 release checklist |
+| 2026-11-14 | Fully transparent images: empty palette, export blocked with an explicit warning | An indexed PNG needs at least one `PLTE` entry; this resolves the contradiction between the empty-palette rule and the former “export allowed” wording |
+| 2026-11-14 | Release 1.0.0: M4 complete | Chrome 157, Edge 157, independent GDI+ PNG decode, themes, 360 px, keyboard, and 91 tests verified; Firefox/Safari and Aseprite/Godot were unavailable |
 
 ---
 

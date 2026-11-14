@@ -23,6 +23,15 @@ test('runPreview returns a palette and a mapped preview', async () => {
   assert.ok(result.timings.histogramMs >= 0);
 });
 
+test('fully transparent image returns an empty palette and a blank preview', async () => {
+  const image = { data: new Uint8ClampedArray(4 * 4 * 4), width: 4, height: 4 };
+  const result = await runPreview({ image, params });
+  assert.deepEqual(result.palette, []);
+  assert.equal(result.uniqueColors, 0);
+  assert.equal(result.preview.data.length, 4 * 4 * 4);
+  assert.ok(result.preview.data.every((value) => value === 0));
+});
+
 test('exportStrip validates a horizontal strip', async () => {
   const palette = createPalette([
     { r: 255, g: 0, b: 0 },

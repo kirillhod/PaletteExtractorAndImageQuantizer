@@ -150,6 +150,15 @@ function onWorkerMessage(event) {
       { value: `${message.timings.extractMs} ms`, label: 'extract' },
       { value: `${message.timings.mapMs} ms`, label: 'map' },
     ]);
+    if (app.palette.length === 0) {
+      // An indexed PNG needs at least one PLTE entry, so a fully transparent image has
+      // nothing to export. Say why instead of leaving the disabled buttons unexplained.
+      toast('This image is fully transparent, so no palette can be built. Try another image or a fixed palette.', 'error');
+      setStatus([
+        { value: 'Warning', label: 'fully transparent image · no palette to export' },
+        { value: `${app.width}×${app.height}`, label: 'source' },
+      ]);
+    }
     return;
   }
 
