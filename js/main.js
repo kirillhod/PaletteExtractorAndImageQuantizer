@@ -57,12 +57,14 @@ const paletteMoveRight = /** @type {HTMLButtonElement|null} */ (document.getElem
 const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
+const paletteUndo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-undo'));
+const paletteRedo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-redo'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
 const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
 const PALETTE_EDIT_HINT =
-  'Select a swatch to edit it. Pick samples the canvas. ← / → move it in Manual order.';
+  'Select a swatch to edit it. Pick samples the canvas. ← / → move it; Ctrl+Z undoes.';
 const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
@@ -118,6 +120,7 @@ let paletteEditMode = false;
 /** @type {number|null} */
 let selectedPaletteId = null;
 let pickingColor = false;
+const paletteHistory = { past: [], future: [], limit: 50 };
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -349,6 +352,12 @@ function updatePaletteEditor() {
     paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
     paletteLock.textContent = selected?.locked ? 'Unlock' : 'Lock';
   }
+  if (paletteUndo) {
+    paletteUndo.disabled = !active || app.exportBusy || paletteHistory.past.length === 0;
+  }
+  if (paletteRedo) {
+    paletteRedo.disabled = !active || app.exportBusy || paletteHistory.future.length === 0;
+  }
 }
 
 /** @param {boolean} active */
@@ -414,6 +423,65 @@ function updatePickPreview(event) {
   pickPreview.style.top = `${Math.max(8, Math.round(top))}px`;
 }
 
+function currentTransparentId() {
+  const position = Number(transparentIndex?.value ?? -1);
+  return position >= 0 ? app.palette[position]?.id ?? null : null;
+}
+
+function paletteSnapshot() {
+  return {
+    palette: app.palette.map((entry) => ({ ...entry, color: { ...entry.color } })),
+    sortOrder,
+    selectedId: selectedPaletteId,
+    transparentId: currentTransparentId(),
+  };
+}
+
+/** @param {ReturnType<typeof paletteSnapshot>} snapshot */
+function pushPaletteHistory(snapshot) {
+  paletteHistory.past.push(snapshot);
+  if (paletteHistory.past.length > paletteHistory.limit) paletteHistory.past.shift();
+  paletteHistory.future.length = 0;
+  updatePaletteEditor();
+}
+
+/** @param {ReturnType<typeof paletteSnapshot>} snapshot */
+function restorePaletteSnapshot(snapshot) {
+  app.palette = snapshot.palette.map((entry) => ({
+    ...entry,
+    color: { ...entry.color },
+  }));
+  sortOrder = snapshot.sortOrder;
+  if (sortSelect) sortSelect.value = sortOrder;
+  selectedPaletteId = snapshot.selectedId;
+  markPaletteEdited();
+  renderCurrentPalette();
+  const position =
+    snapshot.transparentId === null
+      ? -1
+      : app.palette.findIndex((entry) => entry.id === snapshot.transparentId);
+  if (transparentIndex) {
+    transparentIndex.value = position >= 0 ? String(position) : '-1';
+  }
+  processPreview();
+}
+
+function undoPaletteEdit() {
+  if (!paletteEditMode || paletteHistory.past.length === 0) return;
+  paletteHistory.future.push(paletteSnapshot());
+  const snapshot = paletteHistory.past.pop();
+  restorePaletteSnapshot(snapshot);
+  toast('Undid palette edit', 'success');
+}
+
+function redoPaletteEdit() {
+  if (!paletteEditMode || paletteHistory.future.length === 0) return;
+  paletteHistory.past.push(paletteSnapshot());
+  const snapshot = paletteHistory.future.pop();
+  restorePaletteSnapshot(snapshot);
+  toast('Redid palette edit', 'success');
+}
+
 /** @param {PointerEvent} event */
 function handleCanvasPick(event) {
   if (!pickingColor) return;
@@ -448,6 +516,8 @@ function markPaletteEdited() {
 
 function resetPaletteEdits() {
   stopPickMode();
+  paletteHistory.past.length = 0;
+  paletteHistory.future.length = 0;
   app.paletteEdited = false;
   paletteEditMode = false;
   selectedPaletteId = null;
@@ -469,12 +539,15 @@ function applyPaletteHex() {
     return;
   }
   try {
-    app.palette = updatePaletteEntry(app.palette, selected.id, value);
+    const next = updatePaletteEntry(app.palette, selected.id, value);
+    const before = paletteSnapshot();
+    app.palette = next;
     const updated = app.palette.find((entry) => entry.id === selected.id);
     if (paletteHex && updated) paletteHex.value = updated.hex;
     markPaletteEdited();
     renderCurrentPalette();
     processPreview();
+    pushPaletteHistory(before);
     toast('Palette color updated', 'success');
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
@@ -490,12 +563,14 @@ function addPaletteColor() {
   try {
     const next = addPaletteEntry(app.palette, value);
     const entry = next[next.length - 1];
+    const before = paletteSnapshot();
     app.palette = next;
     selectedPaletteId = entry.id;
     if (paletteHex) paletteHex.value = entry.hex;
     markPaletteEdited();
     renderCurrentPalette();
     processPreview();
+    pushPaletteHistory(before);
     toast(`Added ${entry.hex}`, 'success');
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
@@ -506,12 +581,15 @@ function removePaletteColor() {
   const selected = selectedPaletteEntry();
   if (!selected) return;
   try {
-    app.palette = removePaletteEntry(app.palette, selected.id);
+    const next = removePaletteEntry(app.palette, selected.id);
+    const before = paletteSnapshot();
+    app.palette = next;
     selectedPaletteId = null;
     if (paletteHex) paletteHex.value = '';
     markPaletteEdited();
     renderCurrentPalette();
     processPreview();
+    pushPaletteHistory(before);
     toast(`Removed ${selected.hex}`, 'success');
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
@@ -522,8 +600,11 @@ function togglePaletteLock() {
   const selected = selectedPaletteEntry();
   if (!selected) return;
   try {
-    app.palette = setPaletteLock(app.palette, selected.id, !selected.locked);
+    const next = setPaletteLock(app.palette, selected.id, !selected.locked);
+    const before = paletteSnapshot();
+    app.palette = next;
     renderCurrentPalette();
+    pushPaletteHistory(before);
     toast(selected.locked ? `Unlocked ${selected.hex}` : `Locked ${selected.hex}`, 'success');
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
@@ -539,6 +620,7 @@ function moveSelectedPaletteEntry(direction) {
     transparentPosition >= 0 ? app.palette[transparentPosition]?.id ?? null : null;
   try {
     const moved = movePaletteEntry(app.palette, selected.id, direction);
+    const before = paletteSnapshot();
     sortOrder = 'manual';
     if (sortSelect) sortSelect.value = 'manual';
     app.palette = moved;
@@ -548,8 +630,10 @@ function moveSelectedPaletteEntry(direction) {
       const nextPosition = app.palette.findIndex((entry) => entry.id === transparentId);
       if (nextPosition >= 0) transparentIndex.value = String(nextPosition);
     }
-    clearDownloadLinks();
+    processPreview();
+    pushPaletteHistory(before);
     updatePaletteEditor();
+    toast(`Moved ${selected.hex} ${direction}`, 'success');
   } catch (error) {
     toast(error instanceof Error ? error.message : String(error), 'error');
   }
@@ -1020,6 +1104,31 @@ paletteLock?.addEventListener('click', togglePaletteLock);
 palettePick?.addEventListener('click', () => {
   if (pickingColor) stopPickMode();
   else startPickMode();
+});
+paletteUndo?.addEventListener('click', undoPaletteEdit);
+paletteRedo?.addEventListener('click', redoPaletteEdit);
+document.addEventListener('keydown', (event) => {
+  if (!paletteEditMode || app.exportBusy) return;
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+  const target = /** @type {HTMLElement|null} */ (event.target);
+  if (
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'SELECT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable)
+  ) {
+    return;
+  }
+  const key = event.key.toLowerCase();
+  if (key === 'z') {
+    event.preventDefault();
+    if (event.shiftKey) redoPaletteEdit();
+    else undoPaletteEdit();
+  } else if (key === 'y') {
+    event.preventDefault();
+    redoPaletteEdit();
+  }
 });
 canvas.addEventListener('pointerdown', handleCanvasPick, { capture: true });
 frame.addEventListener('pointermove', updatePickPreview);
