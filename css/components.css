@@ -564,6 +564,38 @@
   cursor: crosshair;
 }
 
+.peiq-pick-preview {
+  position: fixed;
+  z-index: 95;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 4px;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius-pill);
+  background: var(--peiq-surface);
+  box-shadow: var(--peiq-shadow-card-lg);
+  color: var(--peiq-text);
+  font: 600 0.75rem/1 var(--peiq-font-ui);
+  pointer-events: none;
+}
+
+.peiq-pick-preview[hidden] {
+  display: none;
+}
+
+.peiq-pick-preview__swatch {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: 50%;
+  background: var(--pick-color, transparent);
+}
+
+.peiq-pick-preview__hex {
+  font-variant-numeric: tabular-nums;
+}
+
 .peiq-export-panel {
   display: grid;
   gap: var(--peiq-space-2);

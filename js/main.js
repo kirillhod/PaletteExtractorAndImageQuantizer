@@ -55,6 +55,9 @@ const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElement
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
+const pickPreview = document.getElementById('palette-pick-preview');
+const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
+const pickPreviewHex = document.getElementById('palette-pick-hex');
 const PALETTE_EDIT_HINT =
   'Select a swatch to edit it. Pick samples the canvas. Locked colors keep their position when sorting.';
 const PALETTE_PICK_HINT = 'Click the image to pick a color. Esc cancels.';
@@ -347,6 +350,7 @@ function startPickMode() {
   palettePick?.setAttribute('aria-pressed', 'true');
   frame.classList.add('is-picking');
   if (paletteEditHint) paletteEditHint.textContent = PALETTE_PICK_HINT;
+  hidePickPreview();
   updatePaletteEditor();
 }
 
@@ -355,8 +359,41 @@ function stopPickMode() {
   pickingColor = false;
   palettePick?.setAttribute('aria-pressed', 'false');
   frame.classList.remove('is-picking');
+  hidePickPreview();
   if (paletteEditHint) paletteEditHint.textContent = PALETTE_EDIT_HINT;
   updatePaletteEditor();
+}
+
+function hidePickPreview() {
+  if (pickPreview) pickPreview.hidden = true;
+}
+
+/** @param {PointerEvent} event */
+function updatePickPreview(event) {
+  if (!pickingColor) return;
+  const color = canvasView.pickColor(event.clientX, event.clientY);
+  if (!color || color.a === 0) {
+    hidePickPreview();
+    return;
+  }
+  const hex = formatHex(color);
+  if (pickPreviewSwatch) pickPreviewSwatch.style.setProperty('--pick-color', hex);
+  if (pickPreviewHex) pickPreviewHex.textContent = hex;
+  if (!pickPreview) return;
+
+  pickPreview.hidden = false;
+  const gap = 14;
+  const rect = pickPreview.getBoundingClientRect();
+  let left = event.clientX + gap;
+  let top = event.clientY + gap;
+  if (left + rect.width > window.innerWidth - 8) {
+    left = event.clientX - rect.width - gap;
+  }
+  if (top + rect.height > window.innerHeight - 8) {
+    top = event.clientY - rect.height - gap;
+  }
+  pickPreview.style.left = `${Math.max(8, Math.round(left))}px`;
+  pickPreview.style.top = `${Math.max(8, Math.round(top))}px`;
 }
 
 /** @param {PointerEvent} event */
@@ -374,6 +411,7 @@ function handleCanvasPick(event) {
     toast('That pixel is transparent', 'error');
     return;
   }
+  hidePickPreview();
   stopPickMode();
   if (paletteHex) paletteHex.value = formatHex(color);
   if (selectedPaletteEntry()) {
@@ -936,6 +974,8 @@ palettePick?.addEventListener('click', () => {
   else startPickMode();
 });
 canvas.addEventListener('pointerdown', handleCanvasPick, { capture: true });
+frame.addEventListener('pointermove', updatePickPreview);
+frame.addEventListener('pointerleave', hidePickPreview);
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && pickingColor) {
     event.preventDefault();
