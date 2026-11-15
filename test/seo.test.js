@@ -52,9 +52,11 @@ test('canonical, Open Graph, and Twitter Card metadata are complete', () => {
 test('title and description use searchable, natural-length copy', () => {
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/);
   assert.ok(title);
-  assert.match(title[1], /PaletteExtractorAndImageQuantizer/);
   assert.match(title[1], /palette/i);
-  assert.ok(title[1].length <= 70, `title too long: ${title[1].length}`);
+  assert.match(title[1], /PEIQ/);
+  assert.ok(title[1].length <= 60, `title too long: ${title[1].length}`);
+  assert.equal(metaContent('og:title'), title[1]);
+  assert.equal(metaContent('twitter:title'), title[1]);
   const description = metaContent('description');
   assert.match(description, /palette/i);
   assert.match(description, /indexed PNG/i);

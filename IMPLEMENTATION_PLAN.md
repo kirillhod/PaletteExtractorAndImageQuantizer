@@ -1133,7 +1133,9 @@ site. Learning is opt-in, contextual, and dismissible.
 ### 8.12 SEO metadata
 
 - `index.html` carries an absolute `canonical`, `index,follow,max-image-preview:large`,
-  a keyword-aware `<title>`, and a natural-length `<meta name="description">`.
+  a keyword-first `<title>` that ends with the `PEIQ` short mark, and a natural-length
+  `<meta name="description">`. The repository display name remains in JSON-LD and the
+  header; the title avoids truncating a 33-character unbroken word in search results.
 - Open Graph and Twitter Card metadata use absolute URLs and the 1200×630
   `assets/og-image.png` social preview.
 - JSON-LD describes a free `WebApplication` with category, browser requirements, feature
@@ -1878,6 +1880,7 @@ A change is done only when:
 | 2026-11-15 | Decode the full-resolution source only at export | Keeping a 16 MP RGBA copy for the session costs 64 MiB and contributes to mobile memory pressure; the preview stays downscaled and export re-decodes the original |
 | 2026-11-15 | Release 1.3.0: M6.1 complete | Touch undo/redo, loupe picking, newest-load session guard, and lazy full-resolution export verified; 134 tests |
 | 2026-11-15 | Store saved session images as ArrayBuffer bytes instead of File/Blob objects | Mobile browsers can lose a picked file's backing data across reload even when IndexedDB returns a Blob; explicit bytes survive, and version 1 records migrate on the next save |
+| 2026-11-15 | Lead the search title with keywords and end it with PEIQ | Google truncated the long unbroken repository name and dropped the descriptive suffix; the full name stays in JSON-LD and the header |
 | 2026-11-15 | Retry image decode through an `<img>` element before reporting imageDecode | Some mobile browsers fail `createImageBitmap` on a restored blob but decode the same bytes through the image element |
 | 2026-11-15 | Release 1.3.1: M6.2 complete | Saved-image byte storage, v1 migration, and the decode fallback verified with repeated reloads and a corrupt record; 135 tests |
 

@@ -8,7 +8,7 @@
  */
 
 const en = {
-  'app.title': 'PaletteExtractorAndImageQuantizer — image palette extractor',
+  'app.title': 'Image palette extractor and quantizer - PEIQ',
   'app.description':
     'Extract a color palette from any image, map it to fixed or custom palettes, dither, and export validated indexed PNGs locally in your browser.',
 
@@ -441,7 +441,7 @@ const en = {
 };
 
 const ru = {
-  'app.title': 'PaletteExtractorAndImageQuantizer — палитра из изображения',
+  'app.title': 'Извлечение палитры из изображения - PEIQ',
   'app.description':
     'Извлекайте палитру из любого изображения, сопоставляйте с фиксированной или своей палитрой, включайте дизеринг и экспортируйте проверенные индексированные PNG локально в браузере.',
 
