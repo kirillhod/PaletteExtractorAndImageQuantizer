@@ -53,6 +53,10 @@ import { clearSession, loadSession, saveSession } from './ui/session-store.js';
 
 const MAX_PIXELS = 16_777_216;
 const PREVIEW_EDGE = 1024;
+const PICK_LOUPE_SIZE = 108;
+const PICK_LOUPE_CELLS = 9;
+const PICK_LOUPE_CELL = PICK_LOUPE_SIZE / PICK_LOUPE_CELLS;
+const PICK_LOUPE_RADIUS = (PICK_LOUPE_CELLS - 1) / 2;
 
 const versionLabel = document.getElementById('app-version');
 if (versionLabel) versionLabel.textContent = `· v${APP_VERSION}`;
@@ -87,10 +91,17 @@ const qaWorst = document.getElementById('qa-worst');
 const sessionClear = /** @type {HTMLButtonElement|null} */ (document.getElementById('session-clear'));
 const sessionStatus = document.getElementById('session-status');
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
+const paletteUndo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-undo'));
+const paletteRedo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-redo'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
 const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
+const pickLoupe = document.getElementById('palette-pick-loupe');
+const pickLoupeCanvas = /** @type {HTMLCanvasElement|null} */ (
+  document.getElementById('palette-pick-canvas')
+);
+const pickLoupeHex = document.getElementById('palette-pick-loupe-hex');
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
 const extractControls = document.getElementById('extract-controls');
@@ -123,8 +134,6 @@ const app = {
   width: 0,
   height: 0,
   /** @type {ImageData|null} */
-  full: null,
-  /** @type {ImageData|null} */
   preview: null,
   /** @type {{ data: Uint8ClampedArray, width:number, height:number }|null} */
   reduced: null,
@@ -146,6 +155,8 @@ let paletteEditMode = false;
 /** @type {number|null} */
 let selectedPaletteId = null;
 let pickingColor = false;
+/** @type {number|null} */
+let pickPointerId = null;
 const paletteHistory = { past: [], future: [], limit: 50 };
 /** @type {any|null} */
 let qaResult = null;
@@ -158,6 +169,7 @@ let pendingTransparentIndex = null;
 let pendingTransparentRemap = false;
 /** @type {File|Blob|null} */
 let lastFile = null;
+let loadRequestId = 0;
 let restoringSession = false;
 let sessionPersistence = true;
 let sessionSaveWarned = false;
@@ -565,6 +577,12 @@ function updatePaletteEditor() {
     paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
     paletteLock.textContent = selected?.locked ? t('palette.unlock') : t('palette.lock');
   }
+  if (paletteUndo) {
+    paletteUndo.disabled = !active || app.exportBusy || paletteHistory.past.length === 0;
+  }
+  if (paletteRedo) {
+    paletteRedo.disabled = !active || app.exportBusy || paletteHistory.future.length === 0;
+  }
 }
 
 /** @param {boolean} active */
@@ -585,6 +603,7 @@ function startPickMode() {
   frame.classList.add('is-picking');
   if (paletteEditHint) paletteEditHint.textContent = t('palette.pickHint');
   hidePickPreview();
+  hidePickLoupe();
   updatePaletteEditor();
 }
 
@@ -593,13 +612,109 @@ function stopPickMode() {
   pickingColor = false;
   palettePick?.setAttribute('aria-pressed', 'false');
   frame.classList.remove('is-picking');
+  if (pickPointerId !== null) {
+    if (canvas.hasPointerCapture(pickPointerId)) canvas.releasePointerCapture(pickPointerId);
+    pickPointerId = null;
+  }
   hidePickPreview();
+  hidePickLoupe();
   if (paletteEditHint) paletteEditHint.textContent = t('palette.editHint');
   updatePaletteEditor();
 }
 
 function hidePickPreview() {
   if (pickPreview) pickPreview.hidden = true;
+}
+
+function hidePickLoupe() {
+  if (pickLoupe) pickLoupe.hidden = true;
+}
+
+/**
+ * Draw a magnified crop around the sampled pixel. The extra context makes touch
+ * picking possible: the finger no longer covers the only visible sample.
+ * @param {{ color: { r:number,g:number,b:number,a:number }, source: { data: Uint8ClampedArray, width:number, height:number }, x:number, y:number }} sample
+ */
+function drawPickLoupe(sample) {
+  if (!pickLoupeCanvas) return;
+  const ctx = pickLoupeCanvas.getContext('2d');
+  if (!ctx) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const pixels = Math.round(PICK_LOUPE_SIZE * dpr);
+  if (pickLoupeCanvas.width !== pixels || pickLoupeCanvas.height !== pixels) {
+    pickLoupeCanvas.width = pixels;
+    pickLoupeCanvas.height = pixels;
+  }
+  ctx.setTransform(pixels / PICK_LOUPE_SIZE, 0, 0, pixels / PICK_LOUPE_SIZE, 0, 0);
+  ctx.clearRect(0, 0, PICK_LOUPE_SIZE, PICK_LOUPE_SIZE);
+
+  const { source, x, y } = sample;
+  for (let dy = -PICK_LOUPE_RADIUS; dy <= PICK_LOUPE_RADIUS; dy++) {
+    for (let dx = -PICK_LOUPE_RADIUS; dx <= PICK_LOUPE_RADIUS; dx++) {
+      const sourceX = x + dx;
+      const sourceY = y + dy;
+      if (sourceX < 0 || sourceY < 0 || sourceX >= source.width || sourceY >= source.height) {
+        continue;
+      }
+      const offset = (sourceY * source.width + sourceX) * 4;
+      const alpha = source.data[offset + 3];
+      if (alpha === 0) continue;
+      ctx.fillStyle = `rgba(${source.data[offset]}, ${source.data[offset + 1]}, ${source.data[offset + 2]}, ${alpha / 255})`;
+      ctx.fillRect(
+        (dx + PICK_LOUPE_RADIUS) * PICK_LOUPE_CELL,
+        (dy + PICK_LOUPE_RADIUS) * PICK_LOUPE_CELL,
+        PICK_LOUPE_CELL,
+        PICK_LOUPE_CELL,
+      );
+    }
+  }
+
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--peiq-accent').trim();
+  if (accent) ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  const center = PICK_LOUPE_RADIUS * PICK_LOUPE_CELL;
+  ctx.strokeRect(center + 1, center + 1, PICK_LOUPE_CELL - 2, PICK_LOUPE_CELL - 2);
+  const mid = PICK_LOUPE_SIZE / 2;
+  ctx.beginPath();
+  ctx.moveTo(mid, 0);
+  ctx.lineTo(mid, center - 3);
+  ctx.moveTo(mid, center + PICK_LOUPE_CELL + 3);
+  ctx.lineTo(mid, PICK_LOUPE_SIZE);
+  ctx.moveTo(0, mid);
+  ctx.lineTo(center - 3, mid);
+  ctx.moveTo(center + PICK_LOUPE_CELL + 3, mid);
+  ctx.lineTo(PICK_LOUPE_SIZE, mid);
+  ctx.stroke();
+}
+
+/** @param {number} clientX @param {number} clientY */
+function positionPickLoupe(clientX, clientY) {
+  if (!pickLoupe) return;
+  const rect = pickLoupe.getBoundingClientRect();
+  const gap = 18;
+  const margin = 8;
+  let left = clientX - rect.width / 2;
+  let top = clientY - rect.height - gap;
+  if (top < margin) top = clientY + gap;
+  left = Math.min(Math.max(margin, left), window.innerWidth - rect.width - margin);
+  top = Math.min(Math.max(margin, top), window.innerHeight - rect.height - margin);
+  pickLoupe.style.left = `${Math.round(left)}px`;
+  pickLoupe.style.top = `${Math.round(top)}px`;
+}
+
+/** @param {PointerEvent} event */
+function updatePickLoupe(event) {
+  if (!pickLoupe) return;
+  const sample = canvasView.pickSample(event.clientX, event.clientY);
+  if (!sample || sample.color.a === 0) {
+    hidePickLoupe();
+    return;
+  }
+  drawPickLoupe(sample);
+  if (pickLoupeHex) pickLoupeHex.textContent = formatHex(sample.color);
+  pickLoupe.hidden = false;
+  positionPickLoupe(event.clientX, event.clientY);
 }
 
 /** @param {PointerEvent} event */
@@ -628,6 +743,18 @@ function updatePickPreview(event) {
   }
   pickPreview.style.left = `${Math.max(8, Math.round(left))}px`;
   pickPreview.style.top = `${Math.max(8, Math.round(top))}px`;
+}
+
+/** @param {PointerEvent} event */
+function updatePickFeedback(event) {
+  if (!pickingColor) return;
+  if (pickPointerId !== null) {
+    updatePickLoupe(event);
+    hidePickPreview();
+  } else {
+    updatePickPreview(event);
+    hidePickLoupe();
+  }
 }
 
 function currentTransparentId() {
@@ -663,6 +790,8 @@ function restorePaletteSnapshot(snapshot) {
   selectedPaletteId = snapshot.selectedId;
   markPaletteEdited();
   renderCurrentPalette();
+  const selected = selectedPaletteEntry();
+  if (paletteHex) paletteHex.value = selected?.hex ?? '';
   const position =
     snapshot.transparentId === null
       ? -1
@@ -692,11 +821,27 @@ function redoPaletteEdit() {
 
 /** @param {PointerEvent} event */
 function handleCanvasPick(event) {
-  if (!pickingColor) return;
+  if (!pickingColor || pickPointerId !== null) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
   event.preventDefault();
   event.stopImmediatePropagation();
+  pickPointerId = event.pointerId;
+  canvas.setPointerCapture(event.pointerId);
+  updatePickFeedback(event);
+}
+
+/** @param {PointerEvent} event */
+function handlePickEnd(event) {
+  if (!pickingColor || pickPointerId !== event.pointerId) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  pickPointerId = null;
+  if (canvas.hasPointerCapture(event.pointerId)) {
+    canvas.releasePointerCapture(event.pointerId);
+  }
   const color = canvasView.pickColor(event.clientX, event.clientY);
+  hidePickPreview();
+  hidePickLoupe();
   if (!color) {
     toastKey('toast.pickOutside', {}, 'error');
     return;
@@ -705,7 +850,6 @@ function handleCanvasPick(event) {
     toastKey('toast.pickTransparent', {}, 'error');
     return;
   }
-  hidePickPreview();
   stopPickMode();
   if (paletteHex) paletteHex.value = formatHex(color);
   if (selectedPaletteEntry()) {
@@ -713,6 +857,14 @@ function handleCanvasPick(event) {
   } else {
     toastKey('toast.picked', { hex: formatHex(color) }, 'success');
   }
+}
+
+/** @param {PointerEvent} event */
+function handlePickCancel(event) {
+  if (pickPointerId !== event.pointerId) return;
+  pickPointerId = null;
+  hidePickPreview();
+  hidePickLoupe();
 }
 
 function markPaletteEdited() {
@@ -1210,40 +1362,47 @@ function processPreview() {
  * @param {any} [restore]
  */
 async function loadFile(file, restore = null) {
+  const requestId = ++loadRequestId;
   try {
     if (!restore) sessionPersistence = true;
     cancelExport();
     setStatusMessage('status.decoding');
     const bitmap = await decodeBitmap(file);
+    // A newer load, including a user drop while the saved session is still decoding,
+    // owns the UI. Never let a stale restore overwrite it.
+    if (requestId !== loadRequestId) {
+      bitmap.close?.();
+      return;
+    }
     const width = bitmap.width;
     const height = bitmap.height;
+    let preview;
 
-    if (width < 1 || height < 1) {
-      bitmap.close?.();
-      throw new Error(t('error.invalidDimensions'));
-    }
-    if (width * height > MAX_PIXELS) {
-      bitmap.close?.();
-      throw new Error(
-        t('error.imageTooLarge', {
-          width,
-          height,
-          mp: formatN((width * height) / 1_000_000),
-        }),
-      );
-    }
+    try {
+      if (width < 1 || height < 1) {
+        throw new Error(t('error.invalidDimensions'));
+      }
+      if (width * height > MAX_PIXELS) {
+        throw new Error(
+          t('error.imageTooLarge', {
+            width,
+            height,
+            mp: formatN((width * height) / 1_000_000),
+          }),
+        );
+      }
 
-    const full = drawToImageData(bitmap, width, height, false);
-    const scale = Math.min(1, PREVIEW_EDGE / Math.max(width, height));
-    const previewWidth = Math.max(1, Math.round(width * scale));
-    const previewHeight = Math.max(1, Math.round(height * scale));
-    const preview = drawToImageData(bitmap, previewWidth, previewHeight, true);
-    bitmap.close?.();
+      const scale = Math.min(1, PREVIEW_EDGE / Math.max(width, height));
+      const previewWidth = Math.max(1, Math.round(width * scale));
+      const previewHeight = Math.max(1, Math.round(height * scale));
+      preview = drawToImageData(bitmap, previewWidth, previewHeight, true);
+    } finally {
+      bitmap.close?.();
+    }
 
     app.name = file.name || 'image';
     app.width = width;
     app.height = height;
-    app.full = full;
     app.preview = preview;
     app.reduced = null;
     app.palette = [];
@@ -1315,6 +1474,7 @@ async function loadFile(file, restore = null) {
     ]);
     processPreview();
   } catch (error) {
+    if (requestId !== loadRequestId) return;
     if (restore) {
       restoringSession = false;
       sessionPersistence = false;
@@ -1379,41 +1539,78 @@ function exportStrip() {
   });
 }
 
-function exportReduced() {
-  if (!app.full) return;
+/**
+ * Decode the source at full resolution only when an export needs it. Keeping a
+ * 16 MP RGBA copy for the whole session costs 64 MiB; the preview does not need it.
+ * @returns {Promise<ImageData|null>}
+ */
+async function decodeFullImage() {
+  if (!lastFile) return null;
+  const bitmap = await decodeBitmap(lastFile);
+  try {
+    if (bitmap.width !== app.width || bitmap.height !== app.height) {
+      throw new Error(t('error.imageDecode'));
+    }
+    return drawToImageData(bitmap, bitmap.width, bitmap.height, false);
+  } finally {
+    bitmap.close?.();
+  }
+}
+
+async function exportReduced() {
   const id = beginExport('status.progressEncode');
   if (!id) return;
   setStatusMessage('status.encodingReduced');
-  const copy = new Uint8ClampedArray(app.full.data);
-  worker.postMessage(
-    {
-      type: 'export-reduced',
-      requestId: id,
-      image: { data: copy.buffer, width: app.width, height: app.height },
-      params: getProcessParams(),
-      name: app.name,
-    },
-    [copy.buffer],
-  );
+  const params = getProcessParams();
+  const name = app.name;
+  try {
+    const full = await decodeFullImage();
+    if (!full) throw new Error(t('error.imageDecode'));
+    if (!app.exportBusy || app.exportRequestId !== id) return;
+    worker.postMessage(
+      {
+        type: 'export-reduced',
+        requestId: id,
+        image: { data: full.data.buffer, width: app.width, height: app.height },
+        params,
+        name,
+      },
+      [full.data.buffer],
+    );
+  } catch (error) {
+    if (app.exportRequestId !== id) return;
+    toast(localizeError(error), 'error');
+    finishExport();
+  }
 }
 
-function exportIndexed() {
-  if (!app.full) return;
+async function exportIndexed() {
   const id = beginExport('status.progressIndex');
   if (!id) return;
   setStatusMessage('status.encodingIndexed');
-  const copy = new Uint8ClampedArray(app.full.data);
-  worker.postMessage(
-    {
-      type: 'export-indexed',
-      requestId: id,
-      image: { data: copy.buffer, width: app.width, height: app.height },
-      palette: app.palette,
-      params: getParams(),
-      name: app.name,
-    },
-    [copy.buffer],
-  );
+  const params = getParams();
+  const name = app.name;
+  const palette = app.palette.map((entry) => ({ ...entry, color: { ...entry.color } }));
+  try {
+    const full = await decodeFullImage();
+    if (!full) throw new Error(t('error.imageDecode'));
+    if (!app.exportBusy || app.exportRequestId !== id) return;
+    worker.postMessage(
+      {
+        type: 'export-indexed',
+        requestId: id,
+        image: { data: full.data.buffer, width: app.width, height: app.height },
+        palette,
+        params,
+        name,
+      },
+      [full.data.buffer],
+    );
+  } catch (error) {
+    if (app.exportRequestId !== id) return;
+    toast(localizeError(error), 'error');
+    finishExport();
+  }
 }
 
 function copyHex() {
@@ -1652,6 +1849,8 @@ palettePick?.addEventListener('click', () => {
   if (pickingColor) stopPickMode();
   else startPickMode();
 });
+paletteUndo?.addEventListener('click', undoPaletteEdit);
+paletteRedo?.addEventListener('click', redoPaletteEdit);
 qaRun?.addEventListener('click', runQuality);
 qaErrorToggle?.addEventListener('change', showQualityMap);
 document.addEventListener('keydown', (event) => {
@@ -1679,8 +1878,16 @@ document.addEventListener('keydown', (event) => {
   }
 });
 canvas.addEventListener('pointerdown', handleCanvasPick, { capture: true });
-frame.addEventListener('pointermove', updatePickPreview);
-frame.addEventListener('pointerleave', hidePickPreview);
+canvas.addEventListener('pointerup', handlePickEnd, { capture: true });
+canvas.addEventListener('pointercancel', handlePickCancel, { capture: true });
+canvas.addEventListener('lostpointercapture', handlePickCancel);
+frame.addEventListener('pointermove', updatePickFeedback);
+frame.addEventListener('pointerleave', () => {
+  if (pickPointerId === null) {
+    hidePickPreview();
+    hidePickLoupe();
+  }
+});
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && pickingColor) {
     event.preventDefault();
@@ -1704,11 +1911,13 @@ updateDitherControls();
 updatePaletteEditor();
 
 async function initializeSessionAndUrl() {
+  const restoreGuard = loadRequestId;
   const hashState = decodeUrlState(location.hash);
   let record = null;
   try {
     record = await loadSession();
   } catch (error) {
+    if (loadRequestId !== restoreGuard) return;
     sessionPersistence = false;
     toastKey(
       'toast.sessionUnavailable',
@@ -1716,6 +1925,9 @@ async function initializeSessionAndUrl() {
       'error',
     );
   }
+  // Dropping an image while the session is being read is a newer user action.
+  // Do not apply saved settings or start a restore that would replace it.
+  if (loadRequestId !== restoreGuard) return;
   if (!record) {
     applyUrlState(hashState);
     return;

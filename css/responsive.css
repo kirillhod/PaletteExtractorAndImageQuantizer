@@ -32,6 +32,12 @@
     height: 56px;
   }
 
+  .peiq-palette-history {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+  }
+
   .peiq-workspace {
     grid-template-columns: 1fr;
   }

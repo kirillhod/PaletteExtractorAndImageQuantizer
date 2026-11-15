@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.2.0
-**Product version at completion:** 1.2.0
+**Plan version:** 1.3.0
+**Product version at completion:** 1.3.0
 **Status:** Approved for implementation
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -38,7 +38,7 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
 | Tests | 134 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
-| Version | `js/core/version.js`; `v1.2.0` tagged; M6 complete |
+| Version | `js/core/version.js`; `v1.3.0` tagged; M6.1 complete |
 | Next | M7: later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
@@ -904,10 +904,12 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark; swatches, HEX list, and strip export follow it.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds **Pick / Apply / Add / ← / → / Remove / Lock**. **Pick** arms a
-  canvas eyedropper with a floating color/HEX preview under the pointer: the next click
-  samples the visible preview (the reduced side when the click is right of the divider),
-  applies it to the selected entry, or fills the HEX field for **Add**. `Esc` cancels.
+  adds **Pick / Apply / Add / ← / → / Remove / Lock**, plus compact undo/redo icon
+  buttons on touch layouts. **Pick** arms a canvas eyedropper with a floating color/HEX
+  preview under the pointer: press and drag to sample the visible preview (the reduced
+  side when the point is right of the divider), watch the magnified loupe, and release to
+  apply it to the selected entry or fill the HEX field for **Add**. A mouse click applies
+  on release at the same point. `Esc` cancels.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Adding, removing, or
@@ -915,7 +917,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   Locked entries keep their slot, and a move that would cross one is blocked. Locks pin an
   entry to its current slot during sorting and block removal.
   The editor keeps up to 50 palette snapshots (colors, order, locks, selection, sort, and
-  transparent index); `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z` work outside text fields.
+  transparent index); `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z` work outside text fields, and
+  the touch-only icon buttons expose the same history without a keyboard.
   Rename, roles, and drag reordering remain post-1.1.
 
 **Dither rail section**
@@ -1094,6 +1097,9 @@ site. Learning is opt-in, contextual, and dismissible.
 - On load, a saved session reopens the editor directly. The URL hash remains a portable
   settings config: if it differs from the saved settings, it wins and the palette is
   re-extracted from the image instead of restoring local edits.
+- A newer image load owns the UI. If the user drops or chooses an image while the saved
+  session is being read or decoded, the restore is abandoned and must not apply settings,
+  replace the image, or surface its own decode error afterwards.
 - **Forget saved session** in Help clears the stored image and state; a failed decode,
   invalid record, unavailable storage, or quota error falls back without trapping the user.
 - Imported palette contents and QA results are not part of the session.
@@ -1178,10 +1184,11 @@ site. Learning is opt-in, contextual, and dismissible.
 
 ### 9.3 Memory
 
-- Preview buffers ≤ 4 MB.
+- Preview buffers ≤ 4 MB and stay in memory; the full-resolution RGBA source is decoded
+  only for an export and released when the worker receives it.
 - Full-res RGBA 4096² = 64 MB; histogram ~1.5 MB; LUTs ~1 MB; index map 16 MB.
 - Release canvases and buffers after export; revoke object URLs.
-- Reject > 16.7 MP before allocation.
+- Reject > 16.7 MP before allocating the preview and export buffers.
 
 ---
 
@@ -1715,6 +1722,19 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
       or unavailable storage.
 - **Exit:** `1.2.0` tagged; reload restores the image, palette, locks, and undo history.
 
+### M6.1 — v1.3: mobile editing and load resilience (complete)
+
+- [x] Add compact touch undo/redo icon buttons to the palette editor and keep the HEX
+      field in sync after a history step.
+- [x] Add press-drag-release eyedropper picking with a magnified loupe; a mouse click
+      still applies on release at the same point.
+- [x] Let the newest image load win over a saved-session restore, including a drop while
+      IndexedDB is still being read.
+- [x] Decode the full-resolution source only for export and release it to the worker;
+      the preview stays downscaled and the 16.7 MP cap remains.
+- **Exit:** `1.3.0` tagged; touch history, loupe picking, stale-restore protection, and
+  full-resolution export after reload verified.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
@@ -1839,6 +1859,11 @@ A change is done only when:
 | 2026-11-14 | Add complete English/Russian site localization with automatic detection and a header toggle | The site follows the browser language by default and switches in place; catalogs stay separate from English repository documentation, and Russian plural forms use `Intl.PluralRules` |
 | 2026-11-14 | Remove emoji from repository documentation and add a no-emoji rule | Plain-text documentation is easier to scan and diff; emoji are allowed only when explicitly requested |
 | 2026-11-15 | Add canonical, Open Graph, Twitter Card, JSON-LD WebApplication, keyword-aware title/description, and a 1200×630 social preview | Improves search snippets and link previews without changing the app; sitemap `lastmod` refreshed and metadata covered by `seo.test.js` |
+| 2026-11-15 | Add compact undo/redo icon buttons to the palette editor on touch layouts | The keyboard-only history left phones without a way back; the icons appear below 980 px and reuse the existing 50-step history |
+| 2026-11-15 | Pick colors with a magnified loupe and commit on pointer release | A finger covers the sampled pixel and touch screens have no hover; dragging updates the loupe and the release point is the applied color |
+| 2026-11-15 | Abandon a saved-session restore when a newer image load starts | A reload followed by an immediate drop could let the restore overwrite the new image or report its own decode error; the newest load now owns the UI |
+| 2026-11-15 | Decode the full-resolution source only at export | Keeping a 16 MP RGBA copy for the session costs 64 MiB and contributes to mobile memory pressure; the preview stays downscaled and export re-decodes the original |
+| 2026-11-15 | Release 1.3.0: M6.1 complete | Touch undo/redo, loupe picking, newest-load session guard, and lazy full-resolution export verified; 134 tests |
 
 ---
 

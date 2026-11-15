@@ -195,6 +195,12 @@
             <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" data-i18n-aria-label="palette.moveRight" data-i18n-title="palette.moveRight" aria-label="Move color right" title="Move color right" disabled>→</button>
             <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" data-i18n="palette.remove" disabled>Remove</button>
             <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" data-i18n="palette.lock" disabled>Lock</button>
+            <button class="peiq-icon-btn peiq-palette-history" id="palette-undo" type="button" data-i18n-aria-label="palette.undo" data-i18n-title="palette.undo" aria-label="Undo palette edit" title="Undo palette edit" disabled>
+              <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a6 6 0 0 1 0 12h-3"/></svg>
+            </button>
+            <button class="peiq-icon-btn peiq-palette-history" id="palette-redo" type="button" data-i18n-aria-label="palette.redo" data-i18n-title="palette.redo" aria-label="Redo palette edit" title="Redo palette edit" disabled>
+              <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a6 6 0 0 0 0 12h3"/></svg>
+            </button>
             <p class="peiq-hint" id="palette-edit-hint" data-i18n="palette.editHint">Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.</p>
           </div>
         </div>
@@ -443,6 +449,10 @@
   <div class="peiq-pick-preview" id="palette-pick-preview" aria-hidden="true" hidden>
     <span class="peiq-pick-preview__swatch" id="palette-pick-swatch"></span>
     <span class="peiq-pick-preview__hex" id="palette-pick-hex"></span>
+  </div>
+  <div class="peiq-pick-loupe" id="palette-pick-loupe" aria-hidden="true" hidden>
+    <canvas class="peiq-pick-loupe__canvas" id="palette-pick-canvas" width="108" height="108"></canvas>
+    <span class="peiq-pick-loupe__hex" id="palette-pick-loupe-hex"></span>
   </div>
   <div class="peiq-toast-host" id="toast-host" aria-live="polite"></div>
   <div class="sr-only" id="live-region" aria-live="polite"></div>

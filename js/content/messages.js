@@ -102,9 +102,12 @@ const en = {
   'palette.unlock': 'Unlock',
   'palette.moveLeft': 'Move color left',
   'palette.moveRight': 'Move color right',
+  'palette.undo': 'Undo palette edit',
+  'palette.redo': 'Redo palette edit',
   'palette.editHint':
     'Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.',
-  'palette.pickHint': 'Click the image to pick a color. Esc cancels.',
+  'palette.pickHint':
+    'Tap or drag on the image to pick a color. Release to apply; tap Pick again or press Esc to cancel.',
   'palette.swatchCopy': 'Copy {hex}',
   'palette.swatchEdit': 'Edit {hex}',
   'palette.lockedSuffix': ' (locked)',
@@ -529,9 +532,12 @@ const ru = {
   'palette.unlock': 'Разблокировать',
   'palette.moveLeft': 'Переместить цвет влево',
   'palette.moveRight': 'Переместить цвет вправо',
+  'palette.undo': 'Отменить изменение палитры',
+  'palette.redo': 'Повторить изменение палитры',
   'palette.editHint':
     'Выберите цвет. Пипетка берёт цвет с изображения; Esc отменяет. ← / → меняют только порядок экспорта; добавление, удаление или изменение влияют на предпросмотр.',
-  'palette.pickHint': 'Нажмите на изображение, чтобы взять цвет. Esc отменяет.',
+  'palette.pickHint':
+    'Коснитесь изображения или ведите палец, чтобы выбрать цвет. Отпустите, чтобы применить; нажмите «Пипетка» ещё раз или Esc, чтобы отменить.',
   'palette.swatchCopy': 'Скопировать {hex}',
   'palette.swatchEdit': 'Изменить {hex}',
   'palette.lockedSuffix': ' (заблокирован)',
