@@ -227,10 +227,18 @@ function onWorkerMessage(event) {
     if (canvasEmpty) canvasEmpty.hidden = true;
     setStatus([
       { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
-      { value: message.uniqueColors, labelKey: 'status.unique' },
+      { value: formatN(message.uniqueColors, 0), labelKey: 'status.unique' },
       { value: app.palette.length, labelKey: 'unit.colors', count: app.palette.length },
-      { value: `${message.timings.extractMs} ms`, labelKey: 'status.extract' },
-      { value: `${message.timings.mapMs} ms`, labelKey: 'status.map' },
+      {
+        valueKey: 'status.ms',
+        params: { value: formatN(message.timings.extractMs, 0) },
+        labelKey: 'status.extract',
+      },
+      {
+        valueKey: 'status.ms',
+        params: { value: formatN(message.timings.mapMs, 0) },
+        labelKey: 'status.map',
+      },
     ]);
     if (app.palette.length === 0) {
       // An indexed PNG needs at least one PLTE entry, so a fully transparent image has
