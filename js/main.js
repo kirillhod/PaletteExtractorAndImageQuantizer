@@ -1179,7 +1179,6 @@ function buildSessionRecord() {
   return {
     version: SESSION_VERSION,
     image: {
-      blob: lastFile,
       name: lastFile instanceof File ? lastFile.name : 'image',
       type: lastFile.type || 'application/octet-stream',
       size: lastFile.size,
@@ -1201,9 +1200,19 @@ function buildSessionRecord() {
 
 async function saveCurrentSession() {
   if (restoringSession || !sessionPersistence || !lastFile || !app.hasResult) return;
-  const record = buildSessionRecord();
-  if (!record) return;
+  const file = lastFile;
   try {
+    // Store bytes, not a File or Blob. Mobile browsers may not preserve a picked
+    // file's backing data across a reload even when IndexedDB returns a Blob.
+    const bytes = await file.arrayBuffer();
+    if (lastFile !== file || !sessionPersistence) return;
+    if (bytes.byteLength === 0 || (file.size > 0 && bytes.byteLength !== file.size)) {
+      throw new Error('saved image bytes are incomplete');
+    }
+    const record = buildSessionRecord();
+    if (!record) return;
+    record.image.bytes = bytes;
+    record.image.size = bytes.byteLength;
     await saveSession(record);
     sessionStatusKey = 'session.saved';
     renderSessionStatus();
@@ -1481,6 +1490,9 @@ async function loadFile(file, restore = null) {
       clearSession().catch(() => {
         setStatusMessage('status.savedSessionCouldNotClear');
       });
+      toastKey('toast.sessionRestoreFailed', {}, 'error');
+      setStatusMessage('status.sessionRestoreFailed');
+      return;
     }
     toast(localizeError(error), 'error');
     setStatusMessage('status.couldNotReadImage');
@@ -1495,14 +1507,43 @@ async function decodeBitmap(file) {
   if (typeof createImageBitmap !== 'function') {
     throw new Error(t('error.createImageBitmapMissing'));
   }
+  let failure = null;
   try {
     return await createImageBitmap(file, { imageOrientation: 'from-image' });
-  } catch {
-    try {
-      return await createImageBitmap(file);
-    } catch {
-      throw new Error(t('error.imageDecode'));
+  } catch (error) {
+    failure = error;
+  }
+  try {
+    return await createImageBitmap(file);
+  } catch (error) {
+    failure = error;
+  }
+  try {
+    return await decodeViaImageElement(file);
+  } catch (error) {
+    failure = error;
+  }
+  throw new Error(t('error.imageDecode'), { cause: failure ?? undefined });
+}
+
+/**
+ * Last-resort decoder for browsers that accept the blob in an <img> but fail in
+ * createImageBitmap after IndexedDB restore.
+ * @param {Blob} file
+ * @returns {Promise<ImageBitmap>}
+ */
+async function decodeViaImageElement(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    if (image.naturalWidth < 1 || image.naturalHeight < 1) {
+      throw new Error(t('error.invalidDimensions'));
     }
+    return await createImageBitmap(image);
+  } finally {
+    URL.revokeObjectURL(url);
   }
 }
 
@@ -1949,7 +1990,27 @@ async function initializeSessionAndUrl() {
     !location.hash || encodeUrlState(hashState) === encodeUrlState(sessionSettings);
   applyUrlState(hashMatches ? sessionSettings : hashState);
   restoringSession = true;
-  const file = new File([record.image.blob], record.image.name, {
+  let bytes = null;
+  if (record.version === SESSION_VERSION) {
+    bytes = record.image.bytes;
+  } else if (record.image.blob instanceof Blob) {
+    try {
+      bytes = await record.image.blob.arrayBuffer();
+    } catch {
+      bytes = null;
+    }
+  }
+  if (!(bytes instanceof ArrayBuffer) || bytes.byteLength === 0) {
+    restoringSession = false;
+    sessionPersistence = false;
+    clearSession().catch((error) => {
+      toastKey('toast.sessionResetFailed', { detail: localizeError(error) }, 'error');
+    });
+    toastKey('toast.sessionRestoreFailed', {}, 'error');
+    setStatusMessage('status.sessionRestoreFailed');
+    return;
+  }
+  const file = new File([bytes], record.image.name, {
     type: record.image.type || 'application/octet-stream',
   });
   await loadFile(file, hashMatches ? record.state : null);

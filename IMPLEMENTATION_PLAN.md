@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.3.0
-**Product version at completion:** 1.3.0
+**Plan version:** 1.3.1
+**Product version at completion:** 1.3.1
 **Status:** Approved for implementation
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -37,8 +37,8 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 134 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
-| Version | `js/core/version.js`; `v1.3.0` tagged; M6.1 complete |
+| Tests | 135 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
+| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete |
 | Next | M7: later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
@@ -1092,8 +1092,9 @@ site. Learning is opt-in, contextual, and dismissible.
 
 ### 8.10 Session persistence
 
-- IndexedDB stores the last image as an encoded Blob, plus settings, palette entries,
-  locks, order, selected entry, edit mode, transparent color id, and the undo/redo history.
+- IndexedDB stores the last image as encoded bytes (`ArrayBuffer`), plus settings, palette
+  entries, locks, order, selected entry, edit mode, transparent color id, and the undo/redo
+  history. Version 1 records with a Blob are read once and upgraded on the next save.
 - On load, a saved session reopens the editor directly. The URL hash remains a portable
   settings config: if it differs from the saved settings, it wins and the palette is
   re-extracted from the image instead of restoring local edits.
@@ -1735,6 +1736,18 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** `1.3.0` tagged; touch history, loupe picking, stale-restore protection, and
   full-resolution export after reload verified.
 
+### M6.2 — v1.3.1: reliable saved-image bytes (complete)
+
+- [x] Store the session image as `ArrayBuffer` bytes instead of a `File` or `Blob`;
+      mobile browsers may not preserve a picked file's backing data across a reload.
+- [x] Read version 1 Blob records once and upgrade them to byte records on the next save.
+- [x] Reject empty or incomplete saved bytes and fall back to the hero with a clear
+      restore message instead of a decode loop.
+- [x] Try an `<img>` decode before reporting `imageDecode` when `createImageBitmap` cannot
+      open a restored blob.
+- **Exit:** `1.3.1` tagged; repeated reloads restore the image, legacy records migrate,
+  and a corrupt record falls back without blocking the next load.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
@@ -1864,6 +1877,9 @@ A change is done only when:
 | 2026-11-15 | Abandon a saved-session restore when a newer image load starts | A reload followed by an immediate drop could let the restore overwrite the new image or report its own decode error; the newest load now owns the UI |
 | 2026-11-15 | Decode the full-resolution source only at export | Keeping a 16 MP RGBA copy for the session costs 64 MiB and contributes to mobile memory pressure; the preview stays downscaled and export re-decodes the original |
 | 2026-11-15 | Release 1.3.0: M6.1 complete | Touch undo/redo, loupe picking, newest-load session guard, and lazy full-resolution export verified; 134 tests |
+| 2026-11-15 | Store saved session images as ArrayBuffer bytes instead of File/Blob objects | Mobile browsers can lose a picked file's backing data across reload even when IndexedDB returns a Blob; explicit bytes survive, and version 1 records migrate on the next save |
+| 2026-11-15 | Retry image decode through an `<img>` element before reporting imageDecode | Some mobile browsers fail `createImageBitmap` on a restored blob but decode the same bytes through the image element |
+| 2026-11-15 | Release 1.3.1: M6.2 complete | Saved-image byte storage, v1 migration, and the decode fallback verified with repeated reloads and a corrupt record; 135 tests |
 
 ---
 

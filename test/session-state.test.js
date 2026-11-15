@@ -33,15 +33,37 @@ test('history snapshots clone independently', () => {
   assert.deepEqual(clonePaletteSnapshot(snapshot), snapshot);
 });
 
-test('session records require a version, image blob, palette, and history', () => {
+test('session records require a version, image bytes, palette, and history', () => {
   const valid = {
     version: SESSION_VERSION,
-    image: { blob: new Blob(['x']), name: 'test.png', type: 'image/png' },
+    image: {
+      bytes: new Uint8Array([1, 2, 3]).buffer,
+      name: 'test.png',
+      type: 'image/png',
+      size: 3,
+    },
     state: { settings: {}, palette, history: { past: [], future: [] } },
   };
   assert.equal(isValidSessionRecord(valid), true);
   assert.equal(isValidSessionRecord({ ...valid, version: 999 }), false);
   assert.equal(isValidSessionRecord({ ...valid, image: { name: 'test.png' } }), false);
+  assert.equal(
+    isValidSessionRecord({ ...valid, image: { ...valid.image, bytes: new ArrayBuffer(0) } }),
+    false,
+  );
   assert.equal(isValidSessionRecord({ ...valid, state: { palette: {} } }), false);
   assert.equal(isValidSessionRecord({ ...valid, state: { settings: null } }), false);
+});
+
+test('legacy version 1 session records with a non-empty blob still load', () => {
+  const legacy = {
+    version: 1,
+    image: { blob: new Blob(['x']), name: 'test.png', type: 'image/png', size: 1 },
+    state: { settings: {}, palette, history: { past: [], future: [] } },
+  };
+  assert.equal(isValidSessionRecord(legacy), true);
+  assert.equal(
+    isValidSessionRecord({ ...legacy, image: { ...legacy.image, blob: new Blob([]) } }),
+    false,
+  );
 });

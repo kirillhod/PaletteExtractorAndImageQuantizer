@@ -2,7 +2,7 @@
 
 /** @typedef {import('./types.js').Palette} Palette */
 
-export const SESSION_VERSION = 1;
+export const SESSION_VERSION = 2;
 
 /** @param {Palette} palette */
 export function clonePalette(palette) {
@@ -41,9 +41,15 @@ export function cloneHistory(history) {
  */
 export function isValidSessionRecord(record) {
   if (!record || typeof record !== 'object') return false;
-  if (record.version !== SESSION_VERSION) return false;
+  if (record.version !== SESSION_VERSION && record.version !== 1) return false;
   if (!record.image || typeof record.image !== 'object') return false;
-  if (!(record.image.blob instanceof Blob)) return false;
+  if (record.version === SESSION_VERSION) {
+    if (!(record.image.bytes instanceof ArrayBuffer)) return false;
+    if (record.image.bytes.byteLength === 0) return false;
+  } else {
+    if (!(record.image.blob instanceof Blob)) return false;
+    if (record.image.blob.size === 0) return false;
+  }
   if (typeof record.image.name !== 'string') return false;
   if (!record.state || typeof record.state !== 'object') return false;
   if (!record.state.settings || typeof record.state.settings !== 'object') return false;

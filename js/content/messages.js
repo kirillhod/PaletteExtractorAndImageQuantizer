@@ -223,6 +223,7 @@ const en = {
   'status.encodingReduced': 'Encoding the full-resolution PNG…',
   'status.encodingIndexed': 'Encoding and validating the indexed PNG…',
   'status.savedSessionCouldNotClear': 'Saved session could not be cleared',
+  'status.sessionRestoreFailed': 'Saved session could not be restored',
   'status.couldNotReadImage': 'Could not read image',
   'status.progressStrip': 'Building palette strip…',
   'status.progressIndex': 'Encoding indexed PNG…',
@@ -359,6 +360,8 @@ const en = {
   'toast.paletteValidationFailed': 'Palette validation failed: {detail}',
   'toast.paletteLoaded': 'Loaded {name} · {countLabel}',
   'toast.sessionUnavailable': 'Saved session is unavailable: {detail}',
+  'toast.sessionRestoreFailed':
+    'The saved image could not be restored. Load it again.',
   'toast.sessionResetFailed': 'Could not reset the saved session: {detail}',
   'toast.sessionSaveFailed': 'Could not save the session locally: {detail}',
   'toast.sessionCleared': 'Saved session cleared.',
@@ -657,6 +660,7 @@ const ru = {
   'status.encodingReduced': 'Кодирование PNG полного разрешения…',
   'status.encodingIndexed': 'Кодирование и проверка индексированного PNG…',
   'status.savedSessionCouldNotClear': 'Не удалось удалить сохранённую сессию',
+  'status.sessionRestoreFailed': 'Не удалось восстановить сохранённую сессию',
   'status.couldNotReadImage': 'Не удалось прочитать изображение',
   'status.progressStrip': 'Создание полосы палитры…',
   'status.progressIndex': 'Кодирование индексированного PNG…',
@@ -794,6 +798,8 @@ const ru = {
   'toast.paletteValidationFailed': 'Проверка палитры не пройдена: {detail}',
   'toast.paletteLoaded': 'Загружено: {name} · {countLabel}',
   'toast.sessionUnavailable': 'Сохранённая сессия недоступна: {detail}',
+  'toast.sessionRestoreFailed':
+    'Не удалось восстановить сохранённое изображение. Загрузите его снова.',
   'toast.sessionResetFailed': 'Не удалось сбросить сохранённую сессию: {detail}',
   'toast.sessionSaveFailed': 'Не удалось сохранить сессию локально: {detail}',
   'toast.sessionCleared': 'Сохранённая сессия удалена.',
