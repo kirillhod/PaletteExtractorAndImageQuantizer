@@ -37,7 +37,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 130 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, references |
+| Tests | 134 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
 | Version | `js/core/version.js`; `v1.2.0` tagged; M6 complete |
 | Next | M7: later / not planned for v1.x |
 
@@ -1119,6 +1119,23 @@ site. Learning is opt-in, contextual, and dismissible.
   counts. Both languages share the same layout; no per-language component overrides.
 - Reference titles, authors, and venues stay canonical; group headings, print notes, and
   credit labels/descriptions are localized.
+- The same URL serves both languages through JavaScript. This is good for the user but
+  does not create a separately indexable Russian page; Russian search visibility would
+  require a static `/ru/` route with `hreflang`, not only JS switching.
+
+### 8.12 SEO metadata
+
+- `index.html` carries an absolute `canonical`, `index,follow,max-image-preview:large`,
+  a keyword-aware `<title>`, and a natural-length `<meta name="description">`.
+- Open Graph and Twitter Card metadata use absolute URLs and the 1200×630
+  `assets/og-image.png` social preview.
+- JSON-LD describes a free `WebApplication` with category, browser requirements, feature
+  list, repository, license, screenshot, and `offers.price = "0"`.
+- `sitemap.xml` lists the canonical page with `lastmod`; `robots.txt` references the
+  project sitemap. GitHub project pages cannot own the host-root `robots.txt`, so manual
+  Search Console submission remains the reliable discovery path.
+- `test/seo.test.js` checks the metadata, JSON-LD, social image dimensions, sitemap, and
+  robots references. Localized Russian SEO would need a separate static route.
 
 ## 9. Performance
 
@@ -1821,6 +1838,7 @@ A change is done only when:
 | 2026-11-14 | Refresh tooltips and Help for v1.2 and the current shortcuts | The drawer still described QA and URL state as upcoming; hints now cover octree, alpha preview behavior, dither scaling, error-map clamping, and `Ctrl/Cmd+Y`, and the text is shorter |
 | 2026-11-14 | Add complete English/Russian site localization with automatic detection and a header toggle | The site follows the browser language by default and switches in place; catalogs stay separate from English repository documentation, and Russian plural forms use `Intl.PluralRules` |
 | 2026-11-14 | Remove emoji from repository documentation and add a no-emoji rule | Plain-text documentation is easier to scan and diff; emoji are allowed only when explicitly requested |
+| 2026-11-15 | Add canonical, Open Graph, Twitter Card, JSON-LD WebApplication, keyword-aware title/description, and a 1200×630 social preview | Improves search snippets and link previews without changing the app; sitemap `lastmod` refreshed and metadata covered by `seo.test.js` |
 
 ---
 

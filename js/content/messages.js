@@ -8,9 +8,9 @@
  */
 
 const en = {
-  'app.title': 'PaletteExtractorAndImageQuantizer — palette compiler',
+  'app.title': 'PaletteExtractorAndImageQuantizer — image palette extractor',
   'app.description':
-    'Extract a palette from any image, compare the result, and export a validated palette strip or reduced PNG. Runs locally in your browser.',
+    'Extract a color palette from any image, map it to fixed or custom palettes, dither, and export validated indexed PNGs locally in your browser.',
 
   'header.homeAria': 'PaletteExtractorAndImageQuantizer home',
 
@@ -431,9 +431,9 @@ const en = {
 };
 
 const ru = {
-  'app.title': 'PaletteExtractorAndImageQuantizer — компилятор палитр',
+  'app.title': 'PaletteExtractorAndImageQuantizer — палитра из изображения',
   'app.description':
-    'Извлекайте палитру из любого изображения, сравнивайте результат и экспортируйте проверенную полосу палитры или уменьшенный PNG. Работает локально в браузере.',
+    'Извлекайте палитру из любого изображения, сопоставляйте с фиксированной или своей палитрой, включайте дизеринг и экспортируйте проверенные индексированные PNG локально в браузере.',
 
   'header.homeAria': 'Главная PaletteExtractorAndImageQuantizer',
 
