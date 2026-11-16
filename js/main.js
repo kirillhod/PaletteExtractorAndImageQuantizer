@@ -39,7 +39,9 @@ const MAX_PIXELS = 16_777_216;
 const PREVIEW_EDGE = 1024;
 
 const versionLabel = document.getElementById('app-version');
+const helpVersionLabel = document.getElementById('help-version');
 if (versionLabel) versionLabel.textContent = `· v${APP_VERSION}`;
+if (helpVersionLabel) helpVersionLabel.textContent = `v${APP_VERSION}`;
 
 const hero = document.getElementById('hero');
 const workspace = document.getElementById('workspace');

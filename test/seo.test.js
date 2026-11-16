@@ -95,3 +95,13 @@ test('social image and sitemap match the canonical URL', () => {
   const robots = read('robots.txt');
   assert.match(robots, new RegExp(`Sitemap: ${canonical}sitemap\\.xml`));
 });
+
+test('the app version is injected, never hardcoded in the shell', () => {
+  assert.ok(html.includes('id="app-version"'), 'missing footer version element');
+  assert.ok(html.includes('id="help-version"'), 'missing Help version element');
+  assert.doesNotMatch(
+    html,
+    /\bv\d+\.\d+/,
+    'index.html must take the version from APP_VERSION',
+  );
+});

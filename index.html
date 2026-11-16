@@ -407,7 +407,8 @@
     <div class="peiq-drawer__body">
       <p data-i18n="help.intro">Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.</p>
       <div class="peiq-learn-note">
-        <p><strong>v1.2</strong> <span data-i18n="help.v12">adds a palette editor with locks and undo, CIEDE2000 quality, shareable URL settings, and a saved local session.</span></p>
+        <!-- Filled from APP_VERSION in js/main.js; never hardcode the version here. -->
+        <p><strong id="help-version"></strong> <span data-i18n="help.current">includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.</span></p>
       </div>
       <h2 data-i18n="help.howTitle">How it works</h2>
       <ol>

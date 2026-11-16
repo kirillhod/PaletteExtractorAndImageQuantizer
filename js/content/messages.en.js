@@ -263,8 +263,8 @@ export const EN_MESSAGES = {
   'help.closeAria': 'Close help',
   'help.intro':
     'Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG by saving it or copying it to the clipboard, plus a palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.',
-  'help.v12':
-    'adds a palette editor with locks and undo, CIEDE2000 quality, shareable URL settings, and a saved local session.',
+  'help.current':
+    'includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.',
   'help.howTitle': 'How it works',
   'help.how1': 'Build a 5-bit, alpha-weighted color histogram.',
   'help.how2': 'Extract a palette or load a fixed one; edit colors, locks, and order.',
