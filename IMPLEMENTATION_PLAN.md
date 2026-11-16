@@ -226,7 +226,7 @@ same network can open the tool; `--host=localhost` keeps it loopback-only.
   `js/content/references.js` and render in the Help drawer; print-only papers are cited
   without a redistributed PDF.
 - Inter is self-hosted under the SIL Open Font License 1.1; `assets/fonts/OFL.txt` ships
-  with it and the provenance is recorded in `assets/README.md`.
+  with it and the provenance is recorded in `assets/PROVENANCE.md`.
 - Built-in palettes are factual hardware/community values. Product names and trademarks
   belong to their owners; the project is not affiliated with them.
 - The visual system is original CSS/SVG inspired by Blender’s public design language. No
@@ -1772,11 +1772,13 @@ Legend: **S** = signatures/notes, **T** = required tests.
 
 | Path | Responsibility |
 |---|---|
-| `assets/blue-noise-64.bin` | 64×64 blue-noise mask (checksum in `assets/README.md`) |
+| `assets/blue-noise-64.bin` | 64×64 blue-noise mask (checksum in `assets/PROVENANCE.md`) |
 | `assets/fonts/InterVariable-latin.woff2` | Self-hosted Inter variable Latin subset (~48 KB) |
 | `assets/fonts/OFL.txt` | Inter SIL Open Font License |
 | `assets/favicon.svg` | Local orange-on-charcoal PEIQ mark |
-| `assets/README.md` | Provenance, font source/license, regeneration command |
+| `assets/og-image.png` | 1200×630 social preview card |
+| `assets/screenshots/*.png` | README captures refreshed with the UI |
+| `assets/PROVENANCE.md` | Screenshot, social card, font, and blue-noise provenance |
 | `tools/dev-server.mjs` | Zero-dep static server |
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
 | `tools/spec.mjs` | Print one plan/DESIGN/research section without loading the whole document |

@@ -195,6 +195,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - UI changes need a manual browser pass at 1280 px and 360 px, keyboard-only, plus the
   relevant items from plan §10.6. Follow [`docs/agent/browser-check.md`](docs/agent/browser-check.md)
   (skill `peiq-browser-check`) instead of writing a new driver.
+- Any UI change that alters a README screenshot or the social preview must refresh
+  `assets/screenshots/*.png` and `assets/og-image.png` from the current UI in the same
+  change, then update [`assets/PROVENANCE.md`](assets/PROVENANCE.md). A stale capture is a
+  documentation defect, not a follow-up.
 - Theme changes need `test/theme.test.js` parity plus a manual auto → light → dark →
   reload check in both themes.
 - Report the command and its result. “Should work” is not verification.
@@ -203,8 +207,9 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 
 A change is done only when `npm test` passes; new behavior has a test; determinism holds;
 no dependency/build/network was added; output contracts still validate; UI changes pass
-the browser check; warnings/errors are surfaced; docs and the decision log are updated;
-and the change is committed locally with a descriptive body (plan §16).
+the browser check; README screenshots and the social preview match the current UI;
+warnings/errors are surfaced; docs and the decision log are updated; and the change is
+committed locally with a descriptive body (plan §16).
 
 ## 9. Documentation
 
