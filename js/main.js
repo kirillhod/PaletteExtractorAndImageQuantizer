@@ -23,8 +23,9 @@ import {
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
-import { debounce, el } from './ui/dom.js';
+import { debounce } from './ui/dom.js';
 import { createExportController } from './ui/export-controller.js';
+import { createQualityPanel } from './ui/quality-panel.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { createPickedMarkers } from './ui/picked-markers.js';
 import { initControls } from './ui/controls.js';
@@ -41,7 +42,6 @@ import {
   localizeDetail,
   localizeError,
   t,
-  tp,
 } from './ui/i18n.js';
 import { initLearn } from './ui/learn-view.js';
 import { renderPalette } from './ui/palette-view.js';
@@ -80,16 +80,6 @@ const paletteMoveLeft = /** @type {HTMLButtonElement|null} */ (document.getEleme
 const paletteMoveRight = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-move-right'));
 const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
 const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
-const qaRun = /** @type {HTMLButtonElement|null} */ (document.getElementById('qa-run'));
-const qaStatus = document.getElementById('qa-status');
-const qaStats = document.getElementById('qa-stats');
-const qaMean = document.getElementById('qa-mean');
-const qaP95 = document.getElementById('qa-p95');
-const qaMax = document.getElementById('qa-max');
-const qaErrorField = document.getElementById('qa-error-field');
-const qaErrorToggle = /** @type {HTMLInputElement|null} */ (document.getElementById('qa-error-toggle'));
-const qaErrorCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('qa-error-canvas'));
-const qaWorst = document.getElementById('qa-worst');
 const sessionClear = /** @type {HTMLButtonElement|null} */ (document.getElementById('session-clear'));
 const sessionStatus = document.getElementById('session-status');
 const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
@@ -173,11 +163,6 @@ let markerDrag = null;
 /** @type {ReturnType<typeof createPickedMarkers>|null} */
 let pickedMarkersView = null;
 const paletteHistory = { past: [], future: [], limit: 50 };
-/** @type {any|null} */
-let qaResult = null;
-let qaRequestId = 0;
-let qaBusy = false;
-let qaFailed = false;
 let applyingUrlState = false;
 /** @type {number|null} */
 let pendingTransparentIndex = null;
@@ -199,6 +184,12 @@ let fixedName = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let importedColors = [];
 let importedName = '';
+
+const qualityPanel = createQualityPanel({
+  getWorker: () => worker,
+  nextRequestId: () => nextRequestId++,
+  getApp: () => app,
+});
 
 const exportController = createExportController({
   app,
@@ -322,18 +313,7 @@ function onWorkerMessage(event) {
   }
 
   if (message.type === 'quality') {
-    if (message.requestId !== qaRequestId) return;
-    qaBusy = false;
-    qaFailed = false;
-    qaResult = {
-      ...message.result,
-      errorMap: {
-        data: new Uint8ClampedArray(message.result.errorMap.data),
-        width: message.result.errorMap.width,
-        height: message.result.errorMap.height,
-      },
-    };
-    renderQuality();
+    qualityPanel.handleMessage(message);
     return;
   }
 
@@ -341,7 +321,7 @@ function onWorkerMessage(event) {
     if (
       message.requestId !== app.previewRequestId &&
       message.requestId !== app.exportRequestId &&
-      message.requestId !== qaRequestId
+      !qualityPanel.matches(message.requestId)
     ) {
       return;
     }
@@ -350,11 +330,8 @@ function onWorkerMessage(event) {
     if (canvasEmpty) canvasEmpty.hidden = true;
     if (message.requestId === app.exportRequestId) {
       exportController.finishExport();
-    } else if (message.requestId === qaRequestId) {
-      qaBusy = false;
-      qaFailed = true;
-      if (qaStatus) qaStatus.textContent = t('quality.statusFailed');
-      updateQualityAvailability();
+    } else if (qualityPanel.matches(message.requestId)) {
+      qualityPanel.fail();
     } else {
       if (restoringSession) restoringSession = false;
       updateExportState();
@@ -365,119 +342,7 @@ function onWorkerMessage(event) {
 function updateExportState() {
   setExportEnabled(app.hasResult && app.palette.length > 0 && !app.exportBusy);
   updatePaletteEditor();
-  updateQualityAvailability();
-}
-
-function updateQualityAvailability() {
-  if (qaRun) {
-    qaRun.disabled =
-      !app.hasResult ||
-      !app.reduced ||
-      app.palette.length === 0 ||
-      qaBusy ||
-      app.exportBusy;
-  }
-}
-
-function resetQuality() {
-  if (qaRequestId) {
-    worker.postMessage({ type: 'cancel', requestId: qaRequestId });
-    qaRequestId = 0;
-  }
-  qaBusy = false;
-  qaFailed = false;
-  qaResult = null;
-  if (qaStats) qaStats.hidden = true;
-  if (qaErrorField) qaErrorField.hidden = true;
-  if (qaErrorToggle) qaErrorToggle.checked = false;
-  if (qaErrorCanvas) qaErrorCanvas.hidden = true;
-  if (qaWorst) {
-    qaWorst.hidden = true;
-    qaWorst.replaceChildren();
-  }
-  if (qaStatus) qaStatus.textContent = t('quality.statusInitial');
-  updateQualityAvailability();
-}
-
-function runQuality() {
-  if (!app.preview || !app.reduced || qaBusy || app.palette.length === 0) return;
-  resetQuality();
-  const id = nextRequestId++;
-  qaRequestId = id;
-  qaBusy = true;
-  qaFailed = false;
-  if (qaStatus) qaStatus.textContent = t('quality.statusMeasuring');
-  updateQualityAvailability();
-  const original = new Uint8ClampedArray(app.preview.data);
-  const mapped = new Uint8ClampedArray(app.reduced.data);
-  worker.postMessage(
-    {
-      type: 'qa',
-      requestId: id,
-      width: app.preview.width,
-      height: app.preview.height,
-      original: { data: original.buffer },
-      mapped: { data: mapped.buffer },
-    },
-    [original.buffer, mapped.buffer],
-  );
-}
-
-function renderQuality() {
-  if (!qaResult) return;
-  if (qaStats) qaStats.hidden = false;
-  if (qaMean) qaMean.textContent = qaResult.deltaE00Mean.toFixed(2);
-  if (qaP95) qaP95.textContent = qaResult.deltaE00P95.toFixed(2);
-  if (qaMax) qaMax.textContent = qaResult.deltaE00Max.toFixed(2);
-  if (qaErrorField) qaErrorField.hidden = false;
-  if (qaErrorToggle) qaErrorToggle.checked = false;
-  if (qaErrorCanvas) qaErrorCanvas.hidden = true;
-  if (qaWorst) {
-    qaWorst.hidden = false;
-    qaWorst.replaceChildren();
-    qaWorst.append(el('p', { className: 'peiq-label', text: t('quality.worst') }));
-    for (const pixel of qaResult.worstPixels) {
-      const row = el('div', { className: 'peiq-qa-worst__row' });
-      row.append(
-        el('span', { text: `${pixel.x}, ${pixel.y}` }),
-        el('span', { text: pixel.deltaE00.toFixed(2) }),
-      );
-      qaWorst.append(row);
-    }
-  }
-  if (qaStatus) {
-    qaStatus.textContent = t('quality.statusMeasured', {
-      countLabel: tp('count.pixels', qaResult.pixels, { count: qaResult.pixels }),
-    });
-  }
-  updateQualityAvailability();
-}
-
-function showQualityMap() {
-  if (!qaResult || !qaErrorCanvas || !qaErrorToggle) return;
-  if (!qaErrorToggle.checked) {
-    qaErrorCanvas.hidden = true;
-    return;
-  }
-  const map = qaResult.errorMap;
-  qaErrorCanvas.width = map.width;
-  qaErrorCanvas.height = map.height;
-  const ctx = qaErrorCanvas.getContext('2d');
-  if (!ctx) return;
-  ctx.putImageData(
-    new ImageData(new Uint8ClampedArray(map.data), map.width, map.height),
-    0,
-    0,
-  );
-  qaErrorCanvas.hidden = false;
-}
-
-function toggleQualityMap() {
-  if (!qaResult || !qaErrorToggle) return;
-  const section = document.getElementById('qa-section');
-  if (section) section.open = true;
-  qaErrorToggle.checked = !qaErrorToggle.checked;
-  showQualityMap();
+  qualityPanel.updateAvailability();
 }
 
 function renderPaletteStrip() {
@@ -1552,8 +1417,7 @@ function populateBuiltinPalettes() {
 
 function processPreview() {
   if (!app.preview) return;
-  resetQuality();
-  if (qaRun) qaRun.disabled = true;
+  qualityPanel.reset({ disable: true });
   if (mode === 'map' && fixedColors.length === 0) {
     if (!loadTargetPalette(paletteSelect?.value || 'pico-8')) return;
   }
@@ -1856,21 +1720,7 @@ function refreshDynamicUi() {
     const label = document.getElementById('export-progress-label');
     if (label) label.textContent = t(progressKey);
   }
-  if (qaStatus) {
-    if (qaBusy) qaStatus.textContent = t('quality.statusMeasuring');
-    else if (qaFailed) qaStatus.textContent = t('quality.statusFailed');
-    else if (qaResult) {
-      qaStatus.textContent = t('quality.statusMeasured', {
-        countLabel: tp('count.pixels', qaResult.pixels, {
-          count: qaResult.pixels,
-        }),
-      });
-    } else qaStatus.textContent = t('quality.statusInitial');
-  }
-  if (qaResult && qaWorst) {
-    const label = qaWorst.querySelector('.peiq-label');
-    if (label) label.textContent = t('quality.worst');
-  }
+  qualityPanel.refreshLabels();
 }
 
 const controls = initControls({
@@ -1893,7 +1743,7 @@ initShortcuts({
   onToggleOriginal: toggleOriginalState,
   onToggleHelp: () => learn.toggle(),
   onCycleTheme: () => theme.cycle(),
-  onToggleErrorMap: toggleQualityMap,
+  onToggleErrorMap: qualityPanel.toggleMap,
 });
 
 document.getElementById('zoom-out')?.addEventListener('click', () => canvasView.zoomOut());
@@ -1932,8 +1782,6 @@ palettePick?.addEventListener('click', () => {
 });
 paletteUndo?.addEventListener('click', undoPaletteEdit);
 paletteRedo?.addEventListener('click', redoPaletteEdit);
-qaRun?.addEventListener('click', runQuality);
-qaErrorToggle?.addEventListener('change', showQualityMap);
 document.addEventListener('keydown', (event) => {
   if (!paletteEditMode || app.exportBusy) return;
   if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
