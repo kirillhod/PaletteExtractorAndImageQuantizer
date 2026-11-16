@@ -473,7 +473,7 @@ Implemented in v1.1 on the preview.
 - Float comparisons use `f64`; stored palette values are exact 8-bit.
 - Canonical JSON: object keys sorted recursively; no insignificant whitespace.
 - Hash: SHA-256 via `crypto.subtle`; fallback FNV-1a 64-bit with a flag.
-- `ALGORITHM_VERSION = 3`; bump it when a decision-affecting rule changes.
+- `ALGORITHM_VERSION = 4`; bump it when a decision-affecting rule changes.
 
 ### 7.2 Guarantee levels
 

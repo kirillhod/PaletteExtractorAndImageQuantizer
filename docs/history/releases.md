@@ -52,3 +52,15 @@ section numbers below are its original ones.
       `ALGORITHM_VERSION` stay compatible; 1.4.0 URLs and sessions load.
 - [x] `APP_VERSION` and `package.json` = `1.5.0`.
 - [x] Annotated tag `v1.5.0` on the version-bump commit.
+
+### v1.6.0
+
+- [x] `npm test` 199 passing.
+- [x] Browser pass at 1280 px and 360 px: hue and hue-perceptual sorts with undo and redo,
+      the full-screen palette preview, the full-resolution original, the automatic
+      transparent index and its warning, the error map with numbered markers, both themes,
+      keyboard.
+- [x] URL `v=1`, session record v2, palette JSON v1, and export filenames stay compatible;
+      existing hue URLs load with the new order. `ALGORITHM_VERSION` is 4.
+- [x] `APP_VERSION` and `package.json` = `1.6.0`.
+- [x] Annotated tag `v1.6.0` on the version-bump commit.

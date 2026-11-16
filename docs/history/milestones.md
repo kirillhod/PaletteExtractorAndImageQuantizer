@@ -170,6 +170,19 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** `1.5.0` tagged; `npm test` 166 passing and the browser pass at 1280/360 px
   are green.
 
+### M6.7 — v1.6.0: handoff and inspection (complete)
+
+- [x] Bound hue bands, add the hue-perceptual sort modes, compact the sort control with a
+      direction button, and record sort changes in undo history.
+- [x] Add the full-screen palette preview and the gaps between preview colors.
+- [x] Keep the original at full resolution and budget the mapping preview by area.
+- [x] Reserve the transparent index automatically on indexed export and report the choice.
+- [x] Draw the error map on the workspace canvas with numbered worst-pixel markers.
+- [x] Fix the dithered preview alpha and the Wu grid, and speed up error diffusion.
+- [x] Add the extraction guide and confirmed session clearing; split the plan by topic.
+- **Exit:** `1.6.0` tagged; `npm test` 199 passing and the browser pass at 1280/360 px
+  are green.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/

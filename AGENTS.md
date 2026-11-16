@@ -311,10 +311,8 @@ committed locally with a descriptive body (plan §16).
   [`docs/history/decisions.md`](docs/history/decisions.md); closed milestones in
   [`docs/history/milestones.md`](docs/history/milestones.md). Do not duplicate feature
   lists or counts here.
-- Released `v1.5.0`; M6.3–M6.6 are complete. Several verified changes are committed but
-  unreleased; plan §0 names them.
-- Next: ship those changes with the next release; otherwise M7 — later / not planned for
-  v1.x.
+- Released `v1.6.0`; M6.3–M6.7 are complete. Status and the test count live in plan §0.
+- Next: M7 — later / not planned for v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker
   exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.

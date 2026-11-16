@@ -6,11 +6,11 @@
  */
 
 /** @type {string} */
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.6.0';
 
 /**
  * Bump this when a decision-affecting rule changes (tie-break, ordering, hashing, or
  * quantizer behavior). It is recorded in manifests and reports.
  * @type {number}
  */
-export const ALGORITHM_VERSION = 3;
+export const ALGORITHM_VERSION = 4;
