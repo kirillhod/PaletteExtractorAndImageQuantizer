@@ -947,7 +947,7 @@
   position: fixed;
   inset: 0 0 0 auto;
   z-index: 60;
-  width: min(360px, 92vw);
+  width: min(680px, 92vw);
   overflow: auto;
   background: var(--peiq-bg);
   color: var(--peiq-text);
@@ -980,28 +980,37 @@
 .peiq-drawer__title {
   margin: 0;
   color: var(--peiq-text-strong);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 
 .peiq-drawer__body {
   padding: var(--peiq-space-4);
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .peiq-drawer__body a {
   color: var(--peiq-link);
 }
 
+.peiq-drawer__body strong {
+  color: var(--peiq-text-strong);
+  font-weight: 600;
+}
+
 .peiq-drawer__body h2 {
   margin-top: var(--peiq-space-4);
-  font-size: 1rem;
+  font-size: 1.0625rem;
+  line-height: 1.3;
 }
 
 .peiq-drawer__body h2:first-child {
   margin-top: 0;
 }
 
-.peiq-drawer__body ul {
+.peiq-drawer__body ul,
+.peiq-drawer__body ol {
   margin: 0 0 var(--peiq-space-3);
   padding-left: 1.25rem;
 }
@@ -1010,10 +1019,24 @@
   margin-bottom: var(--peiq-space-1);
 }
 
+.peiq-help-terms {
+  margin: 0 0 var(--peiq-space-3);
+}
+
+.peiq-help-terms dt {
+  margin-top: var(--peiq-space-2);
+  color: var(--peiq-text-strong);
+  font-weight: 600;
+}
+
+.peiq-help-terms dd {
+  margin: 2px 0 0;
+}
+
 .peiq-drawer__body table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 .peiq-drawer__body th,
@@ -1064,8 +1087,8 @@
 .peiq-reference-meta {
   display: block;
   color: var(--peiq-text-tertiary);
-  font-size: 0.75rem;
-  line-height: 1.35;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .peiq-credits {
@@ -1075,15 +1098,15 @@
 .peiq-credits dt {
   margin-top: var(--peiq-space-3);
   color: var(--peiq-text-strong);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .peiq-credits dd {
   margin: 4px 0 0;
   color: var(--peiq-text-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 /* Compact rail on desktop: one open section at a time keeps every control visible

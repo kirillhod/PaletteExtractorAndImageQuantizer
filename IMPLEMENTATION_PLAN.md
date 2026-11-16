@@ -1098,7 +1098,9 @@ site. Learning is opt-in, contextual, and dismissible.
   - **Guide** — topics, each with a summary, 2–4 short paragraphs, and canonical links.
   - **Shortcuts** — the table from §8.5.
 - Closed by default. Remembers the last tab for the session only.
-- Desktop: 360 px overlay above the right rail; the canvas does not relayout.
+- Desktop: 680 px overlay above the right rail; the canvas does not relayout. Body text is
+  1rem at 1.6 line height, and each section opens with a bold takeaway (or a bold term
+  list) so the drawer reads as prose rather than a wall of small text.
   < 960 px: full-height sheet; `Esc` closes.
 - Topic list (minimum 12):
   1. `quantization-basics` — what quantization is and what it trades away.
@@ -2017,6 +2019,7 @@ A change is done only when:
 | 2026-11-16 | Keep the previous status line and export controls while a preview runs; place the status line under the palette | Replacing the image stats with a processing message and disabling every export button on each preview made both areas blink during slider edits. The last validated stats and controls now stay in place, and a click during the short preview window reports processing rather than exporting a stale palette. The desktop grid gives the status line the stage column, matching the layout and keeping it under the palette instead of stretching from the left edge. |
 | 2026-11-16 | Report 0 ms extraction when a palette is overridden, restored, or comes from Map mode | The stage did not run: palette edits pass a fixed color list to the worker, Map mode starts from a chosen palette, and a restored session brings its own. Keeping the last real extraction time would go stale after a settings change and would still be 0 after restore, so 0 is the honest value. |
 | 2026-11-16 | Release 1.4.0: M6.3–M6.5 complete | Perceptual ordering, picked-color anchors, the compact desktop frame, validated Copy, palette-selection clearing, and preview/status stability ship as one minor release. URL v1, session v2, palette JSON v1, filenames, and `ALGORITHM_VERSION` stay compatible, so no major bump is warranted; 156 tests |
+| 2026-11-16 | Widen the desktop Help drawer to 680 px and set its body at 1rem/1.6 | The 360 px drawer wrapped long explanations into narrow columns and forced heavy scrolling; a wider sheet with larger text reads as prose while staying an overlay that does not relayout the canvas. Bold section takeaways and the three order names keep the key facts scannable. |
 
 ---
 

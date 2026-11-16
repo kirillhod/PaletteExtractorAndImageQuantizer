@@ -4,8 +4,8 @@
   border-radius: 0 var(--peiq-radius) var(--peiq-radius) 0;
   background: var(--peiq-brand-soft);
   color: var(--peiq-text);
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  font-size: 0.875rem;
+  line-height: 1.55;
 }
 
 .peiq-learn-note p:last-child {
@@ -15,7 +15,7 @@
 .peiq-shortcuts {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 .peiq-shortcuts th,
@@ -27,7 +27,7 @@
 
 .peiq-shortcuts th {
   color: var(--peiq-text-tertiary);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -41,5 +41,12 @@
   background: var(--peiq-bg-tertiary);
   color: var(--peiq-text-secondary);
   font-family: var(--peiq-font-mono);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+@media (min-width: 600px) {
+  .peiq-shortcuts th:first-child,
+  .peiq-shortcuts td:first-child {
+    width: 240px;
+  }
 }

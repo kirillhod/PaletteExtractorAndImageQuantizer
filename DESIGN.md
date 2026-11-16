@@ -1046,7 +1046,7 @@ light “paper” sheet.
   position: fixed;
   inset: 0 0 0 auto;
   z-index: 60;
-  width: min(360px, 92vw);
+  width: min(680px, 92vw);
   overflow: auto;
   background: var(--peiq-bg);
   color: var(--peiq-text);
@@ -1057,6 +1057,15 @@ light “paper” sheet.
 }
 .peiq-drawer[data-open="true"] { transform: translateX(0); }
 .peiq-drawer a { color: var(--peiq-link); }
+.peiq-drawer__body {
+  padding: var(--peiq-space-4);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.peiq-drawer__body strong {
+  color: var(--peiq-text-strong);
+  font-weight: 600;
+}
 
 .peiq-popover {
   z-index: 50;

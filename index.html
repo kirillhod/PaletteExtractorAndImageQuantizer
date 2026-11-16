@@ -405,7 +405,7 @@
       <button class="peiq-icon-btn" id="help-close" type="button" data-i18n-aria-label="help.closeAria" aria-label="Close help">×</button>
     </div>
     <div class="peiq-drawer__body">
-      <p data-i18n="help.intro">Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.</p>
+      <p data-i18n="help.intro">Load an image, extract a palette or choose a fixed one, compare the result, and export an indexed PNG, palette strip, palette file, or reduced PNG. Every result is checked before download and can also be copied to the clipboard. Edit colors, locks, and order as needed; undo and redo work while editing.</p>
       <div class="peiq-learn-note">
         <!-- Filled from APP_VERSION in js/main.js; never hardcode the version here. -->
         <p><strong id="help-version"></strong> <span data-i18n="help.current">includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.</span></p>
@@ -415,18 +415,26 @@
         <li data-i18n="help.how1">Build a 5-bit, alpha-weighted color histogram.</li>
         <li data-i18n="help.how2">Extract a palette or load a fixed one; edit colors, locks, and order.</li>
         <li data-i18n="help.how3">Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.</li>
-        <li data-i18n="help.how4">Dither optionally, then encode, decode, and compare before offering the file.</li>
+        <li data-i18n="help.how4">Dither optionally, then encode, decode, and compare the result before offering the file.</li>
       </ol>
       <h2 data-i18n="help.orderTitle">Palette order and the preview</h2>
-      <p data-i18n="help.orderP">The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot.</p>
-      <p data-i18n="help.perceptualP">Perceptual orders compare colors with Delta E (CIEDE2000). Smooth keeps the light-to-dark flow while removing local jumps; Color path follows the closest perceptual route between the darkest and lightest colors; Flow maximizes local continuity without pinning the ends. Only the order and export indices change.</p>
-      <p data-i18n="help.markersP">Picked colors keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.</p>
+      <p><strong data-i18n="help.orderLead">Export order changes, the color set does not.</strong> <span data-i18n="help.orderP">A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette strip or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.</span></p>
+      <p><strong data-i18n="help.perceptualLead">Perceptual orders</strong> <span data-i18n="help.perceptualP">compare colors with Delta E (CIEDE2000). Only the order and export indices change.</span></p>
+      <dl class="peiq-help-terms">
+        <dt data-i18n="help.perceptualSmooth">Smooth</dt>
+        <dd data-i18n="help.perceptualSmoothText">keeps the light-to-dark flow and removes local jumps.</dd>
+        <dt data-i18n="help.perceptualPath">Color path</dt>
+        <dd data-i18n="help.perceptualPathText">follows the closest colors from the darkest to the lightest.</dd>
+        <dt data-i18n="help.perceptualFlow">Flow</dt>
+        <dd data-i18n="help.perceptualFlowText">keeps neighboring colors as close as possible without pinning the ends.</dd>
+      </dl>
+      <p><strong data-i18n="help.markersLead">Picked colors</strong> <span data-i18n="help.markersP">keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.</span></p>
       <h2 data-i18n="help.qualityTitle">Quality</h2>
-      <p data-i18n="help.qualityP">The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.</p>
+      <p><strong data-i18n="help.qualityLead">Lower ΔE00 means a closer preview.</strong> <span data-i18n="help.qualityP">Mean, p95, and max summarize the CIEDE2000 error between the preview and the source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast is not checked.</span></p>
       <h2 data-i18n="help.urlTitle">Shareable settings</h2>
-      <p data-i18n="help.urlP">The URL hash stores settings only: mode, extractor, colors, working space, built-in palette, dither, alpha, sort, and transparent index. It never includes the image, palette edits, locks, or quality results.</p>
+      <p><strong data-i18n="help.urlLead">The URL hash stores settings only.</strong> <span data-i18n="help.urlP">It covers mode, extractor, colors, working space, built-in palette, dither method, strength, serpentine, edge stop, alpha threshold, sort, and transparent index. The image, palette edits, locks, and quality results never enter it.</span></p>
       <h2 data-i18n="help.sessionTitle">Saved session</h2>
-      <p data-i18n="help.sessionP">The last image, settings, palette entries, locks, order, selection, edit mode, and undo/redo history stay in this browser's IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove it.</p>
+      <p><strong data-i18n="help.sessionLead">The last session stays in this browser.</strong> <span data-i18n="help.sessionP">It keeps the image, settings, palette entries, locks, order, selection, markers, edit mode, and undo/redo history in IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove the stored copy.</span></p>
       <button class="peiq-btn peiq-btn--small" id="session-clear" type="button" data-i18n="help.forget">Forget saved session</button>
       <p class="peiq-hint" id="session-status"></p>
       <h2 data-i18n="help.shortcutsTitle">Shortcuts</h2>

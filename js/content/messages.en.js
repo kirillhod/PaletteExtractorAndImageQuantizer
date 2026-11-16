@@ -262,7 +262,7 @@ export const EN_MESSAGES = {
   'help.openAria': 'Open help',
   'help.closeAria': 'Close help',
   'help.intro':
-    'Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG by saving it or copying it to the clipboard, plus a palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.',
+    'Load an image, extract a palette or choose a fixed one, compare the result, and export an indexed PNG, palette strip, palette file, or reduced PNG. Every result is checked before download and can also be copied to the clipboard. Edit colors, locks, and order as needed; undo and redo work while editing.',
   'help.current':
     'includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.',
   'help.howTitle': 'How it works',
@@ -271,23 +271,36 @@ export const EN_MESSAGES = {
   'help.how3':
     'Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.',
   'help.how4':
-    'Dither optionally, then encode, decode, and compare before offering the file.',
+    'Dither optionally, then encode, decode, and compare the result before offering the file.',
   'help.orderTitle': 'Palette order and the preview',
+  'help.orderLead': 'Export order changes, the color set does not.',
   'help.orderP':
-    'The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette strip or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.',
+    'A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette strip or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.',
+  'help.perceptualLead': 'Perceptual orders',
   'help.perceptualP':
-    'Perceptual orders compare colors with Delta E (CIEDE2000). Smooth keeps the light-to-dark flow while removing local jumps; Color path follows the closest perceptual route between the darkest and lightest colors; Flow maximizes local continuity without pinning the ends. Only the order and export indices change.',
+    'compare colors with Delta E (CIEDE2000). Only the order and export indices change.',
+  'help.perceptualSmooth': 'Smooth',
+  'help.perceptualSmoothText': 'keeps the light-to-dark flow and removes local jumps.',
+  'help.perceptualPath': 'Color path',
+  'help.perceptualPathText': 'follows the closest colors from the darkest to the lightest.',
+  'help.perceptualFlow': 'Flow',
+  'help.perceptualFlowText':
+    'keeps neighboring colors as close as possible without pinning the ends.',
+  'help.markersLead': 'Picked colors',
   'help.markersP':
-    'Picked colors keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.',
+    'keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.',
   'help.qualityTitle': 'Quality',
+  'help.qualityLead': 'Lower ΔE00 means a closer preview.',
   'help.qualityP':
-    'The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.',
+    'Mean, p95, and max summarize the CIEDE2000 error between the preview and the source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast is not checked.',
   'help.urlTitle': 'Shareable settings',
+  'help.urlLead': 'The URL hash stores settings only.',
   'help.urlP':
-    'The URL hash stores settings only: mode, extractor, colors, working space, built-in palette, dither, alpha, sort, and transparent index. It never includes the image, palette edits, locks, or quality results.',
+    'It covers mode, extractor, colors, working space, built-in palette, dither method, strength, serpentine, edge stop, alpha threshold, sort, and transparent index. The image, palette edits, locks, and quality results never enter it.',
   'help.sessionTitle': 'Saved session',
+  'help.sessionLead': 'The last session stays in this browser.',
   'help.sessionP':
-    "The last image, settings, palette entries, locks, order, selection, edit mode, and undo/redo history stay in this browser's IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove it.",
+    "It keeps the image, settings, palette entries, locks, order, selection, markers, edit mode, and undo/redo history in IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove the stored copy.",
   'help.forget': 'Forget saved session',
   'help.shortcutsTitle': 'Shortcuts',
   'help.key': 'Key',
