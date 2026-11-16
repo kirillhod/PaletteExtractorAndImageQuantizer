@@ -1,15 +1,25 @@
 // @ts-check
 import { copyText } from './dom.js';
-import { t } from './i18n.js';
+import { countLabel, t } from './i18n.js';
 import { toastKey } from './status.js';
+
+/**
+ * @typedef {{ key:string, params?:Record<string, unknown> }} ExportWarning
+ * @typedef {Object} ExportFileView
+ * @property {string} name
+ * @property {string} mime
+ * @property {ArrayBuffer} data
+ * @property {{ ok:boolean, detail:string }} [validation]
+ * @property {ExportWarning[]} [warnings]
+ */
 
 /** @type {string[]} */
 const activeUrls = [];
-/** @type {{ name:string, mime:string, data:ArrayBuffer, validation?:{ok:boolean,detail:string} }[]} */
+/** @type {ExportFileView[]} */
 let currentFiles = [];
 
 /**
- * @param {{ name:string, mime:string, data:ArrayBuffer, validation?:{ok:boolean,detail:string} }[]} files
+ * @param {ExportFileView[]} files
  */
 export function showDownloadLinks(files) {
   currentFiles = files;
@@ -32,6 +42,14 @@ function renderDownloadLinks() {
   hint.className = 'peiq-hint';
   hint.textContent = t('export.validatedHint');
   host.append(hint);
+
+  const warnings = currentFiles.flatMap((file) => file.warnings ?? []);
+  if (warnings.length > 0) {
+    const warning = document.createElement('p');
+    warning.className = 'peiq-hint peiq-hint--warning';
+    warning.textContent = warnings.map(warningText).join(' ');
+    host.append(warning);
+  }
 
   for (const file of currentFiles) {
     const blob = new Blob([file.data], { type: file.mime });
@@ -60,6 +78,18 @@ function renderDownloadLinks() {
   }
 
   host.hidden = false;
+}
+
+/**
+ * @param {ExportWarning} warning
+ * @returns {string}
+ */
+function warningText(warning) {
+  const params = { ...(warning.params ?? {}) };
+  if (typeof params.count === 'number') {
+    params.countLabel = countLabel('count.pixels', params.count);
+  }
+  return t(warning.key, params);
 }
 
 /**

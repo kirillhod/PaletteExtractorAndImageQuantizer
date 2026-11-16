@@ -275,6 +275,7 @@ const qualityPanel = createQualityPanel({
   getWorker: () => worker,
   nextRequestId: () => nextRequestId++,
   getApp: () => app,
+  getCanvasView: () => canvasView,
 });
 
 const exportController = createExportController({

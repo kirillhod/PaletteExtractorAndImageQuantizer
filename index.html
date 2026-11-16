@@ -401,10 +401,9 @@
                   <input class="peiq-check" id="qa-error-toggle" type="checkbox">
                   <span data-i18n="quality.showMap">Show error map</span>
                 </label>
-                <button class="peiq-help" type="button" data-i18n-tooltip="quality.mapTooltip" data-tooltip="CIEDE2000 heatmap of the preview: dark blue is 0, red is 20 or more. Fully transparent pixels in either image are skipped.">?</button>
+                <button class="peiq-help" type="button" data-i18n-tooltip="quality.mapTooltip" data-tooltip="Draws the CIEDE2000 heatmap on the right half of the canvas: dark blue is 0, red is 20 or more. Numbered markers point to the worst pixels listed below. Fully transparent pixels in either image are skipped.">?</button>
               </div>
             </div>
-            <canvas class="peiq-qa-map" id="qa-error-canvas" data-i18n-aria-label="quality.mapAria" aria-label="CIEDE2000 error map" hidden></canvas>
             <div class="peiq-qa-worst" id="qa-worst" hidden></div>
           </div>
         </details>

@@ -305,8 +305,6 @@ const EXACT_ERRORS = {
   'locked color cannot be moved': 'error.lockedMove',
   'locked color blocks this move': 'error.lockedBlock',
   'color already exists in the palette': 'error.duplicateColor',
-  'Set a transparent index before exporting this image as indexed PNG.':
-    'error.transparentIndexRequired',
   'PNG palette file is missing bytes': 'error.palettePngBytes',
   'ASE palette import arrives in M3; use .gpl, .pal, .hex, .json or a PNG strip':
     'error.paletteAseUnsupported',

@@ -339,6 +339,12 @@
   margin: 0;
 }
 
+.peiq-download-result .peiq-hint--warning {
+  padding-left: var(--peiq-space-2);
+  border-left: 2px solid var(--peiq-warning);
+  color: var(--peiq-warning-text);
+}
+
 .peiq-field {
   display: grid;
   gap: var(--peiq-space-2);
@@ -871,7 +877,6 @@ html.peiq-preview-open body {
 }
 
 .peiq-qa-stats[hidden],
-.peiq-qa-map[hidden],
 .peiq-qa-worst[hidden] {
   display: none;
 }
@@ -890,21 +895,6 @@ html.peiq-preview-open body {
   font-variant-numeric: tabular-nums;
 }
 
-.peiq-qa-map {
-  width: 100%;
-  height: auto;
-  max-height: 220px;
-  border-radius: var(--peiq-radius);
-  background-color: var(--peiq-checker-a);
-  background-image: repeating-conic-gradient(
-    var(--peiq-checker-b) 0% 25%,
-    var(--peiq-checker-a) 0% 50%
-  );
-  background-size: 16px 16px;
-  image-rendering: pixelated;
-  object-fit: contain;
-}
-
 .peiq-qa-worst {
   display: grid;
   gap: 2px;
@@ -916,11 +906,15 @@ html.peiq-preview-open body {
 }
 
 .peiq-qa-worst__row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1.5em 1fr auto;
   gap: var(--peiq-space-2);
   padding: 2px 4px;
   border-radius: var(--peiq-radius);
+}
+
+.peiq-qa-worst__rank {
+  color: var(--peiq-text-secondary);
 }
 
 .peiq-qa-worst__row:nth-child(odd) {

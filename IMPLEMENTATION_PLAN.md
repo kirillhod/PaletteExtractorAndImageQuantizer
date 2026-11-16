@@ -38,10 +38,10 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers |
-| Tests | 193 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, preview sizing, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
-| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
-| Next | Ship the hue-band, hue-perceptual, compact sort, palette-preview, and Help/session-clear changes with the next release; otherwise M7 — later / not planned for v1.x |
+| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers, workspace error map with numbered worst-pixel markers |
+| Tests | 196 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, preview sizing, automatic transparent index, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, the full-screen palette preview, the full-resolution original with a 4 MP preview budget, the automatic transparent index, and the workspace error map, with `ALGORITHM_VERSION` 3 |
+| Next | Ship the unreleased changes with the next release; otherwise M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -499,6 +499,9 @@ Z = 0.0193339 r + 0.1191920 g + 0.9503041 b
   source buffer rather than from the palette alone; the reserved index is always
   transparent. Export validation still expects the binary `tRNS` result.
 - A reserved transparent index removes one usable opaque slot: `colors` includes it.
+- When the user has not chosen a transparent index and the image has pixels below the alpha
+  threshold, indexed export reserves the cheapest entry automatically (see §6.5.2) and
+  reports the choice in the export result.
 
 ### 5.5 Distances and precision
 
@@ -670,8 +673,11 @@ buildMapper(palette, { space, bits: 6 }) -> {
 
 - `alpha < alphaThreshold` → `transparentIndex` (if configured) and skip color mapping.
 - Otherwise `index = nearest(r,g,b)`.
-- If no transparent index is configured and transparency exists, indexed export MUST be
-  blocked until the user chooses one (or the default `0` is accepted explicitly).
+- If no transparent index is configured and transparency exists, indexed export MUST reserve
+  one instead of blocking: choose the lowest palette index that no opaque pixel uses,
+  otherwise the least-used index (ties go to the lowest index). The export result names the
+  reserved index, its color, and how many opaque pixels it makes transparent. An explicit
+  index always wins.
 - Mapping stats: `mode`, per-index counts, build ms.
 - QA measures the actual error of the mapped result, including LUT approximation.
 
@@ -836,9 +842,11 @@ Implemented in v1.1 on the preview.
 - `computeQuality(original, mapped)` compares source preview RGB with mapped preview RGB
   using CIEDE2000 and skips fully transparent source or mapped pixels.
 - Mean is exact; p95 uses a fixed histogram of 0.1-wide buckets from 0 to 200; max is exact.
-- Worst pixels: top 20 by ΔE00, tie-break `(y, x)` ascending.
+- Worst pixels: top 20 by ΔE00, tie-break `(y, x)` ascending. The canvas shows them as
+  numbered markers matching the list order when the error map is on.
 - Error map: RGBA heatmap with a fixed 256-entry ramp, clamped at 20 ΔE00; transparent
-  pixels stay transparent.
+  pixels stay transparent. It is drawn on the right half of the workspace canvas, not in a
+  separate rail thumbnail.
 - The UI measures the preview, not the full-resolution export. Contrast matrices remain
   out of v1.1.
 
@@ -980,8 +988,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   extractor settings apply only in Extract mode. The hint and the Help section explain
   that every pixel becomes the nearest color in the target palette and that the right half
   of the preview is the result. The transparent index defaults to **None** in both modes;
-  choosing one removes that entry from the preview and the indexed/strip output. A
-  restored session keeps the target palette name it showed, including imported files.
+  choosing one removes that entry from the preview and the indexed/strip output. When the
+  image has transparency and no index is chosen, indexed export reserves the cheapest
+  entry and names it in the export result. A restored session keeps the target palette name
+  it showed, including imported files.
 - Palette order bar: source / manual / hue grouped / hue perceptual / lightness /
   perceptual smooth / perceptual color path / perceptual flow; swatches, HEX list, and
   strip export follow it. A direction button next to the select switches hue and
@@ -1061,8 +1071,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   `Copy HEX` while busy is ignored. Changing image or settings cancels the stale export.
 - If image clipboard writes are unavailable or denied, say so and point to the matching
   Save action instead of failing silently.
-- Indexed export uses the sorted palette and declared transparent index; it is decoded
-  and compared to the index map.
+- Indexed export uses the sorted palette and declared transparent index; with none declared
+  and transparency in the source, it reserves the cheapest entry and reports the choice. It
+  is decoded and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
 - Contract summary before download: `K`, bit depth, transparent index, dimensions.
 - Palette-file exports: `.hex`, `.gpl`, and native `.json`.
@@ -1088,8 +1099,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Zoom: wheel at cursor, `+`/`−` toolbar buttons, pinch on touch, `F` fit, `1` 100%.
 - Pan: drag with one finger or the mouse; two-finger pinch also pans by its midpoint.
 - `O` toggles original.
-- Pixelated rendering at ≥100%; smooth below. Error-map and palette-swap previews are
-  post-1.0.
+- Pixelated rendering at ≥100%; smooth below. The error map replaces the mapped preview
+  on the right half when enabled, using the same pan, zoom, and divider; numbered markers
+  locate the worst pixels from the QA list. Palette-swap previews are post-1.0.
 - Checkerboard behind alpha.
 - Largest canvas backing store: `min(devicePixelRatio, 2)`.
 - No layout shift while processing; keep the last result visible with a progress overlay.
@@ -1384,7 +1396,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | `palettes.test.js` | built-in counts/values, import parsers |
 | `metrics.test.js` | ΔE stats, p95, worst pixels, compliance |
 | `pipeline.test.js` | stage composition, preview vs final params |
-| `pipeline-m2.test.js` | indexed export, transparent index, alpha compliance |
+| `pipeline-m2.test.js` | indexed export, automatic transparent index, alpha compliance |
 | `golden.test.js` | synthetic fixture → reviewed hashes |
 | `theme.test.js` | dark/light token parity, auto resolution, 3-state cycle, invalid storage, rail restore |
 | `rail-state.test.js` | rail state normalization and toggle |
@@ -1467,7 +1479,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | Duplicate palette colors | Folded into the first entry; aliases recorded; warning |
 | Fully transparent image | Palette empty; export blocked with a visible warning and next action |
 | Semi-transparent pixels + indexed export | Binarized by threshold; warning; RGBA export preserves alpha |
-| Transparency + no transparent index | Indexed export blocked until one is chosen |
+| Transparency + no transparent index | Indexed export reserves the lowest unused or least-used entry and reports index, color, and count |
 | Transparent index ≥ K | `INVALID_PARAMS`; selector constrains to valid values |
 | K=256 + transparent index | 255 opaque slots + 1 transparent; UI states this |
 | Invalid `.gpl`/`.pal`/`.json`/`.ase` | Format-specific error with line/offset where possible |
@@ -2168,6 +2180,8 @@ A change is done only when:
 | 2026-11-16 | Normalize the Wu grid and skip empty boxes in Oklab | The fixed Oklab grid covered the whole gamut at 32 steps per axis, so a single-hue or nearly gray image collapsed into a handful of cells: Wu stopped short of K and some images returned clipped empty-box means such as `#00ffff` or `#000200`. The grid now normalizes the occupied L, a, b ranges, and an occupancy prefix identifies empty boxes exactly, since non-binary alpha weights leave a rounding residual in the moment prefix. Narrow green fixtures now return 16 of 16 colors instead of 8 or 10 with extremes. 186 tests |
 | 2026-11-16 | Answer error-diffusion decisions from a working-space cell cache | Every dithered pixel paid `rgb8ToOklab` (three cube roots), `oklabToRgb8` (three cubes plus gamma) and `Math.hypot`, so Floyd–Steinberg on a 16 MP file took 7.9 s and even a 1024² preview took 0.6 s, above the plan's own 100–300 ms budget. Source coordinates now come from a cached 6-bit table per space, the nearest palette entry comes from a lazily filled 128-step Oklab cell grid (sRGB keeps the mapper's 6-bit grid), and the clamp uses squared magnitude with one `sqrt`. A 16 MP Floyd–Steinberg pass drops to 1.4 s and a 1024² preview to 0.25 s; CIEDE2000 mean error stays within 0.05 of the previous output across K = 8, 24, 256 in both spaces, and the pass stays deterministic because a cell always resolves from its own center. `strength = 0` now returns the plain mapping directly. 188 tests |
 | 2026-11-16 | Draw the original at full resolution and spend a 4 MP budget on the mapping preview | Both halves of the canvas drew a ≤1024 px copy, so 100% zoom showed a quarter of a 4096 px source and the dither on screen could not be compared with the export. The session now keeps the full-resolution decode and draws the original half from it; the mapping preview keeps the full image up to 4,194,304 pixels and scales larger images by area, preserving the aspect ratio, instead of stopping at a fixed long edge. Picking and the loupe read the full-resolution decode through a scratch canvas, so enlarging the preview does not cost sample accuracy, and the status line names the preview size whenever it differs from the source. Supersedes the 2026-11-15 decision to keep only a preview copy: one full-resolution bitmap is cheaper than a 64 MiB RGBA copy plus its canvas. 193 tests |
+| 2026-11-16 | Reserve an indexed transparency slot automatically instead of blocking the export | Indexed PNG stores transparency only through `tRNS`, so one palette slot must be reserved; blocking until the user chose one turned a valid export into an error and left the preview and the file out of step. The export now counts opaque pixels per entry, reserves the lowest unused index, otherwise the least-used index with a lowest-index tie-break, and names the index, color, and affected pixel count in the result. An explicit transparent index still wins; the preview keeps source alpha. Refs: §5.4, 6.5.2; 196 tests |
+| 2026-11-16 | Draw the QA error map on the workspace canvas with numbered worst-pixel markers | The map lived in a 220 px rail thumbnail, too small to inspect, and the worst-pixel list gave coordinates that were hard to locate. Enabling the map now replaces the mapped preview on the right half, so pan, zoom, the divider, and the full-resolution original all stay available, and numbered markers at the exact pixels match the list order. Adjacent maxima step outward with a leader line instead of merging. Refs: §6.9, 8.3; 196 tests |
 
 ---
 

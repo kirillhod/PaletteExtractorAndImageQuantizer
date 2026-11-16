@@ -74,24 +74,91 @@ test('indexed PNG export round-trips a fixed palette and transparency', async ()
   assert.equal(result.files.length, 1);
   assert.equal(result.files[0].name, 'sprite-16c-indexed.png');
   assert.equal(result.files[0].validation.ok, true);
+  assert.equal(result.files[0].warnings, undefined);
   const decoded = await decodePng(new Uint8Array(result.files[0].data));
   assert.equal(decoded.width, 16);
   assert.equal(decoded.height, 16);
   assert.equal(decoded.data[3], 0);
 });
 
-test('indexed export blocks transparency without a reserved index', async () => {
+test('indexed export reserves the cheapest slot when transparency has no index', async () => {
   const palette = createPalette(picoColors);
-  await assert.rejects(
-    () =>
-      exportIndexed({
-        image: sprite,
-        palette,
-        params: mapParams({ transparentIndex: -1 }),
-        name: 'sprite',
-      }),
-    /transparent index/,
+  const result = await exportIndexed({
+    image: sprite,
+    palette,
+    params: mapParams({ transparentIndex: -1 }),
+    name: 'sprite',
+  });
+  const file = result.files[0];
+  assert.equal(file.validation.ok, true);
+  assert.equal(file.warnings?.length, 1);
+  assert.equal(file.warnings?.[0].key, 'export.autoTransparentIndex');
+  const reserved = Number(file.warnings?.[0].params?.index);
+  assert.ok(reserved >= 0 && reserved < palette.length);
+  // The sprite never draws black, so the unused black entry costs no opaque pixel.
+  assert.equal(reserved, 0);
+  assert.equal(file.warnings?.[0].params?.count, 0);
+  const decoded = await decodePng(new Uint8Array(file.data));
+  assert.equal(decoded.data[3], 0);
+});
+
+test('the reserved slot falls back to the least-used entry', async () => {
+  const palette = createPalette([
+    { r: 255, g: 0, b: 0 },
+    { r: 0, g: 255, b: 0 },
+  ]);
+  const image = makeImage(4, 1, (x) => {
+    if (x === 0) return { r: 0, g: 0, b: 0, a: 0 };
+    return x === 3 ? { r: 0, g: 255, b: 0 } : { r: 255, g: 0, b: 0 };
+  });
+  const result = await exportIndexed({
+    image,
+    palette,
+    params: mapParams({ palette: undefined, transparentIndex: -1 }),
+    name: 'pair',
+  });
+  const warning = result.files[0].warnings?.[0];
+  assert.equal(Number(warning?.params?.index), 1, 'green is used once, red twice');
+  assert.equal(Number(warning?.params?.count), 1);
+  const decoded = await decodePng(new Uint8Array(result.files[0].data));
+  assert.deepEqual(
+    [decoded.data[3], decoded.data[7], decoded.data[11], decoded.data[15]],
+    [0, 255, 255, 0],
   );
+});
+
+test('automatic transparent index survives error diffusion', async () => {
+  const palette = createPalette(picoColors);
+  const result = await exportIndexed({
+    image: sprite,
+    palette,
+    params: mapParams({
+      transparentIndex: -1,
+      dither: { method: 'floyd-steinberg', strength: 0.8, serpentine: true, edgeStop: 0.5 },
+    }),
+    name: 'sprite',
+  });
+  assert.equal(result.files[0].validation.ok, true);
+  assert.equal(result.files[0].warnings?.[0].key, 'export.autoTransparentIndex');
+  const decoded = await decodePng(new Uint8Array(result.files[0].data));
+  assert.equal(decoded.data[3], 0);
+});
+
+test('an opaque image needs no reserved slot', async () => {
+  const palette = createPalette([
+    { r: 0, g: 0, b: 0 },
+    { r: 255, g: 0, b: 0 },
+  ]);
+  const image = makeImage(2, 1, (x) => ({ r: x ? 255 : 0, g: 0, b: 0 }));
+  const result = await exportIndexed({
+    image,
+    palette,
+    params: mapParams({ transparentIndex: -1 }),
+    name: 'opaque',
+  });
+  assert.equal(result.files[0].warnings, undefined);
+  const decoded = await decodePng(new Uint8Array(result.files[0].data));
+  assert.deepEqual([decoded.data[3], decoded.data[7]], [255, 255]);
 });
 
 test('reduced PNG export with dithering validates against the fixed palette', async () => {

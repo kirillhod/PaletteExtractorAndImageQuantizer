@@ -54,6 +54,8 @@ export const EN_MESSAGES = {
   'export.preparing': 'Preparing export…',
   'export.checkHint': 'Decoded or parsed and checked before Save or copy.',
   'export.validatedHint': 'Validated. Save the file or copy it.',
+  'export.autoTransparentIndex':
+    'No transparent index was set, so index {index} ({hex}) was reserved for transparency ({countLabel} affected). Choose a transparent index to control which entry is reserved.',
   'export.saveFile': 'Save {name}',
   'export.copyFile': 'Copy',
   'export.copyFileAria': 'Copy {name} to clipboard',
@@ -174,7 +176,7 @@ export const EN_MESSAGES = {
 
   'transparent.label': 'Transparent index',
   'transparent.tooltip':
-    'Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. The default is None, so every palette color stays visible; choosing an index removes every pixel assigned to that entry.',
+    'Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. The default is None, so every palette color stays visible in the preview; if the image has transparency, indexed export reserves the least-used entry automatically and says so in the result.',
   'transparent.none': 'None',
 
   'alpha.label': 'Alpha threshold',
@@ -216,8 +218,7 @@ export const EN_MESSAGES = {
   'quality.max': 'Max ΔE00',
   'quality.showMap': 'Show error map',
   'quality.mapTooltip':
-    'CIEDE2000 heatmap of the preview: dark blue is 0, red is 20 or more. Fully transparent pixels in either image are skipped.',
-  'quality.mapAria': 'CIEDE2000 error map',
+    'Draws the CIEDE2000 heatmap on the right half of the canvas: dark blue is 0, red is 20 or more. Numbered markers point to the worst pixels listed below. Fully transparent pixels in either image are skipped.',
   'quality.worst': 'Worst pixels',
 
   'status.ms': '{value} ms',
@@ -338,7 +339,7 @@ export const EN_MESSAGES = {
   'help.qualityTitle': 'Quality',
   'help.qualityLead': 'Lower ΔE00 means a closer preview.',
   'help.qualityP':
-    'Mean, p95, and max summarize the CIEDE2000 error between preview and source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Transparent pixels are skipped; contrast is not checked.',
+    'Mean, p95, and max summarize the CIEDE2000 error between preview and source. Show error map draws the heatmap on the right half of the canvas, from dark blue at 0 to red at 20+, and numbered markers point to the worst pixels listed below. Transparent pixels are skipped; contrast is not checked.',
   'help.urlTitle': 'Shareable settings',
   'help.urlLead': 'The URL hash stores settings only.',
   'help.urlP':
@@ -453,8 +454,6 @@ export const EN_MESSAGES = {
   'error.lockedMove': 'A locked color cannot be moved.',
   'error.lockedBlock': 'A locked color blocks this move.',
   'error.duplicateColor': 'That color is already in the palette.',
-  'error.transparentIndexRequired':
-    'Set a transparent index before exporting this image as indexed PNG.',
   'error.paletteEmpty': 'The palette must not be empty.',
   'error.palettePngBytes': 'The PNG palette file is missing bytes.',
   'error.paletteAseUnsupported':

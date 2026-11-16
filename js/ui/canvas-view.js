@@ -26,6 +26,8 @@ import { recenterOffsets } from '../core/view-offsets.js';
  * @property {number} originY
  */
 
+/** @typedef {{ x:number, y:number, deltaE00?:number }} WorstPixel */
+
 /**
  * @param {{ canvas: HTMLCanvasElement, frame: HTMLElement, divider: HTMLElement, onRender?: () => void }} options
  */
@@ -49,6 +51,12 @@ export function createCanvasView(options) {
   let originalBuffer = null;
   /** @type {HTMLCanvasElement|null} */
   let reducedBuffer = null;
+  /** @type {ImageLike|null} */
+  let errorMap = null;
+  /** @type {HTMLCanvasElement|null} */
+  let errorBuffer = null;
+  /** @type {WorstPixel[]|null} */
+  let worstPixels = null;
 
   let scale = 1;
   let offsetX = 0;
@@ -164,6 +172,71 @@ export function createCanvasView(options) {
     scheduleRender();
   }
 
+  /**
+   * Draw the ranked worst-pixel markers over the error map. Numbers match the list in
+   * the Quality panel. Markers that land on top of each other step outward on a
+   * deterministic ring, with a leader back to the exact pixel, so adjacent maxima stay
+   * readable instead of merging into one dot.
+   */
+  function drawWorstMarkers() {
+    if (!original || !errorMap || !worstPixels || worstPixels.length === 0) return;
+    const styles = window.getComputedStyle(frame);
+    const accent = styles.getPropertyValue('--peiq-accent').trim();
+    const background = styles.getPropertyValue('--peiq-bg').trim();
+    const radius = 9;
+    const spacing = radius * 2.4;
+    const boxWidth = original.width * scale;
+    const boxHeight = original.height * scale;
+    /** @type {{ x:number, y:number }[]} */
+    const placed = [];
+
+    const markers = worstPixels.map((pixel, order) => {
+      const anchorX = offsetX + ((pixel.x + 0.5) / errorMap.width) * boxWidth;
+      const anchorY = offsetY + ((pixel.y + 0.5) / errorMap.height) * boxHeight;
+      let x = anchorX;
+      let y = anchorY;
+      for (let attempt = 1; attempt <= 48; attempt++) {
+        if (!placed.some((point) => Math.hypot(point.x - x, point.y - y) < spacing)) break;
+        const ring = Math.ceil(attempt / 8);
+        const angle = ((attempt - 1) % 8) * (Math.PI / 4) - Math.PI / 2;
+        x = anchorX + Math.cos(angle) * spacing * ring;
+        y = anchorY + Math.sin(angle) * spacing * ring;
+      }
+      placed.push({ x, y });
+      return { anchorX, anchorY, x, y, rank: order + 1 };
+    });
+
+    context.save();
+    context.font = `600 10px ${styles.fontFamily || 'sans-serif'}`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    for (const marker of markers) {
+      if (marker.x !== marker.anchorX || marker.y !== marker.anchorY) {
+        context.strokeStyle = accent;
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(marker.anchorX, marker.anchorY);
+        context.lineTo(marker.x, marker.y);
+        context.stroke();
+      }
+      context.fillStyle = accent;
+      context.beginPath();
+      context.arc(marker.anchorX, marker.anchorY, 1.5, 0, Math.PI * 2);
+      context.fill();
+
+      context.beginPath();
+      context.arc(marker.x, marker.y, radius, 0, Math.PI * 2);
+      context.fillStyle = background;
+      context.fill();
+      context.lineWidth = 2;
+      context.strokeStyle = accent;
+      context.stroke();
+      context.fillStyle = accent;
+      context.fillText(String(marker.rank), marker.x, marker.y + 0.5);
+    }
+    context.restore();
+  }
+
   function render() {
     const width = Math.max(1, frame.clientWidth);
     const height = Math.max(1, frame.clientHeight);
@@ -189,7 +262,9 @@ export function createCanvasView(options) {
     context.drawImage(originalBuffer, 0, 0, original.width, original.height);
     context.restore();
 
-    if (reduced && reducedBuffer && !showOriginal) {
+    const rightImage = errorBuffer ? errorMap : reduced;
+    const rightBuffer = errorBuffer ?? reducedBuffer;
+    if (rightImage && rightBuffer && !showOriginal) {
       const split = width * dividerFraction;
       context.save();
       context.beginPath();
@@ -201,14 +276,15 @@ export function createCanvasView(options) {
       context.translate(offsetX, offsetY);
       context.scale(scale, scale);
       context.imageSmoothingEnabled = scale < 1;
-      // The reduced buffer is the mapping preview, which may be smaller than the original.
-      // Stretch it over the same logical box so the divider compares the same frame.
+      // The right buffer is the mapping preview or the error map, which may be smaller
+      // than the original. Stretch it over the same logical box so the divider compares
+      // the same frame.
       context.drawImage(
-        reducedBuffer,
+        rightBuffer,
         0,
         0,
-        reduced.width,
-        reduced.height,
+        rightImage.width,
+        rightImage.height,
         0,
         0,
         original.width,
@@ -216,6 +292,7 @@ export function createCanvasView(options) {
       );
       context.restore();
     }
+    if (errorBuffer && worstPixels && !showOriginal) drawWorstMarkers();
     onRender?.();
   }
 
@@ -595,6 +672,9 @@ export function createCanvasView(options) {
         : null;
       reduced = null;
       reducedBuffer = null;
+      errorMap = null;
+      errorBuffer = null;
+      worstPixels = null;
       autoFit = true;
       fit();
       scheduleRender();
@@ -604,6 +684,26 @@ export function createCanvasView(options) {
       reduced = image;
       reducedBuffer = toCanvas(image);
       if (autoFit) fit();
+      scheduleRender();
+    },
+    /**
+     * Draw the CIEDE2000 heatmap on the right half instead of the mapped preview.
+     * @param {ImageLike|null} image
+     */
+    setErrorMap(image) {
+      errorMap = image;
+      errorBuffer = toCanvas(image);
+      if (!image) worstPixels = null;
+      scheduleRender();
+    },
+    /**
+     * Ranked worst pixels in error-map coordinates; drawn as numbered markers.
+     * @param {WorstPixel[]|null} pixels
+     */
+    setWorstPixels(pixels) {
+      worstPixels = pixels
+        ? pixels.map((pixel) => ({ x: pixel.x, y: pixel.y, deltaE00: pixel.deltaE00 }))
+        : null;
       scheduleRender();
     },
     /** @param {boolean} value */

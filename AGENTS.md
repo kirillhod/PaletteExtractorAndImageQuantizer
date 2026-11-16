@@ -111,8 +111,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
    keys. `Date.now()` only in metadata excluded from hashes.
 6. **Alpha policy.** Extraction weights by `alpha/255` and ignores fully transparent
    pixels. Mapping does not composite. Indexed PNG has **binary** transparency via
-   `tRNS`; pixels below `alphaThreshold` become the declared index. Semi-transparent
-   pixels warn. RGBA export preserves alpha. A transparent index consumes one slot.
+   `tRNS`; pixels below `alphaThreshold` become the declared index. If none is declared
+   and transparency exists, indexed export reserves the lowest unused or least-used index
+   and reports the choice. Semi-transparent pixels warn. RGBA export preserves alpha. A
+   transparent index consumes one slot.
 7. **PNG contract.** Indexed: color type 3, bit depth `K≤2→1`, `K≤4→2`, `K≤16→4`, else 8;
    chunks `IHDR`, `PLTE`, optional `tRNS`, `IDAT`, `IEND` only; filter 0; indices packed
    MSB-first; no ICC/gAMA/sRGB/pHYs/tEXt. Strip: exact `N×1` or `1×N`, 8-bit, no padding
@@ -281,12 +283,13 @@ committed locally with a descriptive body (plan §16).
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.5.0`; 193 tests in `main`. M6.3–M6.6 are complete; the bounded
+- Released `v1.5.0`; 196 tests in `main`. M6.3–M6.6 are complete; the bounded
   hue-band, hue-perceptual, compact sort controls, full-screen palette preview, the
   extraction Help guide, the confirmed footer session clear, the dithered preview alpha
-  fix, the Wu grid and occupancy fix, the faster error-diffusion decision path, and the
-  full-resolution original with an area-budgeted mapping preview are committed but
-  unreleased.
+  fix, the Wu grid and occupancy fix, the faster error-diffusion decision path, the
+  full-resolution original with an area-budgeted mapping preview, the automatic
+  transparency slot on indexed export, and the canvas error map with numbered worst-pixel
+  markers are committed but unreleased.
 - Next: ship those changes with the next release; otherwise M7 — later / not planned for
   v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker

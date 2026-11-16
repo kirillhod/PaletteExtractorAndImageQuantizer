@@ -7,6 +7,7 @@ import { t, tp } from './i18n.js';
  * @property {() => Worker} getWorker
  * @property {() => number} nextRequestId
  * @property {() => any} getApp
+ * @property {() => any} getCanvasView
  */
 
 /**
@@ -26,9 +27,6 @@ export function createQualityPanel(deps) {
   const qaErrorField = document.getElementById('qa-error-field');
   const qaErrorToggle = /** @type {HTMLInputElement|null} */ (
     document.getElementById('qa-error-toggle')
-  );
-  const qaErrorCanvas = /** @type {HTMLCanvasElement|null} */ (
-    document.getElementById('qa-error-canvas')
   );
   const qaWorst = document.getElementById('qa-worst');
 
@@ -59,7 +57,7 @@ export function createQualityPanel(deps) {
     if (qaStats) qaStats.hidden = true;
     if (qaErrorField) qaErrorField.hidden = true;
     if (qaErrorToggle) qaErrorToggle.checked = false;
-    if (qaErrorCanvas) qaErrorCanvas.hidden = true;
+    clearMap();
     if (qaWorst) {
       qaWorst.hidden = true;
       qaWorst.replaceChildren();
@@ -102,19 +100,20 @@ export function createQualityPanel(deps) {
     if (qaMax) qaMax.textContent = result.deltaE00Max.toFixed(2);
     if (qaErrorField) qaErrorField.hidden = false;
     if (qaErrorToggle) qaErrorToggle.checked = false;
-    if (qaErrorCanvas) qaErrorCanvas.hidden = true;
+    clearMap();
     if (qaWorst) {
       qaWorst.hidden = false;
       qaWorst.replaceChildren();
       qaWorst.append(el('p', { className: 'peiq-label', text: t('quality.worst') }));
-      for (const pixel of result.worstPixels) {
+      result.worstPixels.forEach((pixel, index) => {
         const row = el('div', { className: 'peiq-qa-worst__row' });
         row.append(
+          el('span', { className: 'peiq-qa-worst__rank', text: String(index + 1) }),
           el('span', { text: `${pixel.x}, ${pixel.y}` }),
           el('span', { text: pixel.deltaE00.toFixed(2) }),
         );
         qaWorst.append(row);
-      }
+      });
     }
     if (qaStatus) {
       qaStatus.textContent = t('quality.statusMeasured', {
@@ -124,19 +123,23 @@ export function createQualityPanel(deps) {
     updateAvailability();
   }
 
+  function clearMap() {
+    const view = deps.getCanvasView();
+    view?.setErrorMap(null);
+    view?.setWorstPixels(null);
+  }
+
   function showMap() {
-    if (!result || !qaErrorCanvas || !qaErrorToggle) return;
+    if (!result || !qaErrorToggle) return;
+    const view = deps.getCanvasView();
+    if (!view) return;
     if (!qaErrorToggle.checked) {
-      qaErrorCanvas.hidden = true;
+      view.setErrorMap(null);
+      view.setWorstPixels(null);
       return;
     }
-    const map = result.errorMap;
-    qaErrorCanvas.width = map.width;
-    qaErrorCanvas.height = map.height;
-    const ctx = qaErrorCanvas.getContext('2d');
-    if (!ctx) return;
-    ctx.putImageData(new ImageData(new Uint8ClampedArray(map.data), map.width, map.height), 0, 0);
-    qaErrorCanvas.hidden = false;
+    view.setErrorMap(result.errorMap);
+    view.setWorstPixels(result.worstPixels);
   }
 
   function toggleMap() {

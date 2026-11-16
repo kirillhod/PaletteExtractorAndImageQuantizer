@@ -169,13 +169,23 @@ export async function exportIndexed(job) {
   const { image, palette, params, name } = job;
   if (palette.length === 0) throw new Error('palette must not be empty');
   const alphaThreshold = params.alphaThreshold ?? 128;
-  const transparentIndex = params.transparentIndex ?? -1;
-
-  if (transparentIndex < 0 && hasTransparency(image, alphaThreshold)) {
-    throw new Error('Set a transparent index before exporting this image as indexed PNG.');
-  }
+  let transparentIndex = params.transparentIndex ?? -1;
 
   const mapper = buildMapper(palette, { space: params.space });
+  let autoTransparent = null;
+  if (transparentIndex < 0 && hasTransparency(image, alphaThreshold)) {
+    // An indexed PNG stores transparency only through tRNS, so one palette slot must be
+    // reserved. Pick the entry that costs the least: the lowest index no opaque pixel
+    // uses, otherwise the least-used index (ties go to the lowest index). The export
+    // result names the reserved entry instead of silently changing the image.
+    const chosen = leastUsedIndex(image, alphaThreshold, mapper);
+    transparentIndex = chosen.index;
+    autoTransparent = {
+      index: chosen.index,
+      hex: palette[chosen.index].hex,
+      count: chosen.count,
+    };
+  }
   const dithered = ditherPixels(image, palette, {
     ...(params.dither ?? {}),
     space: params.space,
@@ -183,6 +193,14 @@ export async function exportIndexed(job) {
     transparentIndex,
     mapper,
   });
+  if (autoTransparent) {
+    // Dithering can move a pixel onto the reserved entry even when the nearest-color
+    // count put it elsewhere, so the reported count describes the actual file.
+    autoTransparent = {
+      ...autoTransparent,
+      count: reservedPixelCount(image, dithered.indices, transparentIndex, alphaThreshold),
+    };
+  }
   const png = await encodeIndexedPng({
     width: image.width,
     height: image.height,
@@ -204,6 +222,13 @@ export async function exportIndexed(job) {
         mime: 'image/png',
         data: toArrayBuffer(png),
         validation,
+        ...(autoTransparent
+          ? {
+              warnings: [
+                { key: 'export.autoTransparentIndex', params: autoTransparent },
+              ],
+            }
+          : {}),
       },
     ],
   };
@@ -299,6 +324,48 @@ function hasTransparency(image, alphaThreshold) {
     if (image.data[i] < alphaThreshold) return true;
   }
   return false;
+}
+
+/**
+ * Choose the palette entry to reserve for transparency. Counting only opaque pixels
+ * keeps the choice independent of whatever RGB the transparent pixels happen to carry.
+ * An unused index costs nothing; otherwise the smallest count loses the fewest pixels.
+ *
+ * @param {ImageDataLite} image
+ * @param {number} alphaThreshold
+ * @param {import('./map.js').Mapper} mapper
+ * @returns {{ index: number, count: number }}
+ */
+function leastUsedIndex(image, alphaThreshold, mapper) {
+  const counts = new Uint32Array(mapper.paletteCoords.length);
+  const { data } = image;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < alphaThreshold) continue;
+    counts[mapper.nearestRgb(data[i], data[i + 1], data[i + 2])]++;
+  }
+  let index = 0;
+  for (let i = 1; i < counts.length; i++) {
+    if (counts[i] < counts[index]) index = i;
+  }
+  return { index, count: counts[index] };
+}
+
+/**
+ * Count opaque source pixels whose final index is the reserved one.
+ *
+ * @param {ImageDataLite} image
+ * @param {Uint8Array} indices
+ * @param {number} reservedIndex
+ * @param {number} alphaThreshold
+ * @returns {number}
+ */
+function reservedPixelCount(image, indices, reservedIndex, alphaThreshold) {
+  let count = 0;
+  for (let i = 0, p = 0; i < image.data.length; i += 4, p++) {
+    if (image.data[i + 3] < alphaThreshold) continue;
+    if (indices[p] === reservedIndex) count++;
+  }
+  return count;
 }
 
 /**

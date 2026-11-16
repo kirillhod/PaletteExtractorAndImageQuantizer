@@ -68,6 +68,7 @@
  * @property {string} mime
  * @property {ArrayBuffer} data
  * @property {{ ok:boolean, detail:string }} validation
+ * @property {{ key:string, params?:Record<string, unknown> }[]} [warnings]
  */
 
 export {};

@@ -48,8 +48,9 @@ Constrain artwork to the palette your engine or hardware expects.
   and working space apply in Extract mode.
 - Import `.hex`, `.gpl`, `.pal`, `.json`, or a PNG palette strip (`N×1` or `1×N`).
 - Choose a transparent index for sprites. The index starts at **None**, so every palette
-  color stays visible; a chosen entry disappears from the preview and from indexed/strip
-  output.
+  color stays visible in the preview; if the image has transparency, indexed export
+  reserves the least-used entry automatically and names it in the result. A chosen entry
+  disappears from the preview and from indexed/strip output.
 - Tune the alpha threshold and preview the result immediately.
 
 ### Dither like a pixel artist
@@ -69,8 +70,9 @@ looks right.*
 ### Check quality
 
 - CIEDE2000 **mean**, **p95**, and **max** between the source and the mapped preview.
-- Toggleable CIEDE2000 error map, from near-zero (dark blue) to 20+ (red).
-- The 20 worst pixels with their coordinates.
+- Toggleable CIEDE2000 error map drawn on the right half of the canvas, from near-zero
+  (dark blue) to 20+ (red).
+- The 20 worst pixels with their coordinates, located by numbered markers on the canvas.
 - Measurements use the preview; fully transparent pixels are skipped.
 
 ### Export files your tools can use
