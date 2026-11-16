@@ -123,3 +123,56 @@ test('transparent pixels use the reserved index', () => {
     assert.equal(result.indices[0], 0, method);
   }
 });
+
+test('error diffusion keeps the average tone of a flat field', () => {
+  // A working nearest-color table must keep the mean: mid-gray under a black/white palette
+  // becomes about 60% white in Oklab (L(128,128,128) = 0.6), not one flat color.
+  const gray = makeImage(32, 32, () => ({ r: 128, g: 128, b: 128 }));
+  const blackWhite = createPalette([
+    { r: 0, g: 0, b: 0 },
+    { r: 255, g: 255, b: 255 },
+  ]);
+  const result = ditherPixels(gray, blackWhite, {
+    method: 'floyd-steinberg',
+    space: 'oklab',
+    strength: 1,
+    serpentine: true,
+    edgeStop: 0,
+    transparentIndex: -1,
+  });
+  const whitePixels = result.indices.reduce((sum, index) => sum + index, 0);
+  const share = whitePixels / result.indices.length;
+  assert.ok(share > 0.55 && share < 0.7, `white share ${share.toFixed(3)}`);
+});
+
+test('error diffusion follows a gradient instead of collapsing to one entry', () => {
+  const ramp = makeImage(48, 8, (x) => {
+    const value = Math.round((x / 47) * 255);
+    return { r: value, g: value, b: value };
+  });
+  const blackWhite = createPalette([
+    { r: 0, g: 0, b: 0 },
+    { r: 255, g: 255, b: 255 },
+  ]);
+  const result = ditherPixels(ramp, blackWhite, {
+    method: 'floyd-steinberg',
+    space: 'oklab',
+    strength: 1,
+    serpentine: true,
+    edgeStop: 0,
+    transparentIndex: -1,
+  });
+  const counts = (from, to) => {
+    const total = [0, 0];
+    for (let y = 0; y < 8; y++) {
+      for (let x = from; x < to; x++) total[result.indices[y * 48 + x]]++;
+    }
+    return total;
+  };
+  const left = counts(0, 16);
+  const middle = counts(16, 32);
+  const right = counts(32, 48);
+  assert.ok(left[0] > left[1] * 2, `left ${left}`);
+  assert.ok(right[1] > right[0] * 2, `right ${right}`);
+  assert.ok(middle[0] > 0 && middle[1] > 0, `middle ${middle}`);
+});

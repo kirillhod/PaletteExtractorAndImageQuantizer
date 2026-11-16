@@ -39,7 +39,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers |
-| Tests | 186 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Tests | 188 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
 | Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
 | Next | Ship the hue-band, hue-perceptual, compact sort, palette-preview, and Help/session-clear changes with the next release; otherwise M7 — later / not planned for v1.x |
 
@@ -718,6 +718,17 @@ for each tap: accumulatedError[next] += error · weight / denominator
 - Atkinson intentionally diffuses only 6/8 of the error (higher contrast).
 - Two error rows are kept (`Float32Array(width·3)` each); rotate per row.
 - Default: serpentine on, strength 0.8, edgeStop 0.5 for photos.
+- Implementation notes, all of which preserve the algorithm above:
+  - `mapper.nearestOklab(corrected)` is a nearest-color cell grid over the working space,
+    filled on demand. Oklab uses 128 steps per axis (finer than one sRGB level), sRGB
+    reuses the mapper's 6-bit grid. A cell always resolves from its own center, so the
+    result does not depend on visit order.
+  - Source coordinates come from a 6-bit RGB table per space, built once and cached. A
+    per-pixel `rgb8ToOklab` costs three cube roots and gains nothing over the 5-bit
+    histogram and 6-bit lookup cells already in use.
+  - The error clamp compares squared magnitude and takes one `sqrt` only when it clamps;
+    `Math.hypot` costs the same work on every pixel.
+  - `strength = 0` returns the plain mapping directly, because no error can leave a pixel.
 
 #### 6.6.3 Ordered (Bayer 2/4/8)
 
@@ -2149,6 +2160,7 @@ A change is done only when:
 | 2026-11-16 | Move Forget saved session from Help to the footer behind a confirmation dialog | The action sat near the bottom of a long drawer, so it was hard to find and easy to hit while reading. The footer is visible without scrolling on desktop and already carries the local-only claim; a text action there opens a native dialog with Cancel focused by default, and IndexedDB is cleared only after confirmation. The Help text now points to the footer. 178 tests |
 | 2026-11-16 | Keep the source alpha in the dithered preview | The dithered branch rebuilt the preview from the index map alone, so with the default transparent index None every fully transparent pixel became opaque palette entry 0, which reads as a black hole, and semi-transparent pixels lost their coverage; the nearest-color preview did neither. Index maps carry no alpha, so the preview is now composed from the source buffer, `indicesToRgba` validates the map and accepts an alpha source, and export validation keeps the binary `tRNS` expectation. 183 tests |
 | 2026-11-16 | Normalize the Wu grid and skip empty boxes in Oklab | The fixed Oklab grid covered the whole gamut at 32 steps per axis, so a single-hue or nearly gray image collapsed into a handful of cells: Wu stopped short of K and some images returned clipped empty-box means such as `#00ffff` or `#000200`. The grid now normalizes the occupied L, a, b ranges, and an occupancy prefix identifies empty boxes exactly, since non-binary alpha weights leave a rounding residual in the moment prefix. Narrow green fixtures now return 16 of 16 colors instead of 8 or 10 with extremes. 186 tests |
+| 2026-11-16 | Answer error-diffusion decisions from a working-space cell cache | Every dithered pixel paid `rgb8ToOklab` (three cube roots), `oklabToRgb8` (three cubes plus gamma) and `Math.hypot`, so Floyd–Steinberg on a 16 MP file took 7.9 s and even a 1024² preview took 0.6 s, above the plan's own 100–300 ms budget. Source coordinates now come from a cached 6-bit table per space, the nearest palette entry comes from a lazily filled 128-step Oklab cell grid (sRGB keeps the mapper's 6-bit grid), and the clamp uses squared magnitude with one `sqrt`. A 16 MP Floyd–Steinberg pass drops to 1.4 s and a 1024² preview to 0.25 s; CIEDE2000 mean error stays within 0.05 of the previous output across K = 8, 24, 256 in both spaces, and the pass stays deterministic because a cell always resolves from its own center. `strength = 0` now returns the plain mapping directly. 188 tests |
 
 ---
 
