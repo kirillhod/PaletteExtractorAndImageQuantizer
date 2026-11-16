@@ -8,11 +8,7 @@ import {
   isValidSessionRecord,
 } from './core/session-state.js';
 import {
-  addPaletteEntry,
   createPalette,
-  movePaletteEntry,
-  removePaletteEntry,
-  setPaletteLock,
   sortPalette,
   updatePaletteEntry,
 } from './core/palette.js';
@@ -44,7 +40,7 @@ import {
   t,
 } from './ui/i18n.js';
 import { initLearn } from './ui/learn-view.js';
-import { renderPalette } from './ui/palette-view.js';
+import { createPaletteEditor } from './ui/palette-editor.js';
 import { initShortcuts } from './ui/shortcuts.js';
 import { refreshStatus, setStatus, setStatusMessage, toast, toastKey, getLastStatus } from './ui/status.js';
 import { initTheme } from './ui/theme.js';
@@ -67,26 +63,9 @@ const frame = /** @type {HTMLElement} */ (document.getElementById('canvas-frame'
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('view-canvas'));
 const pickedMarkersHost = document.getElementById('picked-markers');
 const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
-const paletteStrip = document.getElementById('palette-strip');
-const palettePanel = document.querySelector('.peiq-palette-panel');
-const paletteCount = document.getElementById('palette-count');
 const sortSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-sort'));
-const paletteEdit = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-edit'));
-const paletteEditor = document.getElementById('palette-editor');
-const paletteHex = /** @type {HTMLInputElement|null} */ (document.getElementById('palette-hex'));
-const paletteApply = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-apply'));
-const paletteAdd = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-add'));
-const paletteMoveLeft = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-move-left'));
-const paletteMoveRight = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-move-right'));
-const paletteRemove = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-remove'));
-const paletteLock = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-lock'));
 const sessionClear = /** @type {HTMLButtonElement|null} */ (document.getElementById('session-clear'));
 const sessionStatus = document.getElementById('session-status');
-const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-pick'));
-const paletteUndo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-undo'));
-const paletteRedo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-redo'));
-const paletteEditHint = document.getElementById('palette-edit-hint');
-const paletteHintPanel = document.getElementById('palette-hint-panel');
 const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
@@ -102,7 +81,6 @@ const mapControls = document.getElementById('map-controls');
 const paletteSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-select'));
 const paletteInput = /** @type {HTMLInputElement|null} */ (document.getElementById('palette-input'));
 const importPalette = document.getElementById('import-palette');
-const paletteStatus = document.getElementById('palette-status');
 const transparentIndex = /** @type {HTMLSelectElement|null} */ (document.getElementById('transparent-index'));
 const alphaThreshold = /** @type {HTMLInputElement|null} */ (document.getElementById('alpha-threshold'));
 const alphaThresholdValue = document.getElementById('alpha-threshold-value');
@@ -148,25 +126,33 @@ let worker = createWorker();
 let sortOrder = 'source';
 /** @type {'extract'|'map'} */
 let mode = 'extract';
-let paletteEditMode = false;
-/** @type {number|null} */
-let selectedPaletteId = null;
-let pickingColor = false;
-/** @type {number|null} */
-let pickPointerId = null;
-/** @type {Map<number, {u:number,v:number}>} */
-let pickedMarkers = new Map();
-/** @type {{u:number,v:number}|null} */
-let pendingPickPoint = null;
-/** @type {{ id:number, before: ReturnType<typeof paletteSnapshot>, moved:boolean }|null} */
-let markerDrag = null;
 /** @type {ReturnType<typeof createPickedMarkers>|null} */
 let pickedMarkersView = null;
-const paletteHistory = { past: [], future: [], limit: 50 };
+const paletteState = {
+  editMode: false,
+  /** @type {number|null} */
+  selectedId: null,
+  history: { past: [], future: [], limit: 50 },
+  /** @type {{u:number,v:number}|null} */
+  pendingPoint: null,
+  statusName: '',
+  statusCount: 0,
+  /** @type {{ kind:'imported'|'restored', name:string, count:number }|null} */
+  customOption: null,
+  /** @type {number|null} */
+  pendingTransparentIndex: null,
+  pendingTransparentRemap: false,
+};
+const pickState = {
+  active: false,
+  /** @type {number|null} */
+  pointerId: null,
+  /** @type {Map<number, {u:number,v:number}>} */
+  markers: new Map(),
+  /** @type {{ id:number, before: any, moved:boolean }|null} */
+  drag: null,
+};
 let applyingUrlState = false;
-/** @type {number|null} */
-let pendingTransparentIndex = null;
-let pendingTransparentRemap = false;
 /** @type {File|Blob|null} */
 let lastFile = null;
 let loadRequestId = 0;
@@ -174,16 +160,38 @@ let restoringSession = false;
 let sessionPersistence = true;
 let sessionSaveWarned = false;
 let sessionStatusKey = '';
-let paletteStatusName = '';
-let paletteStatusCount = 0;
-/** @type {{ kind:'imported'|'restored', name:string, count:number }|null} */
-let customPaletteOption = null;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let importedColors = [];
 let importedName = '';
+
+/** @param {string} order */
+function setSortOrder(order) {
+  sortOrder = order || 'source';
+  if (sortSelect) sortSelect.value = sortOrder;
+}
+
+const paletteEditor = createPaletteEditor({
+  app,
+  state: paletteState,
+  pickState,
+  getSortOrder: () => sortOrder,
+  setSortOrder,
+  getLastFile: () => lastFile,
+  onPaletteEdited: () => {
+    if (mode === 'map') fixedColors = app.palette.map((entry) => ({ ...entry.color }));
+  },
+  requestPreview: () => processPreview(),
+  scheduleSessionSave: () => scheduleSessionSave(),
+  syncUrlState: () => syncUrlState(),
+  clearDownloadLinks,
+  renderPickedMarkers: () => renderPickedMarkers(),
+  stopPickMode: () => stopPickMode(),
+  startPickMode: () => startPickMode(),
+  cancelMarkerDrag: () => pickedMarkersView?.cancelDrag(),
+});
 
 const qualityPanel = createQualityPanel({
   getWorker: () => worker,
@@ -204,7 +212,7 @@ const exportController = createExportController({
   prepareForExport: () => {
     pickedMarkersView?.cancelDrag();
     stopPickMode();
-    updatePaletteEditor();
+    paletteEditor.updatePaletteEditor();
   },
 });
 
@@ -268,7 +276,7 @@ function onWorkerMessage(event) {
     };
     app.hasResult = true;
     canvasView.setReduced(app.reduced);
-    renderCurrentPalette();
+    paletteEditor.renderCurrentPalette();
     updateExportState();
     if (canvasEmpty) canvasEmpty.hidden = true;
     setStatus([
@@ -295,8 +303,8 @@ function onWorkerMessage(event) {
         { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
       ]);
     }
-    if (pendingTransparentRemap) {
-      pendingTransparentRemap = false;
+    if (paletteState.pendingTransparentRemap) {
+      paletteState.pendingTransparentRemap = false;
       processPreview();
       return;
     }
@@ -341,175 +349,36 @@ function onWorkerMessage(event) {
 
 function updateExportState() {
   setExportEnabled(app.hasResult && app.palette.length > 0 && !app.exportBusy);
-  updatePaletteEditor();
+  paletteEditor.updatePaletteEditor();
   qualityPanel.updateAvailability();
 }
 
-function renderPaletteStrip() {
-  renderPalette(app.palette, paletteStrip, {
-    editMode: paletteEditMode,
-    selectedId: selectedPaletteId,
-    onActivate: paletteEditMode ? selectPaletteEntry : null,
-  });
-  if (paletteCount) {
-    paletteCount.textContent = countLabel('count.colors', app.palette.length);
-  }
-  if (sortSelect) sortSelect.disabled = app.palette.length === 0;
-}
-
-/**
- * Update one entry without sorting the palette. Marker drag uses this on every
- * pointer move; the full sort and history commit happen once on release.
- *
- * @param {number} id
- * @param {{ r:number,g:number,b:number,a:number }} color
- */
-function setPaletteEntryColorLive(id, color) {
-  const hex = formatHex(color);
-  const entry = app.palette.find((candidate) => candidate.id === id);
-  if (!entry || entry.hex === hex) return;
-  app.palette = app.palette.map((candidate) =>
-    candidate.id === id
-      ? { ...candidate, color: { ...color }, hex }
-      : candidate,
-  );
-  if (selectedPaletteId === id && paletteHex) paletteHex.value = hex;
-  markPaletteEdited();
-  renderPaletteStrip();
-  renderPickedMarkers();
-}
-
-function renderCurrentPalette() {
-  app.palette = sortPalette(app.palette, sortOrder);
-  if (
-    selectedPaletteId !== null &&
-    !app.palette.some((entry) => entry.id === selectedPaletteId)
-  ) {
-    selectedPaletteId = null;
-    if (paletteHex) paletteHex.value = '';
-  }
-  const selected = selectedPaletteEntry();
-  if (selected && paletteHex && document.activeElement !== paletteHex) {
-    paletteHex.value = selected.hex;
-  }
-  renderPaletteStrip();
-  updatePaletteEditor();
-
-  const current = Number(transparentIndex?.value ?? -1);
-  populateTransparentIndex(app.palette, current);
-  renderPickedMarkers();
-  if (app.hasResult && lastFile) scheduleSessionSave();
-}
-
-/** @param {{ id:number, hex:string }} entry */
-function selectPaletteEntry(entry) {
-  selectedPaletteId = entry.id;
-  pendingPickPoint = null;
-  if (paletteHex) paletteHex.value = entry.hex;
-  renderCurrentPalette();
-}
-
-/**
- * Clear the edited palette entry. With no selection a Pick sample fills the HEX
- * field for Add instead of overwriting an existing color.
- */
-function clearPaletteSelection() {
-  if (selectedPaletteId === null) return;
-  selectedPaletteId = null;
-  pendingPickPoint = null;
-  if (paletteHex) paletteHex.value = '';
-  renderCurrentPalette();
-}
-
-/** @returns {any|null} */
-function selectedPaletteEntry() {
-  return app.palette.find((entry) => entry.id === selectedPaletteId) ?? null;
-}
-
-function updatePaletteEditor() {
-  const selected = selectedPaletteEntry();
-  const active = paletteEditMode && app.hasResult && app.palette.length > 0;
-  if (paletteEdit) {
-    paletteEdit.textContent = paletteEditMode ? t('palette.done') : t('palette.edit');
-    paletteEdit.setAttribute('aria-pressed', String(paletteEditMode));
-    paletteEdit.disabled = !app.hasResult || app.palette.length === 0 || app.exportBusy;
-  }
-  if (paletteEditor) paletteEditor.hidden = !active;
-  if (paletteHintPanel) paletteHintPanel.hidden = !active;
-  if (paletteHex) paletteHex.disabled = app.exportBusy;
-  if (palettePick) palettePick.disabled = !active || app.exportBusy;
-  if (paletteApply) paletteApply.disabled = !selected || app.exportBusy;
-  if (paletteAdd) paletteAdd.disabled = !active || app.exportBusy || app.palette.length >= 256;
-  const position = selected ? app.palette.findIndex((entry) => entry.id === selected.id) : -1;
-  const canMoveLeft =
-    Boolean(selected) &&
-    !selected.locked &&
-    position > 0 &&
-    !app.palette[position - 1].locked &&
-    !app.exportBusy;
-  const canMoveRight =
-    Boolean(selected) &&
-    !selected.locked &&
-    position >= 0 &&
-    position < app.palette.length - 1 &&
-    !app.palette[position + 1].locked &&
-    !app.exportBusy;
-  if (paletteMoveLeft) paletteMoveLeft.disabled = !canMoveLeft;
-  if (paletteMoveRight) paletteMoveRight.disabled = !canMoveRight;
-  if (paletteRemove) {
-    paletteRemove.disabled =
-      !selected || selected.locked || app.palette.length <= 1 || app.exportBusy;
-  }
-  if (paletteLock) {
-    paletteLock.disabled = !selected || app.exportBusy;
-    paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
-    paletteLock.textContent = selected?.locked ? t('palette.unlock') : t('palette.lock');
-  }
-  if (paletteUndo) {
-    paletteUndo.disabled = !active || app.exportBusy || paletteHistory.past.length === 0;
-  }
-  if (paletteRedo) {
-    paletteRedo.disabled = !active || app.exportBusy || paletteHistory.future.length === 0;
-  }
-}
-
-/** @param {boolean} active */
-function setPaletteEditMode(active) {
-  paletteEditMode = active;
-  if (!active) {
-    pickedMarkersView?.cancelDrag();
-    stopPickMode();
-    selectedPaletteId = null;
-    pendingPickPoint = null;
-    if (paletteHex) paletteHex.value = '';
-  }
-  renderCurrentPalette();
-}
-
 function startPickMode() {
-  if (!paletteEditMode || !app.hasResult || app.exportBusy) return;
-  pickingColor = true;
-  palettePick?.setAttribute('aria-pressed', 'true');
+  if (!paletteState.editMode || !app.hasResult || app.exportBusy) return;
+  pickState.active = true;
+  paletteEditor.setPickPressed(true);
   frame.classList.add('is-picking');
-  if (paletteEditHint) paletteEditHint.textContent = t('palette.pickHint');
+  paletteEditor.refreshHint();
   hidePickPreview();
   hidePickLoupe();
-  updatePaletteEditor();
+  paletteEditor.updatePaletteEditor();
 }
 
 function stopPickMode() {
-  if (!pickingColor) return;
-  pickingColor = false;
-  palettePick?.setAttribute('aria-pressed', 'false');
+  if (!pickState.active) return;
+  pickState.active = false;
+  paletteEditor.setPickPressed(false);
   frame.classList.remove('is-picking');
-  if (pickPointerId !== null) {
-    if (canvas.hasPointerCapture(pickPointerId)) canvas.releasePointerCapture(pickPointerId);
-    pickPointerId = null;
+  if (pickState.pointerId !== null) {
+    if (canvas.hasPointerCapture(pickState.pointerId)) {
+      canvas.releasePointerCapture(pickState.pointerId);
+    }
+    pickState.pointerId = null;
   }
   hidePickPreview();
   hidePickLoupe();
-  if (paletteEditHint) paletteEditHint.textContent = t('palette.editHint');
-  updatePaletteEditor();
+  paletteEditor.refreshHint();
+  paletteEditor.updatePaletteEditor();
 }
 
 function hidePickPreview() {
@@ -609,7 +478,7 @@ function updatePickLoupe(event) {
 
 /** @param {PointerEvent} event */
 function updatePickPreview(event) {
-  if (!pickingColor) return;
+  if (!pickState.active) return;
   const color = canvasView.pickColor(event.clientX, event.clientY);
   if (!color || color.a === 0) {
     hidePickPreview();
@@ -637,8 +506,8 @@ function updatePickPreview(event) {
 
 /** @param {PointerEvent} event */
 function updatePickFeedback(event) {
-  if (!pickingColor) return;
-  if (pickPointerId !== null) {
+  if (!pickState.active) return;
+  if (pickState.pointerId !== null) {
     updatePickLoupe(event);
     hidePickPreview();
   } else {
@@ -677,12 +546,12 @@ function hasDuplicatePaletteColor(id, color) {
 /** Remove markers for entries that no longer exist or became transparent. */
 function prunePickedMarkers() {
   const ids = new Set(app.palette.map((entry) => entry.id));
-  for (const id of pickedMarkers.keys()) {
-    if (!ids.has(id)) pickedMarkers.delete(id);
+  for (const id of pickState.markers.keys()) {
+    if (!ids.has(id)) pickState.markers.delete(id);
   }
-  const transparent = currentTransparentId();
-  if (transparent !== null) pickedMarkers.delete(transparent);
-  if (pendingPickPoint && app.palette.length === 0) pendingPickPoint = null;
+  const transparent = paletteEditor.currentTransparentId();
+  if (transparent !== null) pickState.markers.delete(transparent);
+  if (pickState.pendingPoint && app.palette.length === 0) pickState.pendingPoint = null;
 }
 
 function renderPickedMarkers() {
@@ -690,9 +559,9 @@ function renderPickedMarkers() {
   prunePickedMarkers();
   pickedMarkersView.render({
     entries: app.palette,
-    markers: pickedMarkers,
-    selectedId: selectedPaletteId,
-    active: paletteEditMode && app.hasResult && !app.exportBusy,
+    markers: pickState.markers,
+    selectedId: paletteState.selectedId,
+    active: paletteState.editMode && app.hasResult && !app.exportBusy,
   });
 }
 
@@ -700,10 +569,10 @@ function renderPickedMarkers() {
 function selectPickedMarker(id) {
   const entry = app.palette.find((candidate) => candidate.id === id);
   if (!entry) return;
-  selectedPaletteId = id;
-  pendingPickPoint = null;
-  if (paletteHex) paletteHex.value = entry.hex;
-  renderCurrentPalette();
+  paletteState.selectedId = id;
+  pickState.pendingPoint = null;
+  paletteEditor.setHexInput(entry.hex);
+  paletteEditor.renderCurrentPalette();
 }
 
 /**
@@ -711,11 +580,11 @@ function selectPickedMarker(id) {
  * @param {PointerEvent} event
  */
 function startPickedMarkerDrag(id, event) {
-  if (!paletteEditMode || app.exportBusy) return;
+  if (!paletteState.editMode || app.exportBusy) return;
   const entry = app.palette.find((candidate) => candidate.id === id);
   if (!entry) return;
-  markerDrag = { id, before: paletteSnapshot(), moved: false };
-  pendingPickPoint = null;
+  pickState.drag = { id, before: paletteEditor.paletteSnapshot(), moved: false };
+  pickState.pendingPoint = null;
   hidePickPreview();
   updatePickLoupe(event);
 }
@@ -725,15 +594,15 @@ function startPickedMarkerDrag(id, event) {
  * @param {PointerEvent} event
  */
 function movePickedMarkerDrag(id, event) {
-  if (!markerDrag || markerDrag.id !== id) return;
+  if (!pickState.drag || pickState.drag.id !== id) return;
   const sample = canvasView.pickSample(event.clientX, event.clientY);
   if (!sample || sample.color.a === 0) {
     hidePickLoupe();
     return;
   }
-  markerDrag.moved = true;
-  pickedMarkers.set(id, normalizePickPoint(sample));
-  setPaletteEntryColorLive(id, sample.color);
+  pickState.drag.moved = true;
+  pickState.markers.set(id, normalizePickPoint(sample));
+  paletteEditor.setPaletteEntryColorLive(id, sample.color);
   updatePickLoupe(event);
   scheduleProcess();
 }
@@ -744,17 +613,17 @@ function movePickedMarkerDrag(id, event) {
  * @param {boolean} moved
  */
 function endPickedMarkerDrag(id, event, moved) {
-  if (!markerDrag || markerDrag.id !== id) return;
-  const transaction = markerDrag;
-  markerDrag = null;
+  if (!pickState.drag || pickState.drag.id !== id) return;
+  const transaction = pickState.drag;
+  pickState.drag = null;
   hidePickLoupe();
   if (!moved) {
-    renderCurrentPalette();
+    paletteEditor.renderCurrentPalette();
     return;
   }
   const sample = canvasView.pickSample(event.clientX, event.clientY);
   if (!sample || sample.color.a === 0) {
-    restorePaletteSnapshot(transaction.before);
+    paletteEditor.restorePaletteSnapshot(transaction.before);
     toastKey(
       sample ? 'toast.pickTransparent' : 'toast.pickOutside',
       {},
@@ -763,25 +632,25 @@ function endPickedMarkerDrag(id, event, moved) {
     return;
   }
   if (hasDuplicatePaletteColor(id, sample.color)) {
-    restorePaletteSnapshot(transaction.before);
+    paletteEditor.restorePaletteSnapshot(transaction.before);
     toastKey('error.duplicateColor', {}, 'error');
     return;
   }
-  pickedMarkers.set(id, normalizePickPoint(sample));
-  setPaletteEntryColorLive(id, sample.color);
-  renderCurrentPalette();
+  pickState.markers.set(id, normalizePickPoint(sample));
+  paletteEditor.setPaletteEntryColorLive(id, sample.color);
+  paletteEditor.renderCurrentPalette();
   processPreview();
-  pushPaletteHistory(transaction.before);
+  paletteEditor.pushPaletteHistory(transaction.before);
   toastKey('toast.colorUpdated', {}, 'success');
 }
 
 /** @param {number} id */
 function cancelPickedMarkerDrag(id) {
-  if (!markerDrag || markerDrag.id !== id) return;
-  const transaction = markerDrag;
-  markerDrag = null;
+  if (!pickState.drag || pickState.drag.id !== id) return;
+  const transaction = pickState.drag;
+  pickState.drag = null;
   hidePickLoupe();
-  restorePaletteSnapshot(transaction.before);
+  paletteEditor.restorePaletteSnapshot(transaction.before);
 }
 
 /**
@@ -790,8 +659,8 @@ function cancelPickedMarkerDrag(id) {
  * @param {number} step
  */
 function nudgePickedMarker(id, key, step) {
-  if (!paletteEditMode || app.exportBusy) return;
-  const point = pickedMarkers.get(id);
+  if (!paletteState.editMode || app.exportBusy) return;
+  const point = pickState.markers.get(id);
   if (!point) return;
   const dx = key === 'ArrowLeft' ? -step : key === 'ArrowRight' ? step : 0;
   const dy = key === 'ArrowUp' ? -step : key === 'ArrowDown' ? step : 0;
@@ -802,103 +671,37 @@ function nudgePickedMarker(id, key, step) {
   };
   const color = canvasView.pickColorAtImagePoint(nextPoint.u, nextPoint.v);
   if (!color || color.a === 0) return;
-  const before = paletteSnapshot();
+  const before = paletteEditor.paletteSnapshot();
   try {
     app.palette = updatePaletteEntry(app.palette, id, formatHex(color));
-    pickedMarkers.set(id, nextPoint);
-    selectedPaletteId = id;
-    if (paletteHex) paletteHex.value = formatHex(color);
-    markPaletteEdited();
-    renderCurrentPalette();
+    pickState.markers.set(id, nextPoint);
+    paletteState.selectedId = id;
+    paletteEditor.setHexInput(formatHex(color));
+    paletteEditor.markPaletteEdited();
+    paletteEditor.renderCurrentPalette();
     processPreview();
-    pushPaletteHistory(before);
+    paletteEditor.pushPaletteHistory(before);
   } catch (error) {
     toast(localizeError(error), 'error');
   }
 }
 
-function currentTransparentId() {
-  const position = Number(transparentIndex?.value ?? -1);
-  return position >= 0 ? app.palette[position]?.id ?? null : null;
-}
-
-function paletteSnapshot() {
-  return {
-    palette: app.palette.map((entry) => ({ ...entry, color: { ...entry.color } })),
-    sortOrder,
-    selectedId: selectedPaletteId,
-    transparentId: currentTransparentId(),
-    markers: pickedMarkersToArray(pickedMarkers),
-  };
-}
-
-/** @param {ReturnType<typeof paletteSnapshot>} snapshot */
-function pushPaletteHistory(snapshot) {
-  paletteHistory.past.push(snapshot);
-  if (paletteHistory.past.length > paletteHistory.limit) paletteHistory.past.shift();
-  paletteHistory.future.length = 0;
-  updatePaletteEditor();
-}
-
-/** @param {ReturnType<typeof paletteSnapshot>} snapshot */
-function restorePaletteSnapshot(snapshot) {
-  app.palette = snapshot.palette.map((entry) => ({
-    ...entry,
-    color: { ...entry.color },
-  }));
-  sortOrder = snapshot.sortOrder;
-  if (sortSelect) sortSelect.value = sortOrder;
-  selectedPaletteId = snapshot.selectedId;
-  pickedMarkers = pickedMarkersFromArray(snapshot.markers);
-  pendingPickPoint = null;
-  markPaletteEdited();
-  renderCurrentPalette();
-  const selected = selectedPaletteEntry();
-  if (paletteHex) paletteHex.value = selected?.hex ?? '';
-  const position =
-    snapshot.transparentId === null
-      ? -1
-      : app.palette.findIndex((entry) => entry.id === snapshot.transparentId);
-  if (transparentIndex) {
-    transparentIndex.value = position >= 0 ? String(position) : '-1';
-  }
-  processPreview();
-  syncUrlState();
-}
-
-function undoPaletteEdit() {
-  if (!paletteEditMode || paletteHistory.past.length === 0) return;
-  paletteHistory.future.push(paletteSnapshot());
-  const snapshot = paletteHistory.past.pop();
-  restorePaletteSnapshot(snapshot);
-  toastKey('toast.undo', {}, 'success');
-}
-
-function redoPaletteEdit() {
-  if (!paletteEditMode || paletteHistory.future.length === 0) return;
-  paletteHistory.past.push(paletteSnapshot());
-  const snapshot = paletteHistory.future.pop();
-  restorePaletteSnapshot(snapshot);
-  toastKey('toast.redo', {}, 'success');
-}
-
-/** @param {PointerEvent} event */
 function handleCanvasPick(event) {
-  if (!pickingColor || pickPointerId !== null) return;
+  if (!pickState.active || pickState.pointerId !== null) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  pickPointerId = event.pointerId;
+  pickState.pointerId = event.pointerId;
   canvas.setPointerCapture(event.pointerId);
   updatePickFeedback(event);
 }
 
 /** @param {PointerEvent} event */
 function handlePickEnd(event) {
-  if (!pickingColor || pickPointerId !== event.pointerId) return;
+  if (!pickState.active || pickState.pointerId !== event.pointerId) return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  pickPointerId = null;
+  pickState.pointerId = null;
   if (canvas.hasPointerCapture(event.pointerId)) {
     canvas.releasePointerCapture(event.pointerId);
   }
@@ -917,253 +720,21 @@ function handlePickEnd(event) {
   // Keep Pick armed after a successful sample so several swatches can be
   // recolored without pressing the button again. Pick toggles off, and Esc
   // still stops the mode.
-  if (paletteHex) paletteHex.value = formatHex(color);
-  if (selectedPaletteEntry()) {
-    applyPaletteHex(normalizePickPoint(sample));
+  paletteEditor.setHexInput(formatHex(color));
+  if (paletteEditor.selectedPaletteEntry()) {
+    paletteEditor.applyPaletteHex(normalizePickPoint(sample));
   } else {
-    pendingPickPoint = normalizePickPoint(sample);
+    pickState.pendingPoint = normalizePickPoint(sample);
     toastKey('toast.picked', { hex: formatHex(color) }, 'success');
   }
 }
 
 /** @param {PointerEvent} event */
 function handlePickCancel(event) {
-  if (pickPointerId !== event.pointerId) return;
-  pickPointerId = null;
+  if (pickState.pointerId !== event.pointerId) return;
+  pickState.pointerId = null;
   hidePickPreview();
   hidePickLoupe();
-}
-
-function markPaletteEdited() {
-  app.paletteEdited = true;
-  if (mode === 'map') {
-    fixedColors = app.palette.map((entry) => ({ ...entry.color }));
-  }
-}
-
-function resetPaletteEdits() {
-  pickedMarkersView?.cancelDrag();
-  stopPickMode();
-  pickedMarkers.clear();
-  pendingPickPoint = null;
-  markerDrag = null;
-  paletteHistory.past.length = 0;
-  paletteHistory.future.length = 0;
-  app.paletteEdited = false;
-  paletteEditMode = false;
-  selectedPaletteId = null;
-  if (paletteHex) paletteHex.value = '';
-  updatePaletteEditor();
-}
-
-/** @returns {string} */
-function paletteHexValue() {
-  return paletteHex?.value.trim() ?? '';
-}
-
-/**
- * @param {{ u:number, v:number }|null} [sample]
- */
-function applyPaletteHex(sample = null) {
-  const selected = selectedPaletteEntry();
-  if (!selected) return;
-  const value = paletteHexValue();
-  if (!value) {
-    toastKey('toast.enterHex', {}, 'error');
-    return;
-  }
-  try {
-    const next = updatePaletteEntry(app.palette, selected.id, value);
-    const before = paletteSnapshot();
-    app.palette = next;
-    if (sample) {
-      if (selected.id === currentTransparentId()) pickedMarkers.delete(selected.id);
-      else pickedMarkers.set(selected.id, sample);
-    }
-    const updated = app.palette.find((entry) => entry.id === selected.id);
-    if (paletteHex && updated) paletteHex.value = updated.hex;
-    markPaletteEdited();
-    renderCurrentPalette();
-    processPreview();
-    pushPaletteHistory(before);
-    toastKey('toast.colorUpdated', {}, 'success');
-  } catch (error) {
-    toast(localizeError(error), 'error');
-  }
-}
-
-function addPaletteColor() {
-  const value = paletteHexValue();
-  if (!value) {
-    toastKey('toast.enterHex', {}, 'error');
-    return;
-  }
-  try {
-    const next = addPaletteEntry(app.palette, value);
-    const entry = next[next.length - 1];
-    const before = paletteSnapshot();
-    app.palette = next;
-    selectedPaletteId = entry.id;
-    if (pendingPickPoint && entry.id !== currentTransparentId()) {
-      pickedMarkers.set(entry.id, pendingPickPoint);
-    }
-    pendingPickPoint = null;
-    if (paletteHex) paletteHex.value = entry.hex;
-    markPaletteEdited();
-    renderCurrentPalette();
-    processPreview();
-    pushPaletteHistory(before);
-    toastKey('toast.colorAdded', { hex: entry.hex }, 'success');
-  } catch (error) {
-    toast(localizeError(error), 'error');
-  }
-}
-
-function removePaletteColor() {
-  const selected = selectedPaletteEntry();
-  if (!selected) return;
-  try {
-    const next = removePaletteEntry(app.palette, selected.id);
-    const before = paletteSnapshot();
-    app.palette = next;
-    pickedMarkers.delete(selected.id);
-    selectedPaletteId = null;
-    if (paletteHex) paletteHex.value = '';
-    markPaletteEdited();
-    renderCurrentPalette();
-    processPreview();
-    pushPaletteHistory(before);
-    toastKey('toast.colorRemoved', { hex: selected.hex }, 'success');
-  } catch (error) {
-    toast(localizeError(error), 'error');
-  }
-}
-
-function togglePaletteLock() {
-  const selected = selectedPaletteEntry();
-  if (!selected) return;
-  try {
-    const next = setPaletteLock(app.palette, selected.id, !selected.locked);
-    const before = paletteSnapshot();
-    app.palette = next;
-    markPaletteEdited();
-    renderCurrentPalette();
-    pushPaletteHistory(before);
-    toastKey(
-      selected.locked ? 'toast.unlocked' : 'toast.locked',
-      { hex: selected.hex },
-      'success',
-    );
-  } catch (error) {
-    toast(localizeError(error), 'error');
-  }
-}
-
-/** @param {'left'|'right'} direction */
-function moveSelectedPaletteEntry(direction) {
-  const selected = selectedPaletteEntry();
-  if (!selected) return;
-  const transparentPosition = Number(transparentIndex?.value ?? -1);
-  const transparentId =
-    transparentPosition >= 0 ? app.palette[transparentPosition]?.id ?? null : null;
-  try {
-    const moved = movePaletteEntry(app.palette, selected.id, direction);
-    const before = paletteSnapshot();
-    sortOrder = 'manual';
-    if (sortSelect) sortSelect.value = 'manual';
-    app.palette = moved;
-    markPaletteEdited();
-    renderCurrentPalette();
-    if (transparentId !== null && transparentIndex) {
-      const nextPosition = app.palette.findIndex((entry) => entry.id === transparentId);
-      if (nextPosition >= 0) transparentIndex.value = String(nextPosition);
-    }
-    processPreview();
-    pushPaletteHistory(before);
-    updatePaletteEditor();
-    syncUrlState();
-    toastKey(
-      direction === 'left' ? 'toast.movedLeft' : 'toast.movedRight',
-      { hex: selected.hex },
-      'success',
-    );
-  } catch (error) {
-    toast(localizeError(error), 'error');
-  }
-}
-
-/**
- * @param {{ hex:string }[]} palette
- * @param {number} preferred
- */
-function populateTransparentIndex(palette, preferred) {
-  if (!transparentIndex) return;
-  transparentIndex.replaceChildren();
-  const none = document.createElement('option');
-  none.value = '-1';
-  none.textContent = t('transparent.none');
-  transparentIndex.append(none);
-  palette.forEach((entry, index) => {
-    const option = document.createElement('option');
-    option.value = String(index);
-    option.textContent = `${index} · ${entry.hex}`;
-    transparentIndex.append(option);
-  });
-  transparentIndex.disabled = palette.length === 0;
-  if (pendingTransparentIndex !== null && palette.length > 0) {
-    const pending = pendingTransparentIndex;
-    pendingTransparentIndex = null;
-    transparentIndex.value =
-      pending >= 0 && pending < palette.length ? String(pending) : '-1';
-    if (app.hasResult) pendingTransparentRemap = true;
-    return;
-  }
-  const valid = preferred >= 0 && preferred < palette.length;
-  transparentIndex.value = valid ? String(preferred) : '-1';
-}
-
-/**
- * @param {string} name
- * @param {number} count
- */
-function setPaletteStatus(name, count) {
-  paletteStatusName = name;
-  paletteStatusCount = count;
-  renderPaletteStatus();
-}
-
-function renderPaletteStatus() {
-  if (!paletteStatus || !paletteStatusName) return;
-  paletteStatus.textContent = t('palette.status', {
-    name: paletteStatusName,
-    countLabel: countLabel('count.colors', paletteStatusCount),
-  });
-}
-
-/**
- * @param {'imported'|'restored'} kind
- * @param {string} name
- * @param {number} count
- */
-function setCustomPaletteOption(kind, name, count) {
-  customPaletteOption = { kind, name, count };
-  renderCustomPaletteOption();
-}
-
-function renderCustomPaletteOption() {
-  if (!paletteSelect || !customPaletteOption) return;
-  const option = [...paletteSelect.options].find(
-    (candidate) => candidate.value === 'imported',
-  );
-  if (!option) return;
-  const key =
-    customPaletteOption.kind === 'imported'
-      ? 'palette.importedOption'
-      : 'palette.restoredOption';
-  option.textContent = t(key, {
-    name: customPaletteOption.name,
-    countLabel: countLabel('count.colors', customPaletteOption.count),
-  });
 }
 
 function getParams() {
@@ -1247,9 +818,9 @@ function applyUrlState(state) {
     if (paletteSelect) paletteSelect.value = state.palette;
 
     setMode(state.mode);
-    pendingTransparentIndex =
+    paletteState.pendingTransparentIndex =
       state.mode === 'map' || state.transparentIndex >= 0 ? state.transparentIndex : null;
-    renderCurrentPalette();
+    paletteEditor.renderCurrentPalette();
     updateDitherLabels();
     updateDitherControls();
   } finally {
@@ -1273,11 +844,11 @@ function buildSessionRecord() {
       palette: clonePalette(app.palette),
       paletteEdited: app.paletteEdited,
       sortOrder,
-      selectedId: selectedPaletteId,
-      transparentId: currentTransparentId(),
-      markers: pickedMarkersToArray(pickedMarkers),
-      editing: paletteEditMode,
-      history: cloneHistory(paletteHistory),
+      selectedId: paletteState.selectedId,
+      transparentId: paletteEditor.currentTransparentId(),
+      markers: pickedMarkersToArray(pickState.markers),
+      editing: paletteState.editMode,
+      history: cloneHistory(paletteState.history),
     },
   };
 }
@@ -1341,7 +912,7 @@ async function forgetSavedSession() {
  */
 function setMode(next) {
   if (next !== 'extract' && next !== 'map') return;
-  resetPaletteEdits();
+  paletteEditor.resetPaletteEdits();
   mode = next;
   modeExtract?.setAttribute('aria-selected', String(next === 'extract'));
   modeMap?.setAttribute('aria-selected', String(next === 'map'));
@@ -1357,7 +928,7 @@ function setMode(next) {
   } else {
     app.palette = [];
   }
-  renderCurrentPalette();
+  paletteEditor.renderCurrentPalette();
   if (next === 'map' && transparentIndex && transparentIndex.value === '-1') {
     transparentIndex.value = '0';
   }
@@ -1370,7 +941,7 @@ function setMode(next) {
  * @returns {boolean}
  */
 function loadTargetPalette(value) {
-  resetPaletteEdits();
+  paletteEditor.resetPaletteEdits();
   /** @type {{ r:number,g:number,b:number,a:number }[]} */
   let colors = [];
   let name = '';
@@ -1390,10 +961,10 @@ function loadTargetPalette(value) {
   if (colors.length === 0) return false;
   fixedColors = colors;
   fixedName = name;
-  setPaletteStatus(name, colors.length);
+  paletteEditor.setPaletteStatus(name, colors.length);
   if (paletteSelect) paletteSelect.value = value;
   app.palette = sortPalette(createPalette(colors), sortOrder);
-  renderCurrentPalette();
+  paletteEditor.renderCurrentPalette();
   return true;
 }
 
@@ -1411,7 +982,7 @@ function populateBuiltinPalettes() {
     fixedColors = first.colors.map(parseHex);
     fixedName = first.name;
     paletteSelect.value = first.id;
-    setPaletteStatus(first.name, first.colors.length);
+    paletteEditor.setPaletteStatus(first.name, first.colors.length);
   }
 }
 
@@ -1499,19 +1070,19 @@ async function loadFile(file, restore = null) {
     app.reduced = null;
     app.palette = [];
     app.hasResult = false;
-    resetPaletteEdits();
+    paletteEditor.resetPaletteEdits();
     if (restore) {
       app.palette = clonePalette(Array.isArray(restore.palette) ? restore.palette : []);
       app.paletteEdited = Boolean(restore.paletteEdited) || mode === 'map';
       sortOrder = restore.sortOrder || 'source';
       if (sortSelect) sortSelect.value = sortOrder;
       const history = cloneHistory(restore.history ?? { past: [], future: [] });
-      paletteHistory.past = history.past;
-      paletteHistory.future = history.future;
-      selectedPaletteId = restore.selectedId ?? null;
-      paletteEditMode = Boolean(restore.editing);
-      pickedMarkers = pickedMarkersFromArray(restore.markers);
-      pendingPickPoint = null;
+      paletteState.history.past = history.past;
+      paletteState.history.future = history.future;
+      paletteState.selectedId = restore.selectedId ?? null;
+      paletteState.editMode = Boolean(restore.editing);
+      pickState.markers = pickedMarkersFromArray(restore.markers);
+      pickState.pendingPoint = null;
       if (mode === 'map') {
         fixedColors = app.palette.map((entry) => ({ ...entry.color }));
       }
@@ -1528,14 +1099,14 @@ async function loadFile(file, restore = null) {
           paletteSelect.value = restore.paletteValue;
         }
         if (restore.paletteValue === 'imported') {
-          setCustomPaletteOption(
+          paletteEditor.setCustomPaletteOption(
             'restored',
             restore.paletteName || t('palette.restoredSession'),
             app.palette.length,
           );
         }
       }
-      setPaletteStatus(
+      paletteEditor.setPaletteStatus(
         restore.paletteName || t('palette.restoredSession'),
         app.palette.length,
       );
@@ -1546,16 +1117,16 @@ async function loadFile(file, restore = null) {
     if (hero) hero.hidden = true;
     if (workspace) workspace.hidden = false;
     canvasView.setOriginal(preview);
-    renderCurrentPalette();
+    paletteEditor.renderCurrentPalette();
     if (restore && restore.transparentId !== null && restore.transparentId !== undefined) {
       const position = app.palette.findIndex((entry) => entry.id === restore.transparentId);
       if (transparentIndex) {
         transparentIndex.value = position >= 0 ? String(position) : '-1';
       }
-      pendingTransparentIndex = null;
+      paletteState.pendingTransparentIndex = null;
     } else if (restore) {
       if (transparentIndex) transparentIndex.value = '-1';
-      pendingTransparentIndex = null;
+      paletteState.pendingTransparentIndex = null;
     }
     setExportEnabled(false);
     if (canvasEmpty) {
@@ -1703,18 +1274,14 @@ function refreshDynamicUi() {
     refreshStatus();
   }
   refreshDownloadLinks();
-  renderCurrentPalette();
-  updatePaletteEditor();
-  renderPaletteStatus();
-  renderCustomPaletteOption();
+  paletteEditor.renderCurrentPalette();
+  paletteEditor.updatePaletteEditor();
+  paletteEditor.renderPaletteStatus();
+  paletteEditor.renderCustomPaletteOption();
   renderSessionStatus();
   renderOriginalLabels();
   if (canvasEmpty) canvasEmpty.textContent = t('canvas.processing');
-  if (paletteEditHint) {
-    paletteEditHint.textContent = t(
-      pickingColor ? 'palette.pickHint' : 'palette.editHint',
-    );
-  }
+  paletteEditor.refreshHint();
   const progressKey = exportController.getProgressKey();
   if (progressKey) {
     const label = document.getElementById('export-progress-label');
@@ -1725,7 +1292,7 @@ function refreshDynamicUi() {
 
 const controls = initControls({
   onChange: () => {
-    if (mode === 'extract') resetPaletteEdits();
+    if (mode === 'extract') paletteEditor.resetPaletteEdits();
     processPreview();
     syncUrlState();
   },
@@ -1750,92 +1317,28 @@ document.getElementById('zoom-out')?.addEventListener('click', () => canvasView.
 document.getElementById('fit-view')?.addEventListener('click', () => canvasView.fit());
 document.getElementById('zoom-100')?.addEventListener('click', () => canvasView.zoom100());
 document.getElementById('zoom-in')?.addEventListener('click', () => canvasView.zoomIn());
-sortSelect?.addEventListener('change', () => {
-  sortOrder = sortSelect.value || 'source';
-  renderCurrentPalette();
-  clearDownloadLinks();
-  syncUrlState();
-});
-
-paletteEdit?.addEventListener('click', () => setPaletteEditMode(!paletteEditMode));
-paletteStrip?.addEventListener('click', (event) => {
-  if (!paletteEditMode) return;
-  const target = /** @type {Element|null} */ (event.target);
-  if (target?.closest('.peiq-swatch')) return;
-  clearPaletteSelection();
-});
-palettePanel?.addEventListener('keydown', (event) => {
-  if (event.key !== 'Escape' || !paletteEditMode || selectedPaletteId === null) return;
-  if (pickingColor || markerDrag) return;
-  event.preventDefault();
-  clearPaletteSelection();
-});
-paletteApply?.addEventListener('click', applyPaletteHex);
-paletteAdd?.addEventListener('click', addPaletteColor);
-paletteMoveLeft?.addEventListener('click', () => moveSelectedPaletteEntry('left'));
-paletteMoveRight?.addEventListener('click', () => moveSelectedPaletteEntry('right'));
-paletteRemove?.addEventListener('click', removePaletteColor);
-paletteLock?.addEventListener('click', togglePaletteLock);
-palettePick?.addEventListener('click', () => {
-  if (pickingColor) stopPickMode();
-  else startPickMode();
-});
-paletteUndo?.addEventListener('click', undoPaletteEdit);
-paletteRedo?.addEventListener('click', redoPaletteEdit);
-document.addEventListener('keydown', (event) => {
-  if (!paletteEditMode || app.exportBusy) return;
-  if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-  const target = /** @type {HTMLElement|null} */ (event.target);
-  if (
-    target &&
-    (target.tagName === 'INPUT' ||
-      target.tagName === 'SELECT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.isContentEditable)
-  ) {
-    return;
-  }
-  const key = event.key.toLowerCase();
-  const code = event.code;
-  if (code === 'KeyZ' || key === 'z') {
-    event.preventDefault();
-    if (event.shiftKey) redoPaletteEdit();
-    else undoPaletteEdit();
-  } else if (code === 'KeyY' || key === 'y') {
-    event.preventDefault();
-    redoPaletteEdit();
-  }
-});
+paletteEditor.bindEvents();
 canvas.addEventListener('pointerdown', handleCanvasPick, { capture: true });
 canvas.addEventListener('pointerup', handlePickEnd, { capture: true });
 canvas.addEventListener('pointercancel', handlePickCancel, { capture: true });
 canvas.addEventListener('lostpointercapture', handlePickCancel);
 frame.addEventListener('pointermove', updatePickFeedback);
 frame.addEventListener('pointerleave', () => {
-  if (pickPointerId === null) {
+  if (pickState.pointerId === null) {
     hidePickPreview();
     hidePickLoupe();
   }
 });
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && markerDrag) {
+  if (event.key === 'Escape' && pickState.drag) {
     event.preventDefault();
     pickedMarkersView?.cancelDrag();
     return;
   }
-  if (event.key === 'Escape' && pickingColor) {
+  if (event.key === 'Escape' && pickState.active) {
     event.preventDefault();
     stopPickMode();
   }
-});
-paletteHex?.addEventListener('keydown', (event) => {
-  if (event.key !== 'Enter') return;
-  event.preventDefault();
-  if (selectedPaletteEntry()) applyPaletteHex();
-  else addPaletteColor();
-});
-paletteHex?.addEventListener('input', () => {
-  pendingPickPoint = null;
 });
 
 const scheduleProcess = debounce(processPreview, 150);
@@ -1845,7 +1348,7 @@ const scheduleSessionSave = debounce(saveCurrentSession, 500);
 populateBuiltinPalettes();
 updateDitherLabels();
 updateDitherControls();
-updatePaletteEditor();
+paletteEditor.updatePaletteEditor();
 
 async function initializeSessionAndUrl() {
   const restoreGuard = loadRequestId;
@@ -1951,7 +1454,7 @@ paletteInput?.addEventListener('change', async () => {
         option.value = 'imported';
         paletteSelect.append(option);
       }
-      setCustomPaletteOption('imported', importedName, importedColors.length);
+      paletteEditor.setCustomPaletteOption('imported', importedName, importedColors.length);
       paletteSelect.value = 'imported';
     }
 
