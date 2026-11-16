@@ -28,18 +28,18 @@ agents; it defers to this plan for *what* to build.
 - Read §10–§12 for tests and contracts.
 - Keep the §18 decision log current; never silently diverge from a frozen contract.
 
-### Current state (2026-11-14)
+### Current state (2026-11-16)
 
 | Item | State |
 |---|---|
 | Research report | Complete; landscape refreshed 2026-11-14 |
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
-| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes |
+| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering |
 | UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 135 passing (`node --test`), including golden hashes, dithering, palettes, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
-| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete |
-| Next | M7: later / not planned for v1.x |
+| Tests | 143 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
+| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; perceptual ordering unreleased |
+| Next | Release the perceptual ordering change when requested; otherwise M7 is later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -750,9 +750,9 @@ Presets set controls; they do not lock them.
   removed; HEX edits keep the lock.
 - `sortPalette(palette, order)` returns a new palette; IDs survive, indices are reassigned.
   The strip export and HEX list use this order.
-- Perceptual ordering, when added, uses pairwise **CIEDE2000** distances and a
-  deterministic path/2-opt search. Oklab `L/C/h` remain the keys for `hue-*` and
-  `lightness-*`; the ordering metric changes indices, not the nearest-color metric.
+- Perceptual ordering uses pairwise **CIEDE2000** distances and a deterministic path/2-opt
+  search. Oklab `L/C/h` remain the keys for `hue-*` and `lightness-*`; the ordering metric
+  changes indices, not the nearest-color metric.
 - Sort keys:
   - `source`: ID ascending, restoring extraction order after any other sort.
   - `manual`: keep the current array order; the editor’s ← / → buttons move an unlocked
@@ -763,6 +763,14 @@ Presets set controls; they do not lock them.
     direction; chromatic entries in a **circular hue order** (the largest hue gap becomes
     the boundary, so reds near 0°/360° stay adjacent), then L in the requested direction,
     C descending, ID.
+  - `perceptual`: start from `lightness-asc`, then 2-opt with fixed first/last entries.
+    Keeps the Oklab dark-to-light flow and removes local CIEDE2000 jumps.
+  - `perceptual-path`: nearest-neighbor path from the darkest to the lightest Oklab L
+    entry, then 2-opt with fixed ends. Both directions are tried; the lower total cost
+    wins.
+  - `perceptual-flow`: all-start nearest-neighbor cycle, 2-opt, cut at the largest
+    CIEDE2000 edge, then orient dark-to-light by Oklab L. This is DCCW single-palette
+    sorting with deterministic 2-opt instead of LKH.
 - `dedupePalette` folds exact RGB duplicates into the first entry and records aliases;
   a “keep duplicates” option is out of scope for v1.
 - `paletteHash` covers canonical `{order, space, entries:[{index,rgb,alpha}]}`.
@@ -870,8 +878,9 @@ toolbar, export, canvas, palette, settings.
   switch) and Dither. Export is not in the rail; the Quality section is collapsed by default.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
   above it shows the palette count and a sort select: source, hue dark→light, hue
-  light→dark, lightness dark→light, lightness light→dark. The selected order controls
-  the swatches, HEX copy, and strip export.
+  light→dark, lightness dark→light, lightness light→dark, perceptual smooth, perceptual
+  color path, and perceptual flow. The selected order controls the swatches, HEX copy, and
+  strip export.
 - **Desktop frame:** the page itself does not scroll. Header, stage, and compact footer
   fill the viewport; the stage gives the canvas the remaining height and only the rail
   (or a palette strip with many colors) scrolls.
@@ -919,9 +928,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   alpha threshold. A transparent index removes that entry from the preview and the
   indexed/strip output; choose None to keep every color opaque.
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
-  lightness light→dark; swatches, HEX list, and strip export follow it. A perceptual
-  order, when added, is labeled by its result (for example, “Perceptual (smooth)”),
-  not by the metric name; Oklab and CIEDE2000 belong in Help and technical docs.
+  lightness light→dark / perceptual smooth / perceptual color path / perceptual flow;
+  swatches, HEX list, and strip export follow it. Perceptual modes are labeled by their
+  result, not by the metric name; Oklab and CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
   adds **Pick / Apply / Add / ← / → / Remove / Lock**, plus compact undo/redo icon
   buttons on touch layouts. **Pick** arms a canvas eyedropper with a floating color/HEX
@@ -1242,6 +1251,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | `octree.test.js` | K colors, merge order, determinism |
 | `kmeans.test.js` | seeding, empty clusters, iteration cap, determinism |
 | `palette.test.js` | IDs, ordering, locks, dedupe, hash |
+| `palette-order.test.js` | perceptual determinism, endpoints, CIEDE2000 cost, DCCW cut, locks, 256 colors |
 | `map.test.js` | exact/LUT modes, tie-break, alpha, compliance |
 | `dither-error-diffusion.test.js` | kernel sums, serpentine, strength, edge stop, compliance |
 | `dither-ordered.test.js` | Bayer generation, two-candidate probabilities, compliance |
@@ -1392,7 +1402,7 @@ No error may be swallowed. Every warning is visible in the status bar and in the
 | Chunks | `IHDR`, `IDAT`, `IEND` only; no ICC/gAMA/sRGB/pHYs/tEXt |
 | Filter | 0 (None) on every row |
 | Padding | None |
-| Order | As exported (source/hue/lightness/custom) |
+| Order | As exported (source/hue/lightness/perceptual/custom) |
 | Filename | `{name}-palette-{N}x1.png` / `{name}-palette-1x{N}.png` |
 | Validation | Decode the written bytes and compare every pixel to the palette |
 
@@ -1619,6 +1629,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/quantize/kmeans.js` | `extractKMeans` | `quantize-advanced.test.js` |
 | `js/core/quantize/refine.js` | `refinePalette` (Lloyd refinement) | `quantize-advanced.test.js` |
 | `js/core/palette.js` | `createPalette`, `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, `movePaletteEntry`, `setPaletteLock`, `sortPalette`, `paletteHexList`, `paletteHash` | `palette.test.js` |
+| `js/core/palette-order.js` | Deterministic CIEDE2000 perceptual orders (`perceptual`, `perceptual-path`, `perceptual-flow`) | `palette-order.test.js` |
 | `js/core/map.js` | `buildMapper`, `buildExactMap`, `mapPixels`, `mapIndices`, `indicesToRgba` | `map.test.js` |
 | `js/core/dither/index.js` | `ditherPixels(image, palette, dither)` | `dither.test.js` |
 | `js/core/dither/kernels.js` | Error-diffusion tables + Bayer generation | `dither.test.js` |
@@ -1769,6 +1780,19 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** `1.3.1` tagged; repeated reloads restore the image, legacy records migrate,
   and a corrupt record falls back without blocking the next load.
 
+### M6.3 — v1.4: perceptual palette ordering (implemented, unreleased)
+
+- [x] Add `perceptual`: start from `lightness-asc`, then CIEDE2000 2-opt with fixed
+      first/last entries.
+- [x] Add `perceptual-path`: nearest-neighbor path from the darkest to the lightest
+      entry, then 2-opt with fixed ends; try both directions.
+- [x] Add `perceptual-flow`: all-start cycle, 2-opt, cut the largest CIEDE2000 edge, and
+      orient dark-to-light; DCCW single-palette sorting with 2-opt instead of LKH.
+- [x] Keep locks, URL/session round-trip, IDs, and export indices deterministic; add
+      Help copy and EN/RU labels without exposing metric names in the control.
+- **Exit:** pending version bump and tag after review; `npm test` 143 passing and the
+  browser pass at 1280/360 px are green.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
@@ -1903,6 +1927,7 @@ A change is done only when:
 | 2026-11-15 | Retry image decode through an `<img>` element before reporting imageDecode | Some mobile browsers fail `createImageBitmap` on a restored blob but decode the same bytes through the image element |
 | 2026-11-15 | Release 1.3.1: M6.2 complete | Saved-image byte storage, v1 migration, and the decode fallback verified with repeated reloads and a corrupt record; 135 tests |
 | 2026-11-16 | Allow CIEDE2000 for palette ordering; keep Oklab for extraction, mapping, and dithering | These stages optimize different things: clustering needs a vector space with centroids and fast per-pixel distances, while ordering a fixed 1–256 color palette is a one-off pairwise comparison. Splitting the metric removes the apparent conflict without changing nearest-color assignment. |
+| 2026-11-16 | Add perceptual, perceptual-path, and perceptual-flow palette orders | Perceptual starts from the lightness order and refines it with 2-opt; path fixes the darkest and lightest ends; flow uses the DCCW cycle-cut idea. All three use deterministic CIEDE2000 2-opt, preserve locks, and only change order and export indices. |
 
 ---
 

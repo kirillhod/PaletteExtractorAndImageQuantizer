@@ -63,3 +63,14 @@ test('serpentine and transparent index survive compact encoding', () => {
   assert.match(encoded, /transparent=0/);
   assert.deepEqual(decodeUrlState(encoded), state);
 });
+
+test('perceptual sort modes round-trip through the URL', () => {
+  for (const sortOrder of /** @type {const} */ ([
+    'perceptual',
+    'perceptual-path',
+    'perceptual-flow',
+  ])) {
+    const state = { ...URL_DEFAULTS, sortOrder };
+    assert.deepEqual(decodeUrlState(encodeUrlState(state)), state);
+  }
+});

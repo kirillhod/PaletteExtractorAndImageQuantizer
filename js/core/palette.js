@@ -1,5 +1,6 @@
 // @ts-check
 import { formatHex, parseHex, rgb8ToOklab } from './color.js';
+import { perceptualOrder } from './palette-order.js';
 import { sha256Hex, stableStringify } from './hash.js';
 
 /** @typedef {import('./types.js').RGB8} RGB8 */
@@ -159,9 +160,12 @@ function assertUniqueColor(palette, color, skipPosition) {
  * - `hue-asc` / `hue-desc` — achromatic first, then hue groups in a circular order,
  *   with lightness ascending/descending inside each group.
  * - `lightness-asc` / `lightness-desc`
+ * - `perceptual` — lightness seed refined by CIEDE2000 2-opt
+ * - `perceptual-path` — fixed-endpoint TSP path by CIEDE2000
+ * - `perceptual-flow` — DCCW-style cycle cut by CIEDE2000
  *
  * @param {Palette} palette
- * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
+ * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
  * @returns {Palette}
  */
 export function sortPalette(palette, order = 'source') {
@@ -182,7 +186,7 @@ export function sortPalette(palette, order = 'source') {
  * `sortPalette` assigns indices after merging with locked slots.
  *
  * @param {Palette} entries
- * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'} order
+ * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
  * @returns {Palette}
  */
 function sortUnlockedEntries(entries, order) {
@@ -191,6 +195,11 @@ function sortUnlockedEntries(entries, order) {
     return entries.slice().sort((a, b) => a.id - b.id);
   }
   if (entries.length <= 1) return entries.slice();
+  if (order === 'perceptual' || order === 'perceptual-path' || order === 'perceptual-flow') {
+    const seed =
+      order === 'perceptual' ? sortUnlockedEntries(entries, 'lightness-asc') : undefined;
+    return perceptualOrder(entries, order, seed);
+  }
 
   const items = entries.map((entry) => {
     const oklab = rgb8ToOklab(entry.color.r, entry.color.g, entry.color.b);

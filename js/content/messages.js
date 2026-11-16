@@ -89,6 +89,9 @@ const en = {
   'palette.sort.hueDesc': 'Hue · light → dark',
   'palette.sort.lightnessAsc': 'Lightness · dark → light',
   'palette.sort.lightnessDesc': 'Lightness · light → dark',
+  'palette.sort.perceptual': 'Perceptual · smooth',
+  'palette.sort.perceptualPath': 'Perceptual · color path',
+  'palette.sort.perceptualFlow': 'Perceptual · flow',
   'palette.countZero': '0 colors',
   'palette.count': '{countLabel}',
   'palette.edit': 'Edit',
@@ -272,6 +275,8 @@ const en = {
   'help.orderTitle': 'Palette order and the preview',
   'help.orderP':
     'The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot.',
+  'help.perceptualP':
+    'Perceptual orders compare colors with Delta E (CIEDE2000). Smooth keeps the light-to-dark flow while removing local jumps; Color path follows the closest perceptual route between the darkest and lightest colors; Flow maximizes local continuity without pinning the ends. Only the order and export indices change.',
   'help.qualityTitle': 'Quality',
   'help.qualityP':
     'The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.',
@@ -522,6 +527,9 @@ const ru = {
   'palette.sort.hueDesc': 'Тон · светлый → тёмный',
   'palette.sort.lightnessAsc': 'Светлота · тёмный → светлый',
   'palette.sort.lightnessDesc': 'Светлота · светлый → тёмный',
+  'palette.sort.perceptual': 'По восприятию · плавно',
+  'palette.sort.perceptualPath': 'По восприятию · цветовой путь',
+  'palette.sort.perceptualFlow': 'По восприятию · поток',
   'palette.countZero': '0 цветов',
   'palette.count': '{countLabel}',
   'palette.edit': 'Изменить',
@@ -710,6 +718,8 @@ const ru = {
   'help.orderTitle': 'Порядок палитры и предпросмотр',
   'help.orderP':
     'Предпросмотр и уменьшенный PNG используют цвета палитры. Перемещение цвета меняет порядок экспорта и индексы, но не набор цветов, поэтому изображение выглядит так же, кроме случая, когда для пикселя два цвета одинаково близки: тогда выбирается меньший индекс. Добавление, удаление или изменение цвета меняет сопоставление. В индексированном PNG видимые цвета после перемещения сохраняются (кроме случаев, когда два цвета одинаково близки), но порядок PLTE и индексная карта меняются; прозрачный индекс следует за своим цветом, а не за позицией.',
+  'help.perceptualP':
+    'Перцептивные порядки сравнивают цвета по Delta E (CIEDE2000). «Плавно» сохраняет переход от тёмного к светлому и убирает локальные скачки; «Цветовой путь» идёт по ближайшим цветам от самого тёмного к самому светлому; «Поток» максимизирует локальную плавность без фиксации концов. Меняются только порядок и индексы экспорта.',
   'help.qualityTitle': 'Качество',
   'help.qualityP':
     'Раздел «Качество» сравнивает предпросмотр с исходником по CIEDE2000. Среднее, p95 и максимум показывают ошибку; карта идёт от тёмно-синего при 0 до красного при 20+, а список худших пикселей даёт координаты. Полностью прозрачные пиксели пропускаются; проверка контраста не входит.',
