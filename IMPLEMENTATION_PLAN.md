@@ -38,10 +38,10 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 173 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
-| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, and compact sort controls with `ALGORITHM_VERSION` 3 |
-| Next | Ship the hue-band, hue-perceptual, and compact sort controls with the next release; otherwise M7 — later / not planned for v1.x |
+| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with references and credits, picked-color markers |
+| Tests | 176 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
+| Next | Ship the hue-band, hue-perceptual, compact sort, and palette-preview changes with the next release; otherwise M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -971,7 +971,13 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   **Add / Remove / Lock** buttons with action labels. Add is a plus, Remove a trash can,
   and Lock shows an open or closed padlock with the same accent pressed state while the
   entry is locked. The HEX field is fixed at 7.5 rem so the controls stay grouped on the
-  left. The palette bar carries compact undo/redo icon buttons next to Edit. Edit is a
+  left. The palette bar carries compact undo/redo icon buttons next to Edit. A preview
+  icon button sits between redo and Edit: it opens the current palette as one full-screen
+  strip on a neutral gray background, with two gray presets and a color picker for the
+  background. The chosen background persists under `peiq.previewBg`; the preview is
+  read-only and never changes the export. `Esc`, the close button, or a click on the
+  backdrop closes it, and focus returns to the trigger. The dialog traps Tab while open,
+  and the page behind it does not scroll. Edit is a
   toggle button with a visible pressed state; its label does not change, so the bar never
   rewraps. The editor row reveals with a 150 ms height transition and the canvas refits
   each frame, so opening or closing it never blinks or jumps. **Pick** is an icon button with
@@ -1071,7 +1077,9 @@ All colors, typography, component styles, depth, motion, and breakpoints are def
 
 - Components MUST use the `--peiq-*` variables from `DESIGN.md` ?2; no hard-coded hex.
 - Dynamic palette swatch colors are the only inline-style exception: set `--swatch` on the
-  element, never a hex in JS.
+  element, never a hex in JS. The full-screen preview background is the second exception:
+  it is user data, so it is set as `--peiq-preview-bg` on the dialog, never as a literal
+  `background` value.
 - If a visual value and this plan disagree, `DESIGN.md` wins; if behavior disagrees, this
   plan wins.
 
@@ -1667,6 +1675,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
 | `js/ui/palette-editor.js` | Strip and editor controls, selection, undo/redo history, transparent index, status |
+| `js/ui/palette-preview.js` | Full-screen palette strip, gray presets and custom background, focus return, `peiq.previewBg` persistence |
 | `js/ui/picked-markers.js` | Picked-color overlay, drag/cancel, overlap offsets, keyboard nudge focus |
 | `js/ui/palette-picker.js` | Pick mode, loupe, preview tooltip, marker drag, canvas pointer routing |
 | `js/ui/export-view.js` | Validated Save/Copy rows, object URLs, image and text clipboard helpers |
@@ -1714,6 +1723,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/quantize/kmeans.js` | `extractKMeans` | `quantize-advanced.test.js` |
 | `js/core/quantize/refine.js` | `refinePalette` (Lloyd refinement) | `quantize-advanced.test.js` |
 | `js/core/palette.js` | `createPalette`, `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, `movePaletteEntry`, `setPaletteLock`, `sortPalette`, `paletteHexList`, `paletteHash` | `palette.test.js` |
+| `js/core/preview-bg.js` | `normalizePreviewBackground`, `DEFAULT_PREVIEW_BACKGROUND`, gray presets; no DOM | `preview-bg.test.js` |
 | `js/core/palette-order.js` | Deterministic CIEDE2000 perceptual orders (`perceptual`, `perceptual-path`, `perceptual-flow`) | `palette-order.test.js` |
 | `js/core/picked-markers.js` | Picked-color marker map serialization, validation, and cloning | `picked-markers.test.js` |
 | `js/core/map.js` | `buildMapper`, `buildExactMap`, `mapPixels`, `mapIndices`, `indicesToRgba` | `map.test.js` |
@@ -2108,6 +2118,7 @@ A change is done only when:
 | 2026-11-16 | Group hue sorting into bands before lightness (first pass) | `hue-asc`/`hue-desc` sorted by continuous hue, so lightness only broke exact hue ties and real palettes read as a rainbow instead of a ramp per family. Chromatic colors now split into circular bands at 15° gaps, a palette covering under 30° stays one band, a continuous sweep uses its largest gaps, and each band sorts by Oklab L; both modes share the bands and differ only in ramp direction. Existing hue URLs still load but their order and palette hash change, so `ALGORITHM_VERSION` becomes 3; 168 tests |
 | 2026-11-16 | Bound hue bands and add hue-perceptual modes | The first-pass gap rule still left a continuous blue-purple region as one huge band, so L order interleaved hue and lightness. Hue bands now split at the most balanced internal gap until every band is at most 30°, and `hue-perceptual-asc` / `hue-perceptual-desc` refine each band with deterministic CIEDE2000 2-opt seeded by L. Per-band L ramps still left an 84 Delta E jump on the extracted 72-color StoneBlock palette, so the perceptual modes also choose each band's direction to minimize the join; the plain hue modes remain strict L ramps. Old hue URLs still load; their order and palette hash change again before release, so `ALGORITHM_VERSION` stays 3 because the banded hue change is unreleased; 172 tests |
 | 2026-11-16 | Show sort families with a direction button | Eleven select rows made the order list slow to scan, and six of them differed only by direction. The select now has eight rows: source, manual, hue grouped, hue perceptual, lightness, perceptual smooth, perceptual color path, and perceptual flow. One direction button maps the three directional families to their `-asc`/`-desc` keys and is disabled for fixed-direction orders. Stored keys, URLs, sessions, and export order keep the full key, so old links and saved sessions still load; 173 tests |
+| 2026-11-16 | Add a full-screen palette preview | Judging a palette against a page or sprite at real size needs a clean, full-width strip without the editor around it. A preview button in the palette bar opens the current order as one edge-to-edge strip on a neutral gray background; two gray presets and a native color picker set the background, which is remembered under `peiq.previewBg`. The overlay is read-only, traps Tab, closes on Esc, the close button, or a backdrop click, and returns focus to its trigger. The user-chosen background is data, so it is the second permitted inline style after `--swatch`; it never enters the palette, hash, URL, or session. 176 tests |
 
 ---
 

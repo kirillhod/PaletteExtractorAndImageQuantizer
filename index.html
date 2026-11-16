@@ -205,6 +205,9 @@
             <button class="peiq-icon-btn peiq-palette-history" id="palette-redo" type="button" data-i18n-aria-label="palette.redo" data-i18n-title="palette.redo" aria-label="Redo last change" title="Redo last change" disabled>
               <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a6 6 0 0 0 0 12h3"/></svg>
             </button>
+            <button class="peiq-icon-btn peiq-palette-preview-open" id="palette-preview-open" type="button" data-i18n-aria-label="palette.preview" data-i18n-title="palette.preview" aria-label="Preview palette" title="Preview palette" aria-haspopup="dialog" aria-expanded="false" aria-controls="palette-preview" disabled>
+              <svg class="peiq-palette-preview-open__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
             <button class="peiq-btn peiq-btn--small peiq-palette-edit" id="palette-edit" type="button" aria-pressed="false" data-i18n="palette.edit" disabled>Edit</button>
           </div>
           <div class="peiq-palette-strip" id="palette-strip" data-i18n-aria-label="palette.currentAria" aria-label="Current palette"></div>
@@ -441,7 +444,7 @@
       <h2 data-i18n="help.mapTitle">Mapping to a palette</h2>
       <p><strong data-i18n="help.mapLead">Map replaces colors; it does not add them.</strong> <span data-i18n="help.mapP">Every pixel takes the closest color in the target palette, so a photo can come out with four colors. Distances use the working space (Oklab by default); exact ties go to the lowest palette index. The left half of the preview is the source and the right half is the result; drag the divider or press O to compare. Dithering spreads the error to neighboring pixels so small areas can suggest colors the palette does not contain. Leave the transparent index at None to keep every color visible; choosing one removes every pixel assigned to that entry.</span></p>
       <h2 data-i18n="help.orderTitle">Palette order and the preview</h2>
-      <p><strong data-i18n="help.orderLead">Export order changes, the color set does not.</strong> <span data-i18n="help.orderP">A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.</span></p>
+      <p><strong data-i18n="help.orderLead">Export order changes, the color set does not.</strong> <span data-i18n="help.orderP">A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add. The preview button opens the current palette as one full-screen strip on a neutral gray background; you can switch between two grays or pick any color, and the choice is remembered. The preview never changes the export.</span></p>
       <p><strong data-i18n="help.hueLead">Hue order</strong> <span data-i18n="help.hueP">groups similar hues into bands and sorts each band from dark to light. Hue · grouped keeps each band as a strict lightness ramp. Hue · perceptual refines each band with Delta E (CIEDE2000) and may reverse a band so neighboring bands join at their closest ends. The direction button next to Sort switches both Hue modes and Lightness between dark → light and light → dark.</span></p>
       <p><strong data-i18n="help.perceptualLead">Perceptual orders</strong> <span data-i18n="help.perceptualP">compare colors with Delta E (CIEDE2000). Only the order and export indices change. These orders have a fixed direction, so the direction button is disabled.</span></p>
       <dl class="peiq-help-terms">
@@ -489,6 +492,26 @@
       <dl class="peiq-credits" id="help-credits"></dl>
     </div>
   </aside>
+
+  <div class="peiq-palette-preview" id="palette-preview" role="dialog" aria-modal="true" aria-labelledby="palette-preview-title" hidden>
+    <div class="peiq-palette-preview__bar">
+      <h2 class="peiq-palette-preview__title" id="palette-preview-title" data-i18n="palette.previewTitle">Palette preview</h2>
+      <div class="peiq-palette-preview__background" role="group" data-i18n-aria-label="palette.previewBackground" aria-label="Preview background">
+        <span class="peiq-label" data-i18n="palette.previewBackground">Background</span>
+        <div class="peiq-palette-preview__presets" id="palette-preview-presets"></div>
+        <label class="peiq-palette-preview__custom" data-i18n-title="palette.previewCustom" title="Custom background">
+          <span class="sr-only" data-i18n="palette.previewCustom">Custom background</span>
+          <input class="peiq-palette-preview__color" id="palette-preview-bg" type="color">
+        </label>
+      </div>
+      <button class="peiq-icon-btn peiq-palette-preview__close" id="palette-preview-close" type="button" data-i18n-aria-label="palette.previewClose" data-i18n-title="palette.previewClose" aria-label="Close preview" title="Close preview">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="peiq-palette-preview__stage" id="palette-preview-stage">
+      <div class="peiq-palette-preview__strip" id="palette-preview-strip" role="img" aria-label="Palette preview"></div>
+    </div>
+  </div>
 
   <div class="peiq-pick-preview" id="palette-pick-preview" aria-hidden="true" hidden>
     <span class="peiq-pick-preview__swatch" id="palette-pick-swatch"></span>

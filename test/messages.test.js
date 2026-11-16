@@ -85,11 +85,13 @@ test('every static data-i18n annotation has both translations', () => {
 test('every literal message key used by the UI has both translations', () => {
   const files = [
     'js/main.js',
+    'js/core/preview-bg.js',
     'js/ui/i18n.js',
     'js/ui/rail.js',
     'js/ui/theme.js',
     'js/ui/learn-view.js',
     'js/ui/palette-view.js',
+    'js/ui/palette-preview.js',
     'js/ui/status.js',
     'js/ui/export-view.js',
     'js/ui/dropzone.js',

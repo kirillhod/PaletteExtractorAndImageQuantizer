@@ -175,9 +175,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
   mutation. Prefer functions + plain data over classes.
 - No `console.log` in shipped code; `js/core/log.js` is debug-gated and off by default.
 - No `innerHTML` with user-controlled strings; no inline event handlers. Avoid inline
-  styles; the only exception is dynamic palette swatches via
-  `style.setProperty('--swatch', hex)`. Style with `css/tokens.css` and `DESIGN.md`
-  components.
+  styles; the only exceptions are dynamic palette swatches via
+  `style.setProperty('--swatch', hex)` and the user-chosen full-screen preview background
+  via `style.setProperty('--peiq-preview-bg', hex)`. Style with `css/tokens.css` and
+  `DESIGN.md` components.
 - All colors come from `--peiq-*` variables in `DESIGN.md`; no hard-coded hex in CSS or JS.
 - No dead code, speculative abstractions, or TODOs without a plan/backlog entry.
 - Comments explain *why*; cite the plan section or paper for non-obvious math.
@@ -272,9 +273,10 @@ and the change is committed locally with a descriptive body (plan §16).
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.5.0`; 173 tests in `main`. M6.3–M6.6 are complete; the bounded
-  hue-band, hue-perceptual, and compact sort controls are committed but unreleased.
-- Next: ship that fix with the next release; otherwise M7 — later / not planned for
+- Released `v1.5.0`; 176 tests in `main`. M6.3–M6.6 are complete; the bounded
+  hue-band, hue-perceptual, compact sort controls, and full-screen palette preview are
+  committed but unreleased.
+- Next: ship those changes with the next release; otherwise M7 — later / not planned for
   v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker
   exist.

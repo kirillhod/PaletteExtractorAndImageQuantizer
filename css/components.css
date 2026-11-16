@@ -542,6 +542,120 @@
   transform: rotate(180deg);
 }
 
+.peiq-palette-preview-open {
+  flex: 0 0 auto;
+}
+
+.peiq-palette-preview-open__icon,
+.peiq-palette-preview__close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.peiq-palette-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overscroll-behavior: contain;
+  background: var(--peiq-preview-bg, var(--peiq-bg-secondary));
+}
+
+.peiq-palette-preview[hidden] {
+  display: none;
+}
+
+html.peiq-preview-open,
+html.peiq-preview-open body {
+  overflow: hidden;
+}
+
+.peiq-palette-preview__bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2);
+  padding: var(--peiq-space-2) var(--peiq-space-4);
+  border-bottom: 1px solid var(--peiq-border);
+  background: var(--peiq-surface);
+  color: var(--peiq-text-strong);
+}
+
+.peiq-palette-preview__title {
+  margin: 0 auto 0 0;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.peiq-palette-preview__background {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+}
+
+.peiq-palette-preview__presets {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-1);
+}
+
+.peiq-palette-preview__preset {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius);
+  background: var(--swatch);
+  cursor: pointer;
+}
+
+.peiq-palette-preview__preset[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--peiq-focus);
+}
+
+.peiq-palette-preview__custom {
+  display: inline-flex;
+}
+
+.peiq-palette-preview__color {
+  width: 32px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-surface);
+  cursor: pointer;
+}
+
+.peiq-palette-preview__close {
+  flex: 0 0 auto;
+}
+
+.peiq-palette-preview__stage {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.peiq-palette-preview__strip {
+  display: flex;
+  width: 100%;
+  height: clamp(140px, 40vh, 440px);
+}
+
+.peiq-palette-preview__swatch {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--swatch);
+}
+
 .peiq-palette-editor-slot {
   display: grid;
   grid-template-rows: 0fr;

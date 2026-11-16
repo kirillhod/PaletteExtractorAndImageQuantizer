@@ -35,6 +35,7 @@ import {
 } from './ui/i18n.js';
 import { initLearn } from './ui/learn-view.js';
 import { createPaletteEditor } from './ui/palette-editor.js';
+import { createPalettePreview } from './ui/palette-preview.js';
 import { initRail } from './ui/rail.js';
 import { createSessionUrl } from './ui/session-url.js';
 import { initShortcuts } from './ui/shortcuts.js';
@@ -108,6 +109,10 @@ const app = {
   exportRequestId: 0,
   exportBusy: false,
 };
+
+const palettePreview = createPalettePreview({
+  getPalette: () => app.palette,
+});
 
 let nextRequestId = 1;
 let worker = createWorker();
@@ -210,6 +215,7 @@ const paletteEditor = createPaletteEditor({
   getSortOrder: () => sortOrder,
   setSortOrder,
   renderSortControls,
+  refreshPalettePreview: () => palettePreview.refresh(),
   getLastFile: () => lastFile,
   getSettings: () => readSettings(),
   applySettings: (settings) => applySettingsSnapshot(settings),

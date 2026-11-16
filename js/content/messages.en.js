@@ -96,6 +96,13 @@ export const EN_MESSAGES = {
   'palette.count': '{countLabel}',
   'palette.edit': 'Edit',
   'palette.currentAria': 'Current palette',
+  'palette.preview': 'Preview palette',
+  'palette.previewTitle': 'Palette preview',
+  'palette.previewClose': 'Close preview',
+  'palette.previewBackground': 'Background',
+  'palette.previewCustom': 'Custom background',
+  'palette.previewGrayMid': 'Mid gray background',
+  'palette.previewGrayDark': 'Dark gray background',
   'palette.pick': 'Pick',
   'palette.apply': 'Apply',
   'palette.add': 'Add',
@@ -288,7 +295,7 @@ export const EN_MESSAGES = {
   'help.orderTitle': 'Palette order and the preview',
   'help.orderLead': 'Export order changes, the color set does not.',
   'help.orderP':
-    'A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.',
+    'A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add. The preview button opens the current palette as one full-screen strip on a neutral gray background; you can switch between two grays or pick any color, and the choice is remembered. The preview never changes the export.',
   'help.hueLead': 'Hue order',
   'help.hueP':
     'groups similar hues into bands and sorts each band from dark to light. Hue · grouped keeps each band as a strict lightness ramp. Hue · perceptual refines each band with Delta E (CIEDE2000) and may reverse a band so neighboring bands join at their closest ends. The direction button next to Sort switches both Hue modes and Lightness between dark → light and light → dark.',

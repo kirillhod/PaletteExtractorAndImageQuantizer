@@ -656,6 +656,15 @@ grouped on the left instead of stretching across the card. Clicking any empty pa
 palette card, not only the strip, clears the selection; controls and swatches keep their
 own action.
 
+The preview button between redo and Edit opens a full-screen, read-only palette strip. The
+bar uses `--peiq-surface` with `--peiq-text-strong` and the page inline padding; the stage
+is the user-chosen `--peiq-preview-bg` (default `#808080`, plus `#767676` and a native color
+picker), so the strip is judged against a neutral field. The strip is edge-to-edge,
+`height: clamp(140px, 40vh, 440px)`, with equal flex segments and no gaps. Desktop controls
+are 28–32 px; below 600 px the bar becomes two rows, the visible Background label becomes
+screen-reader-only, and presets, picker, and close are 44 px. The overlay covers the page,
+locks body scroll, traps Tab, and closes on `Esc`, the close button, or a backdrop click.
+
 ```css
 .peiq-palette-panel {
   display: grid;
@@ -694,6 +703,58 @@ own action.
 }
 .peiq-sort-direction[data-direction='desc'] .peiq-sort-direction__icon {
   transform: rotate(180deg);
+}
+.peiq-palette-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--peiq-preview-bg, var(--peiq-bg-secondary));
+}
+.peiq-palette-preview__bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2);
+  padding: var(--peiq-space-2) var(--peiq-space-4);
+  border-bottom: 1px solid var(--peiq-border);
+  background: var(--peiq-surface);
+  color: var(--peiq-text-strong);
+}
+.peiq-palette-preview__preset {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius);
+  background: var(--swatch);
+}
+.peiq-palette-preview__preset[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--peiq-focus);
+}
+.peiq-palette-preview__color {
+  width: 32px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-surface);
+}
+.peiq-palette-preview__stage {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+.peiq-palette-preview__strip {
+  display: flex;
+  width: 100%;
+  height: clamp(140px, 40vh, 440px);
+}
+.peiq-palette-preview__swatch {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--swatch);
 }
 .peiq-select--compact {
   width: auto;
