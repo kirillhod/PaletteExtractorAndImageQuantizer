@@ -464,8 +464,18 @@ Z = 0.0193339 r + 0.1191920 g + 0.9503041 b
 `L = 116 f(Y/Yn) − 16`, `a = 500(f(X/Xn) − f(Y/Yn))`,
 `b = 200(f(Y/Yn) − f(Z/Zn))`, white D65 `(0.95047, 1, 1.08883)`.
 
-- Decisions use **Oklab Euclidean** by default.
-- Reporting uses **CIEDE2000** (`deltaE00`), validated against all 34 Sharma pairs.
+- **Oklab is the working space for color-assignment decisions:** extraction
+  (histogram cells, Wu moments, median-cut axes, K-means centroids, refinement),
+  nearest-color mapping, and dithering. It is a vector space with meaningful
+  centroids, error vectors, and fast Euclidean distances.
+- **CIEDE2000 is the metric for palette ordering and reporting.** Ordering a fixed
+  palette of 1–256 colors is a one-off pairwise comparison and can afford `deltaE00`;
+  QA reports mean/p95/max ΔE00, the error map, and worst pixels.
+- **Nearest-color assignment still uses Oklab**, even when the palette order was
+  produced with CIEDE2000. Ordering changes export indices; it does not change the
+  mapping metric.
+- CIEDE2000 is not a working space: it is a difference formula over CIELAB pairs.
+  Do not replace Oklab centroids, Wu moments, or error-diffusion vectors with it.
 - `deltaE76` exists for legacy/QA comparison only.
 
 ### 5.4 Alpha policy
@@ -482,10 +492,12 @@ Z = 0.0193339 r + 0.1191920 g + 0.9503041 b
 
 ### 5.5 Distances and precision
 
-- Clustering/mapping distances in Oklab with `f64`.
+- Clustering, mapping, and dithering distances in Oklab with `f64`.
+- Palette ordering uses pairwise CIEDE2000 distances; every ordering has a total
+  tie-break (§6.7). Oklab remains the metric for nearest-color assignment.
 - sRGB→linear LUT of 256 entries is allowed.
 - Oklab is computed per histogram bin / unique color, never per pixel.
-- Nearest ties: **lowest palette index wins**.
+- Nearest-color ties: **lowest palette index wins**.
 - Out-of-gamut Oklab results are clamped to 0..255 only at 8-bit materialization.
 
 ### 5.6 Reporting thresholds (defaults, user-overridable)
@@ -738,6 +750,9 @@ Presets set controls; they do not lock them.
   removed; HEX edits keep the lock.
 - `sortPalette(palette, order)` returns a new palette; IDs survive, indices are reassigned.
   The strip export and HEX list use this order.
+- Perceptual ordering, when added, uses pairwise **CIEDE2000** distances and a
+  deterministic path/2-opt search. Oklab `L/C/h` remain the keys for `hue-*` and
+  `lightness-*`; the ordering metric changes indices, not the nearest-color metric.
 - Sort keys:
   - `source`: ID ascending, restoring extraction order after any other sort.
   - `manual`: keep the current array order; the editor’s ← / → buttons move an unlocked
@@ -794,7 +809,9 @@ Implemented in v1.1 on the preview.
 - Time: `Date.now()` is forbidden in decisions; timestamps only in metadata, and excluded
   from hashes.
 - Sorts: total order with the documented tie-breaks in §6.7 and §6.4.
-- Nearest ties: lowest palette index.
+- Color-assignment decisions (extraction, mapping, dithering) use Oklab; palette
+  ordering and QA use CIEDE2000. Both are deterministic and use documented ties.
+- Nearest-color ties: lowest palette index.
 - K-means: fixed iteration cap and epsilon; no wall-clock stop.
 - Float comparisons use `f64`; stored palette values are exact 8-bit.
 - Canonical JSON: object keys sorted recursively; no insignificant whitespace.
@@ -902,7 +919,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   alpha threshold. A transparent index removes that entry from the preview and the
   indexed/strip output; choose None to keep every color opaque.
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
-  lightness light→dark; swatches, HEX list, and strip export follow it.
+  lightness light→dark; swatches, HEX list, and strip export follow it. A perceptual
+  order, when added, is labeled by its result (for example, “Perceptual (smooth)”),
+  not by the metric name; Oklab and CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
   adds **Pick / Apply / Add / ← / → / Remove / Lock**, plus compact undo/redo icon
   buttons on touch layouts. **Pick** arms a canvas eyedropper with a floating color/HEX
@@ -1883,6 +1902,7 @@ A change is done only when:
 | 2026-11-15 | Lead the search title with keywords and end it with PEIQ | Google truncated the long unbroken repository name and dropped the descriptive suffix; the full name stays in JSON-LD and the header |
 | 2026-11-15 | Retry image decode through an `<img>` element before reporting imageDecode | Some mobile browsers fail `createImageBitmap` on a restored blob but decode the same bytes through the image element |
 | 2026-11-15 | Release 1.3.1: M6.2 complete | Saved-image byte storage, v1 migration, and the decode fallback verified with repeated reloads and a corrupt record; 135 tests |
+| 2026-11-16 | Allow CIEDE2000 for palette ordering; keep Oklab for extraction, mapping, and dithering | These stages optimize different things: clustering needs a vector space with centroids and fast per-pixel distances, while ordering a fixed 1–256 color palette is a one-off pairwise comparison. Splitting the metric removes the apparent conflict without changing nearest-color assignment. |
 
 ---
 

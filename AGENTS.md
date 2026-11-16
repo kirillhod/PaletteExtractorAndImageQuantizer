@@ -101,8 +101,9 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
    `canvas`, `Image`, `navigator`, `localStorage`, or `fetch`; it must run under
    `node --test`. Side effects live in `ui`, `main.js`, or the worker.
 4. **One color implementation.** All conversions, distances, and contrast go through
-   `js/core/color.js`. Decisions use Oklab Euclidean; reporting uses CIEDE2000. Nearest
-   ties: **lowest palette index wins**.
+   `js/core/color.js`. Color-assignment decisions (extraction, mapping, dithering) use
+   Oklab Euclidean; palette ordering and reporting use CIEDE2000. Nearest-color ties:
+   **lowest palette index wins**.
 5. **Determinism.** No `Math.random`; use `js/core/rng.js` (`splitmix64`, explicit seed).
    No wall-clock stopping. Every sort has a total-order tie-break. Canonical JSON sorts
    keys. `Date.now()` only in metadata excluded from hashes.
