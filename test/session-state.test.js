@@ -9,6 +9,7 @@ import {
   clonePalette,
   clonePaletteSnapshot,
   isValidSessionRecord,
+  sessionPaletteName,
 } from '../js/core/session-state.js';
 
 const palette = createPalette([
@@ -70,6 +71,22 @@ test('history snapshots keep palette edits and settings together', () => {
   assert.equal(settings.colors, 16);
   assert.equal(settings.dither.strength, 0.8);
   assert.equal('settings' in clonePaletteSnapshot({ ...snapshot, settings: undefined }), false);
+});
+
+test('a restored imported palette keeps the name the UI shows', () => {
+  assert.equal(
+    sessionPaletteName({ statusName: 'tester.hex', fixedName: 'PICO-8' }),
+    'tester.hex',
+  );
+  assert.equal(
+    sessionPaletteName({ statusName: '', fixedName: 'Game Boy DMG', importedName: 'tester.hex' }),
+    'Game Boy DMG',
+  );
+  assert.equal(
+    sessionPaletteName({ statusName: '', fixedName: '', importedName: 'tester.hex' }),
+    'tester.hex',
+  );
+  assert.equal(sessionPaletteName({}), '');
 });
 
 test('session records require a version, image bytes, palette, and history', () => {

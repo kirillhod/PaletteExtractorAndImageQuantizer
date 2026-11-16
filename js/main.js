@@ -208,6 +208,7 @@ sessionUrl = createSessionUrl({
   getLoadRequestId: () => loadRequestId,
   getFixedName: () => fixedName,
   getImportedName: () => importedName,
+  getPaletteName: () => paletteEditor.getPaletteName(),
   getControlsParams: () => controls.getParams(),
   setMode: (next) => setMode(next),
   loadFile: (file, restore) => loadFile(file, restore),
@@ -485,18 +486,16 @@ function setMode(next) {
   if (mapControls) mapControls.hidden = next !== 'map';
 
   if (next === 'map') {
-    if (fixedColors.length === 0) {
-      loadTargetPalette(paletteSelect?.value || 'pico-8');
-    } else {
+    // The select is the source of truth for the target palette, so a hash or a
+    // restored session that lands in Map mode shows the palette it names, not the
+    // built-in that happened to be selected at startup.
+    if (!loadTargetPalette(paletteSelect?.value || 'pico-8') && fixedColors.length > 0) {
       app.palette = sortPalette(createPalette(fixedColors), sortOrder);
     }
   } else {
     app.palette = [];
   }
   paletteEditor.renderCurrentPalette();
-  if (next === 'map' && transparentIndex && transparentIndex.value === '-1') {
-    transparentIndex.value = '0';
-  }
   if (app.preview) processPreview();
   sessionUrl?.syncUrlState();
 }
@@ -677,6 +676,19 @@ async function loadFile(file, restore = null) {
             app.palette.length,
           );
         }
+      }
+      // Restore the palette identity together with the colors. Otherwise the next
+      // session save would name the restored palette after the built-in selected at
+      // startup, and switching back to "Imported" would have no colors to reload.
+      if (restore.paletteValue === 'imported') {
+        importedColors = app.palette.map((entry) => ({ ...entry.color }));
+        importedName = restore.paletteName || t('palette.restoredSession');
+        fixedName = importedName;
+      } else if (restore.paletteValue) {
+        const builtin = BUILTIN_PALETTES.find(
+          (palette) => palette.id === restore.paletteValue,
+        );
+        if (builtin) fixedName = builtin.name;
       }
       paletteEditor.setPaletteStatus(
         restore.paletteName || t('palette.restoredSession'),

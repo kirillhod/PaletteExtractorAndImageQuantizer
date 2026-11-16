@@ -18,9 +18,9 @@
 `screenshots/workspace-dark.png` and `screenshots/map-dither-dark.png` are captures of
 the running app using a hydrangea photo supplied by the project owner for documentation.
 The workspace capture shows the palette editor open with a selected swatch; the map capture
-shows the Game Boy DMG palette with Floyd–Steinberg dithering. No third-party artwork,
-screenshots, or stock images are included. Refreshed 2026-11-16 at 1440×900 from the
-current UI.
+shows the Game Boy DMG palette with Floyd–Steinberg dithering and the transparent index at
+None. No third-party artwork, screenshots, or stock images are included. Refreshed
+2026-11-16 at 1440×900 from the current UI.
 
 ## Blue noise
 

@@ -39,11 +39,13 @@ Constrain artwork to the palette your engine or hardware expects.
 
 - Built-in palettes: **PICO-8**, **Game Boy DMG**, **Commodore 64**, **ZX Spectrum**, and
   **EGA**.
-- Map mode uses the target palette as-is; it does not run an extractor. Extractor method,
-  color count, and working space apply in Extract mode.
+- Map mode replaces every pixel with the nearest color in the target palette; the right
+  half of the preview shows the result. It does not run an extractor: method, color count,
+  and working space apply in Extract mode.
 - Import `.hex`, `.gpl`, `.pal`, `.json`, or a PNG palette strip (`N×1` or `1×N`).
-- Choose a transparent index for sprites. That palette entry disappears from the preview
-  and from indexed/strip output; choose None to keep every color opaque.
+- Choose a transparent index for sprites. The index starts at **None**, so every palette
+  color stays visible; a chosen entry disappears from the preview and from indexed/strip
+  output.
 - Tune the alpha threshold and preview the result immediately.
 
 ### Dither like a pixel artist

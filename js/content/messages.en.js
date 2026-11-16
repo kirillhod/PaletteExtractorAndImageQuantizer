@@ -131,12 +131,13 @@ export const EN_MESSAGES = {
   'rail.previewHint': 'Preview uses a downscaled copy. Export always uses the full image.',
 
   'mode.label': 'Mode',
-  'mode.tooltip': 'Extract builds a palette from this image. Map applies a fixed palette instead.',
+  'mode.tooltip':
+    'Extract chooses colors from this image. Map replaces every pixel with the nearest color from a fixed palette.',
   'mode.aria': 'Palette mode',
   'mode.extract': 'Extract',
   'mode.map': 'Map',
   'mode.mapHint':
-    'Map uses this palette as-is. Extractor settings apply in Extract mode.',
+    'Map replaces each pixel with the nearest color in this palette; the right half of the preview shows the result. A transparent index appears only after you choose one.',
 
   'method.label': 'Method',
   'method.tooltip':
@@ -160,11 +161,11 @@ export const EN_MESSAGES = {
 
   'targetPalette.label': 'Target palette',
   'targetPalette.tooltip':
-    'A built-in or imported fixed palette. Map mode reuses it instead of extracting colors.',
+    'The fixed palette Map uses. It is applied as-is; Load palette file adds your own .hex, .gpl, .pal, .json, or indexed PNG strip.',
 
   'transparent.label': 'Transparent index',
   'transparent.tooltip':
-    'Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. Map mode starts at index 0; choose None to keep every color opaque.',
+    'Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. The default is None, so every palette color stays visible; choosing an index removes every pixel assigned to that entry.',
   'transparent.none': 'None',
 
   'alpha.label': 'Alpha threshold',
@@ -273,11 +274,15 @@ export const EN_MESSAGES = {
   'help.howTitle': 'How it works',
   'help.how1': 'Build a 5-bit, alpha-weighted color histogram.',
   'help.how2':
-    'Extract a palette or load a fixed one; Map uses the fixed palette as-is. Edit colors, locks, and order.',
+    'Extract a palette or load a fixed one; Map replaces every pixel with a palette color. Edit colors, locks, and order.',
   'help.how3':
     'Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.',
   'help.how4':
     'Dither optionally, then encode, decode, and compare the result before offering the file.',
+  'help.mapTitle': 'Mapping to a palette',
+  'help.mapLead': 'Map replaces colors; it does not add them.',
+  'help.mapP':
+    'Every pixel takes the closest color in the target palette, so a photo can come out with four colors. Distances use the working space (Oklab by default); exact ties go to the lowest palette index. The left half of the preview is the source and the right half is the result; drag the divider or press O to compare. Dithering spreads the error to neighboring pixels so small areas can suggest colors the palette does not contain. Leave the transparent index at None to keep every color visible; choosing one removes every pixel assigned to that entry.',
   'help.orderTitle': 'Palette order and the preview',
   'help.orderLead': 'Export order changes, the color set does not.',
   'help.orderP':

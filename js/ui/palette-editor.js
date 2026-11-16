@@ -548,6 +548,15 @@ export function createPaletteEditor(deps) {
   }
 
   /**
+   * The palette name shown next to the count. Session saves use it so a restored
+   * custom palette keeps its own name instead of the built-in selected at startup.
+   * @returns {string}
+   */
+  function getPaletteName() {
+    return state.statusName;
+  }
+
+  /**
    * @param {string} name
    * @param {number} count
    */
@@ -687,6 +696,7 @@ export function createPaletteEditor(deps) {
     paletteSnapshot,
     populateTransparentIndex,
     pushPaletteHistory,
+    getPaletteName,
     refreshHint,
     removePaletteColor,
     renderCurrentPalette,

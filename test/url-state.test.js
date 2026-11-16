@@ -64,6 +64,17 @@ test('serpentine and transparent index survive compact encoding', () => {
   assert.deepEqual(decodeUrlState(encoded), state);
 });
 
+test('map mode without a transparent parameter keeps every color opaque', () => {
+  const state = {
+    ...URL_DEFAULTS,
+    mode: /** @type {const} */ ('map'),
+    palette: 'gameboy-dmg',
+  };
+  const encoded = encodeUrlState(state);
+  assert.ok(!/transparent=/.test(encoded));
+  assert.equal(decodeUrlState(`#${encoded}`).transparentIndex, -1);
+});
+
 test('perceptual sort modes round-trip through the URL', () => {
   for (const sortOrder of /** @type {const} */ ([
     'perceptual',

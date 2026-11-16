@@ -1,4 +1,6 @@
 // @ts-check
+import { recenterOffsets } from '../core/view-offsets.js';
+
 /**
  * @typedef {{ data: Uint8ClampedArray, width:number, height:number }} ImageLike
  */
@@ -401,16 +403,32 @@ export function createCanvasView(options) {
   }
 
   const narrowViewport = window.matchMedia('(max-width: 979px)');
-  let lastFrameWidth = 0;
+  let lastFrameWidth = frame.clientWidth;
+  let lastFrameHeight = frame.clientHeight;
   const resizeObserver = new ResizeObserver(() => {
     const width = frame.clientWidth;
     if (width < 2) return;
+    const height = frame.clientHeight;
     // Mobile browser chrome changes the visual viewport height while scrolling. Do not
     // re-fit the image for height-only changes there; keep the scale stable and redraw.
     const widthChanged = Math.abs(width - lastFrameWidth) > 1;
-    if (autoFit && (!narrowViewport.matches || widthChanged)) fit();
+    const heightChanged = Math.abs(height - lastFrameHeight) > 1;
+    if (autoFit) {
+      if (!narrowViewport.matches || widthChanged) fit();
+    } else if (widthChanged || (!narrowViewport.matches && heightChanged)) {
+      // The rail or palette editor changed the frame size without a refit. Keep the
+      // image under the frame center instead of anchoring it to the old top-left.
+      const next = recenterOffsets(
+        { offsetX, offsetY },
+        { width, height },
+        { width: lastFrameWidth, height: lastFrameHeight },
+      );
+      offsetX = next.offsetX;
+      offsetY = next.offsetY;
+    }
     renderNow();
     lastFrameWidth = width;
+    lastFrameHeight = height;
   });
   resizeObserver.observe(frame);
 

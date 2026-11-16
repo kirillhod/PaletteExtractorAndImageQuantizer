@@ -4,6 +4,7 @@ import {
   cloneHistory,
   clonePalette,
   isValidSessionRecord,
+  sessionPaletteName,
 } from '../core/session-state.js';
 import { pickedMarkersToArray } from '../core/picked-markers.js';
 import { decodeUrlState, encodeUrlState } from '../core/url-state.js';
@@ -36,6 +37,7 @@ import { setStatusMessage, toastKey } from './status.js';
  * @property {() => number} getLoadRequestId
  * @property {() => string} getFixedName
  * @property {() => string} getImportedName
+ * @property {() => string} getPaletteName
  * @property {() => any} getControlsParams
  * @property {(next: 'extract'|'map') => void} setMode
  * @property {(file: File, restore?: any) => Promise<void>} loadFile
@@ -139,10 +141,7 @@ export function createSessionUrl(deps) {
       if (paletteSelect) paletteSelect.value = state.palette;
 
       deps.setMode(state.mode);
-      paletteState.pendingTransparentIndex =
-        state.mode === 'map' || state.transparentIndex >= 0
-          ? state.transparentIndex
-          : null;
+      paletteState.pendingTransparentIndex = state.transparentIndex;
       paletteEditor.renderCurrentPalette();
       deps.updateDitherLabels();
       deps.updateDitherControls();
@@ -164,7 +163,11 @@ export function createSessionUrl(deps) {
       state: {
         settings: buildUrlState(),
         paletteValue: paletteSelect?.value ?? 'pico-8',
-        paletteName: deps.getFixedName() || deps.getImportedName() || '',
+        paletteName: sessionPaletteName({
+          statusName: deps.getPaletteName(),
+          fixedName: deps.getFixedName(),
+          importedName: deps.getImportedName(),
+        }),
         palette: clonePalette(app.palette),
         paletteEdited: app.paletteEdited,
         sortOrder: deps.getSortOrder(),

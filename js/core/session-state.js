@@ -53,6 +53,18 @@ export function clonePaletteSnapshot(snapshot) {
 }
 
 /**
+ * The session keeps the palette name the UI shows. Startup fills the fixed-palette
+ * name before any restore, so trusting that field alone would rename a restored
+ * imported palette to the built-in selected at boot.
+ *
+ * @param {{ statusName?:string, fixedName?:string, importedName?:string }} names
+ * @returns {string}
+ */
+export function sessionPaletteName(names) {
+  return names.statusName || names.fixedName || names.importedName || '';
+}
+
+/**
  * @param {{ past: any[], future: any[] }} history
  */
 export function cloneHistory(history) {

@@ -230,7 +230,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <span class="peiq-label" data-i18n="mode.label">Mode</span>
-                <button class="peiq-help" type="button" data-i18n-tooltip="mode.tooltip" data-tooltip="Extract builds a palette from this image. Map applies a fixed palette instead.">?</button>
+                <button class="peiq-help" type="button" data-i18n-tooltip="mode.tooltip" data-tooltip="Extract chooses colors from this image. Map replaces every pixel with the nearest color from a fixed palette.">?</button>
               </div>
               <div class="peiq-tabs" role="tablist" data-i18n-aria-label="mode.aria" aria-label="Palette mode">
                 <button class="peiq-tab" id="mode-extract" type="button" role="tab" aria-selected="true" data-i18n="mode.extract">Extract</button>
@@ -279,7 +279,7 @@
               <div class="peiq-field">
                 <div class="peiq-label-row">
                   <label class="peiq-label" for="palette-select" data-i18n="targetPalette.label">Target palette</label>
-                  <button class="peiq-help" type="button" data-i18n-tooltip="targetPalette.tooltip" data-tooltip="A built-in or imported fixed palette. Map mode reuses it instead of extracting colors.">?</button>
+                  <button class="peiq-help" type="button" data-i18n-tooltip="targetPalette.tooltip" data-tooltip="The fixed palette Map uses. It is applied as-is; Load palette file adds your own .hex, .gpl, .pal, .json, or indexed PNG strip.">?</button>
                 </div>
                 <select class="peiq-select" id="palette-select"></select>
               </div>
@@ -288,13 +288,13 @@
                 <input id="palette-input" type="file" accept=".hex,.gpl,.pal,.json,.png,image/png" hidden>
                 <span class="peiq-hint" id="palette-status" data-i18n="palette.statusInitial">PICO-8 · 16 colors</span>
               </div>
-              <p class="peiq-hint" data-i18n="mode.mapHint">Map uses this palette as-is. Extractor settings apply in Extract mode.</p>
+              <p class="peiq-hint" data-i18n="mode.mapHint">Map replaces each pixel with the nearest color in this palette; the right half of the preview shows the result. A transparent index appears only after you choose one.</p>
             </div>
 
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="transparent-index" data-i18n="transparent.label">Transparent index</label>
-                <button class="peiq-help" type="button" data-i18n-tooltip="transparent.tooltip" data-tooltip="Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. Map mode starts at index 0; choose None to keep every color opaque.">?</button>
+                <button class="peiq-help" type="button" data-i18n-tooltip="transparent.tooltip" data-tooltip="Which palette entry becomes fully transparent in the preview, indexed PNG, and strip. The default is None, so every palette color stays visible; choosing an index removes every pixel assigned to that entry.">?</button>
               </div>
               <select class="peiq-select" id="transparent-index" disabled>
                 <option value="-1" data-i18n="transparent.none">None</option>
@@ -423,10 +423,12 @@
       <h2 data-i18n="help.howTitle">How it works</h2>
       <ol>
         <li data-i18n="help.how1">Build a 5-bit, alpha-weighted color histogram.</li>
-        <li data-i18n="help.how2">Extract a palette or load a fixed one; edit colors, locks, and order.</li>
+        <li data-i18n="help.how2">Extract a palette or load a fixed one; Map replaces every pixel with a palette color. Edit colors, locks, and order.</li>
         <li data-i18n="help.how3">Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.</li>
         <li data-i18n="help.how4">Dither optionally, then encode, decode, and compare the result before offering the file.</li>
       </ol>
+      <h2 data-i18n="help.mapTitle">Mapping to a palette</h2>
+      <p><strong data-i18n="help.mapLead">Map replaces colors; it does not add them.</strong> <span data-i18n="help.mapP">Every pixel takes the closest color in the target palette, so a photo can come out with four colors. Distances use the working space (Oklab by default); exact ties go to the lowest palette index. The left half of the preview is the source and the right half is the result; drag the divider or press O to compare. Dithering spreads the error to neighboring pixels so small areas can suggest colors the palette does not contain. Leave the transparent index at None to keep every color visible; choosing one removes every pixel assigned to that entry.</span></p>
       <h2 data-i18n="help.orderTitle">Palette order and the preview</h2>
       <p><strong data-i18n="help.orderLead">Export order changes, the color set does not.</strong> <span data-i18n="help.orderP">A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette strip or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.</span></p>
       <p><strong data-i18n="help.perceptualLead">Perceptual orders</strong> <span data-i18n="help.perceptualP">compare colors with Delta E (CIEDE2000). Only the order and export indices change.</span></p>

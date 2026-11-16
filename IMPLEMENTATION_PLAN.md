@@ -39,7 +39,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 161 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, SEO, references |
+| Tests | 166 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
 | Version | `js/core/version.js`; `v1.4.0` tagged; M6.3–M6.5 complete |
 | Next | Ship the Help version fix and post-release polish with the next release; otherwise M7 — later / not planned for v1.x |
 
@@ -938,9 +938,11 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Map: built-in target palette (PICO-8, Game Boy, C64, ZX Spectrum, EGA), "Load palette
   file…" for `.hex`, `.gpl`, `.pal`, `.json`, and 1×N/N×1 PNG strips, transparent index,
   alpha threshold. Map does not extract colors: the target palette is used as-is and the
-  extractor settings apply only in Extract mode, which a one-line hint in the Map section
-  states. A transparent index removes that entry from the preview and the indexed/strip
-  output; choose None to keep every color opaque.
+  extractor settings apply only in Extract mode. The hint and the Help section explain
+  that every pixel becomes the nearest color in the target palette and that the right half
+  of the preview is the result. The transparent index defaults to **None** in both modes;
+  choosing one removes that entry from the preview and the indexed/strip output. A
+  restored session keeps the target palette name it showed, including imported files.
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark / perceptual smooth / perceptual color path / perceptual flow;
   swatches, HEX list, and strip export follow it. Perceptual modes are labeled by their
@@ -1717,6 +1719,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/session-store.js` | IndexedDB read/write/clear for the last image + session state | — |
 | `js/core/session-state.js` | Palette/history/marker cloning and saved-record validation | `session-state.test.js` |
 | `js/core/url-state.js` | Versioned hash encode/decode for settings; no image data | `url-state.test.js` |
+| `js/core/view-offsets.js` | Center-preserving offsets when the canvas frame resizes without a refit | `view-offsets.test.js` |
 | `js/core/pipeline.js` | `runPipeline(job)` stage composition | `pipeline.test.js`, `determinism.test.js` |
 | `js/core/log.js` | Optional debug logger; disabled in production | — |
 
@@ -2048,6 +2051,10 @@ A change is done only when:
 | 2026-11-16 | Add a header toggle that collapses the settings rail | On a wide screen the rail is 360 px of permanent width; users who work mostly in the canvas should be able to reclaim it. The choice persists in `peiq.rail`, `theme-init.js` applies it before paint, and the stage takes the freed column without a flash. |
 | 2026-11-16 | Keep the Edit label and report Map mode without an extraction timing | Swapping Edit for Done changed the button width, rewrapped the palette bar, and resized the canvas together with the editor; a pressed state reports the mode without moving anything. Map never extracts, so the status line no longer shows a 0 ms extraction item there, and the Map section states that extractor settings apply in Extract mode. |
 | 2026-11-16 | Match the Help drawer header to the page header | The drawer bar was 65 px tall against the page's 52 px, with a 20 px/600 title, so the two bottom borders stepped and the overlay looked like a separate app. It now uses `--peiq-header-height`, the same 24 px inline padding, the brand's 18 px/800 title scale, and an 18 px close icon; the borders line up at 52 px (48 px on touch). |
+| 2026-11-16 | Default the transparent index to None in Map mode | Forcing index 0 made every pixel that mapped to the palette's first color disappear, so mapping looked broken and the screenshot showed holes. Both modes now start at None; choosing an index still removes that entry from the preview and indexed/strip output. |
+| 2026-11-16 | Preserve a restored palette's own name and target through reloads | Session saves used the startup fixed-palette name, so a restored import was renamed PICO-8 on the next reload and its colors were unavailable when switching back to Imported. The record now keeps the name the UI shows and restores the imported colors; Map also loads the palette named by the select, including a URL hash. |
+| 2026-11-16 | Keep the image centered when the frame resizes without a refit | After zoom or pan, collapsing or opening the rail and the palette editor changed the frame width and height while the offsets stayed put, pushing the image off-center. The resize observer now shifts the offsets by half the size delta; fit mode still refits normally. |
+| 2026-11-16 | Explain mapping in the Map section and Help | "Map uses this palette as-is" described the palette, not the operation. The hint and a new Help section now state that every pixel becomes the nearest target color, which preview half is the result, and when transparency appears. |
 
 ---
 
