@@ -152,6 +152,14 @@
   padding: 0 8px;
 }
 
+@media (min-width: 980px) {
+  .peiq-stage__toolbar .peiq-icon-btn {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+  }
+}
+
 /* The desktop stage grid gives the canvas the space left by the palette, export,
    and status rows. This rule must live after the base clamp() above. */
 @media (min-width: 980px) {

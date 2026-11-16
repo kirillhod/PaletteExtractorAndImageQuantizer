@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   gap: var(--peiq-space-3);
-  height: 64px;
+  height: var(--peiq-header-height);
   padding: 0 var(--peiq-space-4);
   background: var(--peiq-bg);
   border-bottom: 1px solid var(--peiq-border-strong);
@@ -67,7 +67,7 @@
   justify-content: center;
   min-height: 480px;
   max-height: 560px;
-  height: calc(100svh - 64px);
+  height: calc(100svh - var(--peiq-header-height));
   margin-inline: calc(var(--peiq-space-3) * -1);
   padding: var(--peiq-space-5) var(--peiq-space-3);
   text-align: center;
@@ -112,12 +112,21 @@
     "toolbar"
     "canvas"
     "palette"
+    "hint"
     "status"
     "rail";
   gap: var(--peiq-space-3);
   align-items: start;
-  min-height: calc(100svh - 64px);
+  min-height: calc(100svh - var(--peiq-header-height));
   padding-block: var(--peiq-space-4);
+}
+
+.peiq-workspace > * {
+  min-width: 0;
+}
+
+.peiq-export-column {
+  display: contents;
 }
 
 .peiq-stage__toolbar {
@@ -126,7 +135,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--peiq-space-2);
-  min-height: 36px;
+  min-height: 28px;
 }
 
 .peiq-export-panel {
@@ -156,11 +165,11 @@
 .peiq-rail {
   grid-area: rail;
   position: sticky;
-  top: 80px;
+  top: calc(var(--peiq-header-height) + var(--peiq-space-3));
   display: grid;
   gap: var(--peiq-space-3);
   min-width: 0;
-  max-height: calc(100svh - 96px);
+  max-height: calc(100svh - var(--peiq-header-height) - 32px);
   overflow: auto;
   padding-right: 4px;
   align-content: start;
@@ -241,12 +250,32 @@
       "export canvas rail"
       "export palette rail"
       "status status rail";
+    gap: var(--peiq-space-2);
     align-items: stretch;
-    padding-block: var(--peiq-space-3);
+    padding-block: var(--peiq-space-2);
   }
 
   .peiq-export-panel {
     align-self: start;
+  }
+
+  .peiq-export-column {
+    grid-area: export;
+    display: grid;
+    grid-template-rows: max-content minmax(0, 1fr);
+    gap: var(--peiq-space-2);
+    min-width: 0;
+    min-height: 0;
+    align-content: start;
+  }
+
+  .peiq-export-column > .peiq-export-panel,
+  .peiq-export-column > .peiq-palette-hint {
+    grid-area: auto;
+  }
+
+  .peiq-palette-hint {
+    align-self: end;
   }
 
   .peiq-rail {

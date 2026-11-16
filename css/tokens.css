@@ -98,6 +98,8 @@
   --peiq-space-6: 96px;
   --peiq-space-7: 192px;
 
+  --peiq-header-height: 52px;
+
   --peiq-ease: ease-out;
   --peiq-dur-fast: 80ms;
   --peiq-dur: 150ms;

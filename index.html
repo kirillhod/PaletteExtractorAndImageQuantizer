@@ -107,37 +107,44 @@
     </section>
 
     <section class="peiq-workspace" id="workspace" hidden>
-        <div class="peiq-export-panel" aria-labelledby="export-heading">
-          <div class="peiq-export-bar">
-            <span class="peiq-label" id="export-heading" data-i18n="export.heading">Export</span>
-            <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" data-i18n-aria-label="export.indexedAria" aria-label="Download indexed PNG" data-i18n="export.indexed" disabled>Indexed PNG</button>
-            <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" data-i18n="export.strip" disabled>Palette strip</button>
-            <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" data-i18n="export.reduced" disabled>Reduced PNG</button>
-            <button class="peiq-btn peiq-btn--small" id="copy-hex" type="button" data-i18n="export.copyHex" disabled>Copy HEX</button>
-            <div class="peiq-export-option">
-              <label class="peiq-label" for="strip-orientation" data-i18n="export.stripLabel">Strip</label>
-              <select class="peiq-select peiq-select--compact" id="strip-orientation">
-                <option value="Nx1">N×1</option>
-                <option value="1xN">1×N</option>
-              </select>
-              <button class="peiq-help" type="button" data-i18n-tooltip="export.stripTooltip" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips; a transparent index adds alpha.">?</button>
+        <div class="peiq-export-column">
+          <div class="peiq-export-panel" aria-labelledby="export-heading">
+            <div class="peiq-export-bar">
+              <span class="peiq-label" id="export-heading" data-i18n="export.heading">Export</span>
+              <button class="peiq-btn peiq-btn--primary" id="export-indexed" type="button" data-i18n-aria-label="export.indexedAria" aria-label="Download indexed PNG" data-i18n="export.indexed" disabled>Indexed PNG</button>
+              <button class="peiq-btn peiq-btn--small" id="copy-image" type="button" data-i18n-aria-label="export.copyImageAria" aria-label="Copy indexed PNG to clipboard" data-i18n="export.copyImage" disabled>Copy image</button>
+              <button class="peiq-btn peiq-btn--small" id="export-strip" type="button" data-i18n="export.strip" disabled>Palette strip</button>
+              <button class="peiq-btn peiq-btn--small" id="export-reduced" type="button" data-i18n="export.reduced" disabled>Reduced PNG</button>
+              <button class="peiq-btn peiq-btn--small" id="copy-hex" type="button" data-i18n="export.copyHex" disabled>Copy HEX</button>
+              <div class="peiq-export-option">
+                <label class="peiq-label" for="strip-orientation" data-i18n="export.stripLabel">Strip</label>
+                <select class="peiq-select peiq-select--compact" id="strip-orientation">
+                  <option value="Nx1">N×1</option>
+                  <option value="1xN">1×N</option>
+                </select>
+                <button class="peiq-help" type="button" data-i18n-tooltip="export.stripTooltip" data-tooltip="N×1 is one horizontal row of colors; 1×N is one vertical column. Both are 8-bit PNG strips; a transparent index adds alpha.">?</button>
+              </div>
             </div>
+            <div class="peiq-export-palette">
+              <label class="peiq-label" for="palette-format" data-i18n="export.file">File</label>
+              <select class="peiq-select peiq-select--compact" id="palette-format">
+                <option value="hex">.hex</option>
+                <option value="gpl">.gpl</option>
+                <option value="json">.json</option>
+              </select>
+              <button class="peiq-btn peiq-btn--small" id="export-palette" type="button" data-i18n="export.save" disabled>Save</button>
+            </div>
+            <div class="peiq-export-progress" id="export-progress" role="status" aria-live="polite" hidden>
+              <div class="peiq-export-progress__track" aria-hidden="true"><span></span></div>
+              <p class="peiq-export-progress__label" id="export-progress-label" data-i18n="export.preparing">Preparing export…</p>
+            </div>
+            <div class="peiq-download-result" id="download-result" hidden></div>
+            <p class="peiq-hint" data-i18n="export.checkHint">Decoded or parsed and checked before Save or copy.</p>
           </div>
-          <div class="peiq-export-palette">
-            <label class="peiq-label" for="palette-format" data-i18n="export.file">File</label>
-            <select class="peiq-select peiq-select--compact" id="palette-format">
-              <option value="hex">.hex</option>
-              <option value="gpl">.gpl</option>
-              <option value="json">.json</option>
-            </select>
-            <button class="peiq-btn peiq-btn--small" id="export-palette" type="button" data-i18n="export.save" disabled>Save</button>
-          </div>
-          <div class="peiq-export-progress" id="export-progress" role="status" aria-live="polite" hidden>
-            <div class="peiq-export-progress__track" aria-hidden="true"><span></span></div>
-            <p class="peiq-export-progress__label" id="export-progress-label" data-i18n="export.preparing">Preparing export…</p>
-          </div>
-          <div class="peiq-download-result" id="download-result" hidden></div>
-          <p class="peiq-hint" data-i18n="export.checkHint">Decoded or parsed and checked before Save.</p>
+          <aside class="peiq-palette-hint" id="palette-hint-panel" aria-labelledby="palette-hint-label" hidden>
+            <span class="peiq-label" id="palette-hint-label" data-i18n="palette.hintLabel">Hint</span>
+            <p class="peiq-hint" id="palette-edit-hint" data-i18n="palette.editHint">Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.</p>
+          </aside>
         </div>
 
         <div class="peiq-stage__toolbar">
@@ -205,7 +212,6 @@
             <button class="peiq-icon-btn peiq-palette-history" id="palette-redo" type="button" data-i18n-aria-label="palette.redo" data-i18n-title="palette.redo" aria-label="Redo palette edit" title="Redo palette edit" disabled>
               <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a6 6 0 0 0 0 12h3"/></svg>
             </button>
-            <p class="peiq-hint" id="palette-edit-hint" data-i18n="palette.editHint">Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.</p>
           </div>
         </div>
 

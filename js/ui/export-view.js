@@ -67,10 +67,45 @@ export function clearDownloadLinks() {
  * @param {boolean} enabled
  */
 export function setExportEnabled(enabled) {
-  for (const id of ['export-indexed', 'export-strip', 'export-reduced', 'copy-hex', 'export-palette']) {
+  for (const id of [
+    'export-indexed',
+    'copy-image',
+    'export-strip',
+    'export-reduced',
+    'copy-hex',
+    'export-palette',
+  ]) {
     const button = /** @type {HTMLButtonElement|null} */ (document.getElementById(id));
     if (button) button.disabled = !enabled;
   }
+}
+
+/**
+ * The Clipboard API only accepts images where `write` and `ClipboardItem` exist.
+ * Kept pure so Node tests can cover feature detection.
+ *
+ * @param {{ write?: unknown }|null|undefined} clipboard
+ * @param {unknown} ClipboardItemCtor
+ * @returns {boolean}
+ */
+export function supportsImageClipboard(clipboard, ClipboardItemCtor) {
+  return Boolean(
+    clipboard &&
+      typeof clipboard.write === 'function' &&
+      typeof ClipboardItemCtor === 'function',
+  );
+}
+
+/**
+ * Turn a validated export file into the PNG blob the clipboard expects.
+ *
+ * @param {{ mime:string, data:ArrayBuffer }[]} files
+ * @returns {Blob|null}
+ */
+export function exportedPngBlob(files) {
+  const file = files[0];
+  if (!file || file.mime !== 'image/png') return null;
+  return new Blob([file.data], { type: 'image/png' });
 }
 
 /**

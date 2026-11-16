@@ -34,10 +34,12 @@ import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
 import {
   clearDownloadLinks,
+  exportedPngBlob,
   getStripOrientation,
   refreshDownloadLinks,
   setExportEnabled,
   showDownloadLinks,
+  supportsImageClipboard,
 } from './ui/export-view.js';
 import {
   countLabel,
@@ -100,6 +102,7 @@ const palettePick = /** @type {HTMLButtonElement|null} */ (document.getElementBy
 const paletteUndo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-undo'));
 const paletteRedo = /** @type {HTMLButtonElement|null} */ (document.getElementById('palette-redo'));
 const paletteEditHint = document.getElementById('palette-edit-hint');
+const paletteHintPanel = document.getElementById('palette-hint-panel');
 const pickPreview = document.getElementById('palette-pick-preview');
 const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
 const pickPreviewHex = document.getElementById('palette-pick-hex');
@@ -199,6 +202,8 @@ let paletteStatusCount = 0;
 let customPaletteOption = null;
 let exportProgressKey = '';
 let lastValidationDetailRaw = '';
+/** @type {{ resolve:(files:any[])=>void, reject:(error:Error)=>void, failed:boolean }|null} */
+let clipboardImage = null;
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -309,6 +314,23 @@ function onWorkerMessage(event) {
     if (message.requestId !== app.exportRequestId) return;
     const files = message.files ?? [];
     const ok = files.length > 0 && files.every((file) => file.validation?.ok);
+    if (clipboardImage) {
+      const pending = clipboardImage;
+      clipboardImage = null;
+      if (!ok) {
+        pending.failed = true;
+        pending.reject(new Error('clipboard image export failed'));
+        const detail = localizeDetail(files[0]?.validation?.detail);
+        toastKey('toast.exportFailedValidation', { detail }, 'error');
+        setStatusMessage('status.exportFailedValidation');
+        clearDownloadLinks();
+        finishExport();
+        return;
+      }
+      lastValidationDetailRaw = files[0]?.validation?.detail ?? '';
+      pending.resolve(files);
+      return;
+    }
     if (!ok) {
       const detail = localizeDetail(files[0]?.validation?.detail);
       toastKey('toast.exportFailedValidation', { detail }, 'error');
@@ -354,6 +376,12 @@ function onWorkerMessage(event) {
     setStatusMessage('status.error');
     if (canvasEmpty) canvasEmpty.hidden = true;
     if (message.requestId === app.exportRequestId) {
+      if (clipboardImage) {
+        const pending = clipboardImage;
+        clipboardImage = null;
+        pending.failed = true;
+        pending.reject(new Error(message.message || 'export failed'));
+      }
       finishExport();
     } else if (message.requestId === qaRequestId) {
       qaBusy = false;
@@ -530,6 +558,12 @@ function finishExport() {
 
 function cancelExport() {
   if (!app.exportBusy) return;
+  if (clipboardImage) {
+    const pending = clipboardImage;
+    clipboardImage = null;
+    pending.failed = true;
+    pending.reject(new Error('export cancelled'));
+  }
   worker.postMessage({ type: 'cancel', requestId: app.exportRequestId });
   app.exportRequestId = 0;
   finishExport();
@@ -613,6 +647,7 @@ function updatePaletteEditor() {
     paletteEdit.disabled = !app.hasResult || app.palette.length === 0 || app.exportBusy;
   }
   if (paletteEditor) paletteEditor.hidden = !active;
+  if (paletteHintPanel) paletteHintPanel.hidden = !active;
   if (paletteHex) paletteHex.disabled = app.exportBusy;
   if (palettePick) palettePick.disabled = !active || app.exportBusy;
   if (paletteApply) paletteApply.disabled = !selected || app.exportBusy;
@@ -1917,6 +1952,108 @@ async function exportIndexed() {
   }
 }
 
+/**
+ * Copy the validated indexed PNG to the clipboard. The ClipboardItem receives a
+ * promise for the PNG so the write starts inside the click gesture while the full
+ * image is still being decoded and encoded.
+ */
+async function copyIndexedImage() {
+  if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return;
+  const ClipboardItemCtor = /** @type {any} */ (window).ClipboardItem;
+  if (!supportsImageClipboard(navigator.clipboard, ClipboardItemCtor)) {
+    toastKey('toast.clipboardImageUnavailable', {}, 'error');
+    return;
+  }
+  const id = beginExport('status.progressIndex');
+  if (!id) return;
+  setStatusMessage('status.copyingImage');
+
+  /** @type {(blob: Blob) => void} */
+  let resolveBlob = () => {};
+  /** @type {(error: Error) => void} */
+  let rejectBlob = () => {};
+  const blobPromise = new Promise((resolve, reject) => {
+    resolveBlob = resolve;
+    rejectBlob = reject;
+  });
+  const pending = {
+    failed: false,
+    resolve: (files) => {
+      const blob = exportedPngBlob(files);
+      if (blob) {
+        resolveBlob(blob);
+        return;
+      }
+      pending.failed = true;
+      rejectBlob(new Error('no PNG export'));
+      toastKey('toast.clipboardImageUnavailable', {}, 'error');
+      setStatusMessage('status.copyImageFailed');
+    },
+    reject: (error) => rejectBlob(error),
+  };
+  clipboardImage = pending;
+
+  /** @type {Promise<void>} */
+  let writePromise;
+  try {
+    writePromise = navigator.clipboard.write([
+      new ClipboardItemCtor({ 'image/png': blobPromise }),
+    ]);
+  } catch {
+    clipboardImage = null;
+    rejectBlob(new Error('clipboard write unavailable'));
+    finishExport();
+    toastKey('toast.clipboardImageUnavailable', {}, 'error');
+    return;
+  }
+  writePromise.catch(() => {});
+
+  try {
+    const full = await decodeFullImage();
+    if (!full) throw new Error(t('error.imageDecode'));
+    if (!app.exportBusy || app.exportRequestId !== id) return;
+    const params = getParams();
+    const name = app.name;
+    const palette = app.palette.map((entry) => ({ ...entry, color: { ...entry.color } }));
+    worker.postMessage(
+      {
+        type: 'export-indexed',
+        requestId: id,
+        image: { data: full.data.buffer, width: app.width, height: app.height },
+        palette,
+        params,
+        name,
+      },
+      [full.data.buffer],
+    );
+  } catch (error) {
+    if (app.exportRequestId !== id) return;
+    pending.failed = true;
+    pending.reject(error instanceof Error ? error : new Error(String(error)));
+    toast(localizeError(error), 'error');
+    setStatusMessage('status.copyImageFailed');
+    finishExport();
+    return;
+  }
+
+  try {
+    await writePromise;
+    toastKey('toast.copiedImage', {}, 'success');
+    setStatusMessage('status.copiedImage', {
+      detail: localizeDetail(lastValidationDetailRaw),
+    });
+  } catch {
+    if (!pending.failed) {
+      toastKey('toast.clipboardImageUnavailable', {}, 'error');
+      setStatusMessage('status.copyImageFailed');
+      if (app.exportBusy) cancelExport();
+    }
+  } finally {
+    if (clipboardImage === pending) clipboardImage = null;
+    if (app.exportRequestId === id) finishExport();
+  }
+}
+
 function copyHex() {
   if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return;
   copyText(paletteHexList(app.palette))
@@ -2406,6 +2543,7 @@ toggleOriginal.addEventListener('click', toggleOriginalState);
 document.getElementById('export-strip')?.addEventListener('click', exportStrip);
 document.getElementById('export-reduced')?.addEventListener('click', exportReduced);
 document.getElementById('export-indexed')?.addEventListener('click', exportIndexed);
+document.getElementById('copy-image')?.addEventListener('click', copyIndexedImage);
 document.getElementById('export-palette')?.addEventListener('click', exportPaletteFile);
 document.getElementById('copy-hex')?.addEventListener('click', copyHex);
 

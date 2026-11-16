@@ -36,10 +36,10 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 146 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
-| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; M6.3 and M6.4 unreleased |
-| Next | Release the perceptual ordering and picked-marker changes when requested; otherwise M7 is later / not planned for v1.x |
+| UI | Stage + compact collapsible rail, left export column with clipboard image copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
+| Tests | 148 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
+| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; M6.3–M6.5 unreleased |
+| Next | Release the perceptual ordering, picked-marker, compact-frame, and clipboard-image changes when requested; otherwise M7 is later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -848,34 +848,36 @@ hashes are reviewed when intentional changes occur.
 Empty state: full-width hero with the drop zone; no rail.
 Loaded state: three columns on desktop — export, stage, and settings rail — following the
 PaletteForge workflow without its header clutter. The export column spans the canvas and
-palette rows; the palette starts at the canvas’s left edge. On mobile the order is
-toolbar, export, canvas, palette, settings.
+palette rows; its palette-editor hint sits at the bottom of that free left column so hint
+text changes never resize the canvas, and the palette starts at the canvas’s left edge.
+On mobile the order is toolbar, export, canvas, palette, hint, settings.
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ [PEIQ]                                      [theme] [help]   │ 64 px
+│ [PEIQ]                                      [theme] [help]   │ 52 px
 ├──────────────────────────────────────────┬───────────────────┤
 │ Export (180–220) │ Stage                   │ Rail (360/340 px) │
 │  primary PNG     │  toolbar: change · fit  │  Palette          │
-│  strip / reduced │  canvas / before-after  │   mode, algorithm │
-│  HEX / strip     │  palette strip          │  Dither           │
-│                  │  status line            │  (scrolls)        │
-│                  │                         │                   │
+│  copy / strip    │  canvas / before-after  │   mode, algorithm │
+│  reduced / HEX   │  palette strip          │  Dither           │
+│  hint (bottom)   │  status line            │  (scrolls)        │
 └──────────────────┴─────────────────────────┴───────────────────┘
 ```
 
-- **Header:** brand on the left; language toggle, theme toggle, and Help on the right. No
-  mode tabs, nav links, download buttons, account controls, or secondary subbar.
+- **Header:** 52 px (48 px below 980 px); brand on the left; language toggle, theme toggle,
+  and Help on the right. No mode tabs, nav links, download buttons, account controls, or
+  secondary subbar.
 - **Empty state:** full-width hero; no rail. After an image loads, the hero collapses into
   the stage and the rail appears.
 - **≥ 1220 px:** export `clamp(180–220 px)` + stage `1fr` + rail **360 px**.
   **980–1219 px:** export **180 px** + stage `1fr` + rail **340 px**.
   **< 980 px:** stacked; export, toolbar, canvas, palette, settings. **< 600 px:** single
   column, 44 px touch targets, canvas `55svh`.
-- **Stage:** toolbar, canvas, palette strip, usage bar, and a compact status line.
-  "Change image" lives in the stage toolbar, not the header.
-- **Export column:** a narrow left column with the primary indexed-PNG action, strip,
-  reduced PNG, HEX, and strip orientation. It does not take width from the canvas.
+- **Stage:** a 28 px desktop toolbar, canvas, palette strip, usage bar, and a compact
+  24 px status line. "Change image" lives in the stage toolbar, not the header.
+- **Export column:** a narrow left column with the primary indexed-PNG action, Copy image,
+  strip, reduced PNG, HEX, and strip orientation. It does not take width from the canvas.
+  The palette-editor hint is bottom-aligned in the same left column.
 - **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
   switch) and Dither. Export is not in the rail; the Quality section is collapsed by default.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
@@ -886,9 +888,10 @@ toolbar, export, canvas, palette, settings.
 - **Desktop frame:** the page itself does not scroll. Header, stage, and compact footer
   fill the viewport; the stage gives the canvas the remaining height and only the rail
   (or a palette strip with many colors) scrolls.
-- **Export panel:** a separate left column with the primary indexed-PNG action and the
-  strip/reduced/HEX actions; above the canvas below 980 px. The column spans the canvas and
-  palette rows, and the palette aligns with the canvas’s left edge.
+- **Export panel:** a separate left column with the primary indexed-PNG action, Copy image,
+  and the strip/reduced/HEX actions; above the canvas below 980 px. The column spans the
+  canvas and palette rows, the palette aligns with the canvas’s left edge, and the editor
+  hint sits at the bottom of the free left column.
 - **Quality:** export validation and palette compliance stay in the status line. The
   Quality section measures the current preview with CIEDE2000: mean, p95, max, a toggleable
   error map, and the 20 worst pixels. Contrast matrices are out of v1.1.
@@ -971,11 +974,16 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 **Export panel** (left of the canvas on desktop, above it on mobile)
 
 - Primary: "Download indexed PNG".
-- Secondary: "Palette strip", "Reduced PNG", "Copy HEX".
+- Secondary: "Copy image", "Palette strip", "Reduced PNG", "Copy HEX".
+- **Copy image** writes the same validated indexed PNG to the clipboard as an
+  `image/png` `ClipboardItem`; the promise is created inside the click gesture so a slow
+  full-resolution encode keeps the user activation. Saving remains a separate action.
 - While an export runs, show an indeterminate progress bar and stage label; mark the
   panel `aria-busy` and disable every export/copy button.
 - Only one export may be in flight. A second click, a different export button, or
   `Copy HEX` while busy is ignored. Changing image or settings cancels the stale export.
+- If image clipboard writes are unavailable or denied, say so and point to the Indexed
+  PNG save action instead of failing silently.
 - Indexed export uses the sorted palette and declared transparent index; it is decoded
   and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
@@ -1265,6 +1273,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | `palette.test.js` | IDs, ordering, locks, dedupe, hash |
 | `palette-order.test.js` | perceptual determinism, endpoints, CIEDE2000 cost, DCCW cut, locks, 256 colors |
 | `picked-markers.test.js` | marker round-trip, clamping, invalid records, clone independence |
+| `clipboard-image.test.js` | image clipboard feature detection, PNG blob type and bytes |
 | `map.test.js` | exact/LUT modes, tie-break, alpha, compliance |
 | `dither-error-diffusion.test.js` | kernel sums, serpentine, strength, edge stop, compliance |
 | `dither-ordered.test.js` | Bayer generation, two-candidate probabilities, compliance |
@@ -1604,7 +1613,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
 | `js/ui/picked-markers.js` | Picked-color overlay, drag/cancel, overlap offsets, keyboard nudge focus |
-| `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
+| `js/ui/export-view.js` | Export selection, validation, downloads, clipboard helpers, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
 | `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
 | `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |
@@ -1824,6 +1833,20 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** pending version bump and tag after review; `npm test` 146 passing and the
   browser pass at 1280/360 px are green.
 
+### M6.5 — compact desktop frame and clipboard image (implemented, unreleased)
+
+- [x] Reduce the desktop header to 52 px, the stage toolbar to 28 px, and the status line
+      to 24 px without shrinking touch targets below 600 px.
+- [x] Tighten desktop workspace gaps and padding so the canvas keeps the reclaimed height.
+- [x] Move the palette-editor hint into the free left export column, bottom-aligned with
+      the palette, so changing hints and languages never resizes the canvas.
+- [x] Add **Copy image** for the validated indexed PNG with an in-gesture `ClipboardItem`
+      promise; keep Save as a separate validated download and report unsupported/denied
+      clipboard writes.
+- [x] Add helper tests for image clipboard support and PNG blob creation.
+- **Exit:** pending version bump and tag after review; `npm test` 148 passing and the
+  browser pass at 1280/360 px is green.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
@@ -1961,6 +1984,9 @@ A change is done only when:
 | 2026-11-16 | Add perceptual, perceptual-path, and perceptual-flow palette orders | Perceptual starts from the lightness order and refines it with 2-opt; path fixes the darkest and lightest ends; flow uses the DCCW cycle-cut idea. All three use deterministic CIEDE2000 2-opt, preserve locks, and only change order and export indices. |
 | 2026-11-16 | Keep Pick armed after a successful sample | Re-arming the eyedropper for every swatch was unnecessary friction; the button and Esc still stop the mode. |
 | 2026-11-16 | Add picked-color anchors only for explicitly sampled colors | Extracted and imported colors have no source point; user-created anchors avoid 256 handles and arbitrary positions while keeping direct manipulation where a point actually exists. Markers stay UI/session state and never enter palette JSON or hashes. |
+| 2026-11-16 | Compact the desktop frame: 52 px header, 28 px toolbar, 24 px status line, and 8 px workspace gaps | The canvas is the working surface; desktop chrome was spending 127 px of height on header, toolbar, padding, and gaps. Touch layouts keep their 44 px targets, and the reclaimed height all goes to the canvas. |
+| 2026-11-16 | Move the palette-editor hint into the left export column | Hint text changes with Pick and with the language, and inside the palette card it resized the canvas. Bottom-aligning the hint in the free left column keeps the instruction visible without any layout shift. |
+| 2026-11-16 | Add Copy image next to Indexed PNG and keep Save | Copying the prepared indexed PNG removes the save dialog from the common handoff. The ClipboardItem receives a promise created inside the click gesture so full-resolution encoding does not lose activation; saving remains a separate validated link and unsupported clipboard writes fall back to a clear message. |
 
 ---
 

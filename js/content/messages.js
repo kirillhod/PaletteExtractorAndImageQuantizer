@@ -47,6 +47,8 @@ const en = {
   'export.heading': 'Export',
   'export.indexed': 'Indexed PNG',
   'export.indexedAria': 'Download indexed PNG',
+  'export.copyImage': 'Copy image',
+  'export.copyImageAria': 'Copy indexed PNG to clipboard',
   'export.strip': 'Palette strip',
   'export.reduced': 'Reduced PNG',
   'export.copyHex': 'Copy HEX',
@@ -56,7 +58,7 @@ const en = {
   'export.file': 'File',
   'export.save': 'Save',
   'export.preparing': 'Preparing export…',
-  'export.checkHint': 'Decoded or parsed and checked before Save.',
+  'export.checkHint': 'Decoded or parsed and checked before Save or copy.',
   'export.validatedHint': 'Validated. Click Save to write the file.',
   'export.saveFile': 'Save {name}',
 
@@ -111,6 +113,7 @@ const en = {
     'Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.',
   'palette.pickHint':
     'Pick stays active: tap or drag on the image for each swatch; release applies the color. Tap Pick again or press Esc to stop.',
+  'palette.hintLabel': 'Hint',
   'palette.swatchCopy': 'Copy {hex}',
   'palette.swatchEdit': 'Edit {hex}',
   'palette.markerAria': 'Color {hex} sample marker. Drag or use arrow keys to adjust.',
@@ -226,6 +229,9 @@ const en = {
   'status.buildingStrip': 'Building and validating the palette strip…',
   'status.encodingReduced': 'Encoding the full-resolution PNG…',
   'status.encodingIndexed': 'Encoding and validating the indexed PNG…',
+  'status.copyingImage': 'Copying the indexed PNG to the clipboard…',
+  'status.copiedImage': 'Copied to the clipboard: {detail}',
+  'status.copyImageFailed': 'Could not copy the image',
   'status.savedSessionCouldNotClear': 'Saved session could not be cleared',
   'status.sessionRestoreFailed': 'Saved session could not be restored',
   'status.couldNotReadImage': 'Could not read image',
@@ -263,7 +269,7 @@ const en = {
   'help.openAria': 'Open help',
   'help.closeAria': 'Close help',
   'help.intro':
-    'Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.',
+    'Load an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG by saving it or copying it to the clipboard, plus a palette strip, palette file, or reduced PNG. Edit colors, locks, and order as needed; undo and redo work while editing.',
   'help.v12':
     'adds a palette editor with locks and undo, CIEDE2000 quality, shareable URL settings, and a saved local session.',
   'help.howTitle': 'How it works',
@@ -363,7 +369,10 @@ const en = {
   'toast.movedRight': 'Moved {hex} right',
   'toast.copiedHex': 'Copied {hex}',
   'toast.copiedHexValues': 'Copied {countLabel}',
+  'toast.copiedImage': 'Indexed PNG copied to the clipboard',
   'toast.clipboardUnavailable': 'Clipboard is unavailable',
+  'toast.clipboardImageUnavailable':
+    'Copying images is unavailable here. Use Indexed PNG to save instead.',
   'toast.paletteFileReady': 'Palette file ready. Click Save.',
   'toast.paletteBuildFailed': 'Could not build palette file: {detail}',
   'toast.paletteValidationFailed': 'Palette validation failed: {detail}',
@@ -489,6 +498,8 @@ const ru = {
   'export.heading': 'Экспорт',
   'export.indexed': 'Индексированный PNG',
   'export.indexedAria': 'Скачать индексированный PNG',
+  'export.copyImage': 'Копировать изображение',
+  'export.copyImageAria': 'Скопировать индексированный PNG в буфер обмена',
   'export.strip': 'Полоса палитры',
   'export.reduced': 'Уменьшенный PNG',
   'export.copyHex': 'Копировать HEX',
@@ -499,7 +510,7 @@ const ru = {
   'export.save': 'Сохранить',
   'export.preparing': 'Подготовка экспорта…',
   'export.checkHint':
-    'Файл декодируется или разбирается, а затем проверяется перед сохранением.',
+    'Файл декодируется или разбирается, а затем проверяется перед сохранением или копированием.',
   'export.validatedHint': 'Проверка пройдена. Нажмите «Сохранить», чтобы записать файл.',
   'export.saveFile': 'Сохранить {name}',
 
@@ -553,6 +564,7 @@ const ru = {
     'Выберите цвет. Пипетка берёт цвет с изображения; Esc отменяет. ← / → меняют только порядок экспорта; добавление, удаление или изменение влияют на предпросмотр.',
   'palette.pickHint':
     'Пипетка остаётся включённой: коснитесь изображения или ведите палец для каждого свотча; отпускание применяет цвет. Нажмите «Пипетка» ещё раз или Esc, чтобы выключить.',
+  'palette.hintLabel': 'Подсказка',
   'palette.swatchCopy': 'Скопировать {hex}',
   'palette.swatchEdit': 'Изменить {hex}',
   'palette.markerAria':
@@ -673,6 +685,9 @@ const ru = {
   'status.buildingStrip': 'Создание и проверка полосы палитры…',
   'status.encodingReduced': 'Кодирование PNG полного разрешения…',
   'status.encodingIndexed': 'Кодирование и проверка индексированного PNG…',
+  'status.copyingImage': 'Копирование индексированного PNG в буфер обмена…',
+  'status.copiedImage': 'Скопировано в буфер обмена: {detail}',
+  'status.copyImageFailed': 'Не удалось скопировать изображение',
   'status.savedSessionCouldNotClear': 'Не удалось удалить сохранённую сессию',
   'status.sessionRestoreFailed': 'Не удалось восстановить сохранённую сессию',
   'status.couldNotReadImage': 'Не удалось прочитать изображение',
@@ -710,7 +725,7 @@ const ru = {
   'help.openAria': 'Открыть справку',
   'help.closeAria': 'Закрыть справку',
   'help.intro':
-    'Загрузите изображение, извлеките палитру или выберите фиксированную, сравните результат и экспортируйте проверенный индексированный PNG, полосу палитры, файл палитры или уменьшенный PNG. Цвета, блокировки и порядок можно менять; отмена и повтор работают в режиме редактирования.',
+    'Загрузите изображение, извлеките палитру или выберите фиксированную, сравните результат и экспортируйте проверенный индексированный PNG — сохраните его или скопируйте в буфер обмена, — а также полосу палитры, файл палитры или уменьшенный PNG. Цвета, блокировки и порядок можно менять; отмена и повтор работают в режиме редактирования.',
   'help.v12':
     'добавляет редактор палитры с блокировками и отменой, качество CIEDE2000, настройки в URL, которыми можно поделиться, и локальную сохранённую сессию.',
   'help.howTitle': 'Как это работает',
@@ -811,7 +826,10 @@ const ru = {
   'toast.movedRight': '{hex} перемещён вправо',
   'toast.copiedHex': 'Скопирован {hex}',
   'toast.copiedHexValues': 'Скопировано {countLabel}',
+  'toast.copiedImage': 'Индексированный PNG скопирован в буфер обмена',
   'toast.clipboardUnavailable': 'Буфер обмена недоступен',
+  'toast.clipboardImageUnavailable':
+    'Копирование изображений здесь недоступно. Используйте «Индексированный PNG», чтобы сохранить файл.',
   'toast.paletteFileReady': 'Файл палитры готов. Нажмите «Сохранить».',
   'toast.paletteBuildFailed': 'Не удалось создать файл палитры: {detail}',
   'toast.paletteValidationFailed': 'Проверка палитры не пройдена: {detail}',

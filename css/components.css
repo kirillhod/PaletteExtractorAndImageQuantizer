@@ -512,11 +512,6 @@
   font-size: 0.8125rem;
 }
 
-.peiq-palette-editor .peiq-hint {
-  flex-basis: 100%;
-  margin: 0;
-}
-
 .peiq-palette-history {
   display: none;
   flex: 0 0 auto;
@@ -746,12 +741,28 @@
 }
 
 .peiq-export-panel {
+  grid-area: export;
   display: grid;
   gap: var(--peiq-space-2);
   padding: var(--peiq-space-3) var(--peiq-space-4);
   border-radius: var(--peiq-radius-lg);
   background: var(--peiq-surface);
   box-shadow: var(--peiq-shadow-card);
+}
+
+.peiq-palette-hint {
+  grid-area: hint;
+  display: grid;
+  gap: var(--peiq-space-1);
+  padding: var(--peiq-space-3);
+  border: 1px solid var(--peiq-border);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-bg-secondary);
+}
+
+.peiq-palette-hint .peiq-hint {
+  color: var(--peiq-text-secondary);
+  line-height: 1.4;
 }
 
 .peiq-export-bar {
@@ -845,12 +856,12 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--peiq-space-3);
-  min-height: 32px;
+  gap: var(--peiq-space-2);
+  min-height: 24px;
   padding: 0 4px;
   color: var(--peiq-text-tertiary);
   font-size: 0.75rem;
-  line-height: 1.43;
+  line-height: 1.35;
 }
 
 .peiq-statusbar__item {

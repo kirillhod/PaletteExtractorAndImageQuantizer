@@ -563,10 +563,13 @@ body instead of making the rail scroll.
 ### Export panel
 
 Export is its own column to the left of the canvas on desktop and above the canvas on
-mobile. It reads as the primary action area: a bright primary indexed-PNG button,
+mobile. It reads as the primary action area: a bright primary indexed-PNG button, a
+secondary **Copy image** action that copies the same validated PNG to the clipboard,
 quieter strip, reduced-PNG, and HEX buttons, then strip orientation. The desktop column
 is 180–220 px, so the canvas keeps its width; the export column spans the canvas and
-palette rows, and the palette aligns with the canvas’s left edge below it.
+palette rows, and the palette aligns with the canvas’s left edge below it. The palette
+editor hint sits under the export panel at the bottom of that free left column, so
+changing the hint text never resizes the canvas.
 
 ```css
 .peiq-workspace {
@@ -575,11 +578,17 @@ palette rows, and the palette aligns with the canvas’s left edge below it.
   grid-template-areas:
     "toolbar toolbar rail"
     "export canvas rail"
-    "palette palette rail"
+    "export palette rail"
     "status status rail";
 }
-.peiq-export-panel {
+.peiq-export-column {
   grid-area: export;
+  display: grid;
+  grid-template-rows: max-content minmax(0, 1fr);
+  gap: var(--peiq-space-2);
+  align-content: start;
+}
+.peiq-export-panel {
   align-self: start;
   display: grid;
   gap: var(--peiq-space-2);
@@ -593,16 +602,29 @@ palette rows, and the palette aligns with the canvas’s left edge below it.
   grid-template-columns: minmax(0, 1fr);
   gap: var(--peiq-space-2);
 }
+.peiq-palette-hint {
+  align-self: end;
+  display: grid;
+  gap: var(--peiq-space-1);
+  padding: var(--peiq-space-3);
+  border: 1px solid var(--peiq-border);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-bg-secondary);
+}
 ```
 
-Below 980 px the workspace becomes one column in this order: toolbar, export, canvas,
-palette, status, settings. The export panel returns to the horizontal wrapping layout.
+Below 980 px the export column disappears as a box and its children join the one-column
+flow in this order: export, toolbar, canvas, palette, hint, status, settings. The export
+panel returns to the horizontal wrapping layout.
 
 While an export runs, a 6 px indeterminate bar and a short label appear in the panel.
 All export buttons are disabled, the panel gets `aria-busy="true"`, and the bar becomes a
 static half-opacity line under `prefers-reduced-motion`. Only one export can run at a
 time; a second click is ignored until the first completes or is cancelled by a settings
-or image change.
+or image change. **Copy image** starts a `ClipboardItem` write inside the click gesture
+with a promise for the validated PNG, so slow full-resolution encoding does not lose the
+user activation; when image clipboard writes are unavailable, the action reports it and
+points to the Save action. **Save** remains a real link and is never replaced by copy.
 
 ### Palette strip and sort bar
 
@@ -661,7 +683,7 @@ requested lightness direction inside each group.
 
 ### Empty state / hero
 
-The site’s `.hero` is 480–560 px tall (30–35 spacers), sits under the 64 px navbar, and
+The site’s `.hero` is 480–560 px tall (30–35 spacers), sits under the 52 px navbar, and
 uses white text. PEIQ uses the same metrics **only when no image is loaded**; after load,
 the hero collapses into a compact drop bar so the tool stays above the fold. No photo
 background: use a canvas-generated palette mosaic or the CSS gradients below.
@@ -672,7 +694,7 @@ background: use a canvas-generated palette mosaic or the CSS gradients below.
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: calc(100svh - 112px);
+  height: calc(100svh - var(--peiq-header-height));
   min-height: 480px;
   max-height: 560px;
   padding: var(--peiq-space-5) var(--peiq-space-3);
@@ -721,7 +743,7 @@ subbar. Mode and export live in the right rail; image actions live in the stage 
   display: flex;
   align-items: center;
   gap: var(--peiq-space-3);
-  height: 64px;
+  height: var(--peiq-header-height);
   padding: 0 var(--peiq-space-3);
   background: var(--peiq-bg);
   border-bottom: 1px solid var(--peiq-border-strong);
@@ -1090,11 +1112,11 @@ It reports dimensions, unique colors, stage/progress, timings, and export valida
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--peiq-space-3);
-  min-height: 32px;
+  gap: var(--peiq-space-2);
+  min-height: 24px;
   padding: 0 4px;
   color: var(--peiq-text-tertiary);
-  font: 400 0.75rem/1.43 var(--peiq-font-ui);
+  font: 400 0.75rem/1.35 var(--peiq-font-ui);
 }
 .peiq-statusbar__item {
   display: inline-flex;
@@ -1207,9 +1229,11 @@ screen block.
   palette strip + status), and a 360/340 px right rail (palette settings, dither). The
   export column spans the canvas and palette rows; the palette aligns with the canvas’s
   left edge. Below 980 px the order is toolbar, export, canvas, palette, settings.
-- **Header:** 64 px; brand left; language toggle, theme toggle, and Help right. No subbar,
-  no nav links, no download button in the header.
-- Stage actions (change image, zoom, fit, original) live in the stage toolbar.
+- **Header:** 52 px (48 px below 980 px); brand left; language toggle, theme toggle, and
+  Help right. No subbar, no nav links, no download button in the header.
+- Stage actions (change image, zoom, fit, original) live in the stage toolbar. On desktop
+  the toolbar row is 28 px with 28 px icon buttons; below 600 px the controls return to
+  44 px touch targets.
 - The palette strip sits directly under the canvas; the status line reports dimensions,
   unique colors, timings, and export validation.
 - The rail is a stack of collapsible sections, not tabs; the Extract/Map mode switch lives
@@ -1237,7 +1261,7 @@ screen block.
   grid-template-columns: minmax(0, 1fr) 380px;
   gap: var(--peiq-space-4);
   align-items: start;
-  min-height: calc(100svh - 64px);
+  min-height: calc(100svh - var(--peiq-header-height));
 }
 @media (min-width: 980px) and (max-width: 1219px) {
   .peiq-workspace { grid-template-columns: minmax(0, 1fr) 340px; }
@@ -1257,7 +1281,7 @@ screen block.
   position: sticky;
   top: 80px;
   min-width: 0;
-  max-height: calc(100svh - 96px);
+  max-height: calc(100svh - var(--peiq-header-height) - 32px);
   overflow: auto;
   padding-right: 4px;
   display: grid;
@@ -1280,10 +1304,11 @@ screen block.
 | `--peiq-space-5` | 48 px |
 | `--peiq-space-6` | 96 px |
 | `--peiq-space-7` | 192 px |
+| `--peiq-header-height` | 52 px desktop / 48 px below 980 px |
 
 | Context | Value |
 |---|---|
-| App panel gap | 16 px |
+| App panel gap | 8 px desktop / 16 px mobile |
 | Card padding | 24 px |
 | Editorial section padding | 96 px desktop / 48 px tablet / 24 px mobile |
 | Control vertical rhythm | 8–16 px |
