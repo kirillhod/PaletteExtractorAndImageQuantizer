@@ -36,10 +36,10 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail, left export column with clipboard image copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
+| UI | Stage + compact collapsible rail, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
 | Tests | 148 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
 | Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; M6.3–M6.5 unreleased |
-| Next | Release the perceptual ordering, picked-marker, compact-frame, and clipboard-image changes when requested; otherwise M7 is later / not planned for v1.x |
+| Next | Release the perceptual ordering, picked-marker, compact-frame, and validated-copy changes when requested; otherwise M7 is later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -875,9 +875,10 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
   column, 44 px touch targets, canvas `55svh`.
 - **Stage:** a 28 px desktop toolbar, canvas, palette strip, usage bar, and a compact
   24 px status line. "Change image" lives in the stage toolbar, not the header.
-- **Export column:** a narrow left column with the primary indexed-PNG action, Copy image,
-  strip, reduced PNG, HEX, and strip orientation. It does not take width from the canvas.
-  The palette-editor hint is bottom-aligned in the same left column.
+- **Export column:** a narrow left column with the primary indexed-PNG action, strip,
+  reduced PNG, HEX, and strip orientation. It does not take width from the canvas. Each
+  validated result adds Save and Copy actions. The palette-editor hint is bottom-aligned
+  in the same left column.
 - **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
   switch) and Dither. Export is not in the rail; the Quality section is collapsed by default.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
@@ -888,10 +889,10 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
 - **Desktop frame:** the page itself does not scroll. Header, stage, and compact footer
   fill the viewport; the stage gives the canvas the remaining height and only the rail
   (or a palette strip with many colors) scrolls.
-- **Export panel:** a separate left column with the primary indexed-PNG action, Copy image,
-  and the strip/reduced/HEX actions; above the canvas below 980 px. The column spans the
-  canvas and palette rows, the palette aligns with the canvas’s left edge, and the editor
-  hint sits at the bottom of the free left column.
+- **Export panel:** a separate left column with the primary indexed-PNG action and the
+  strip/reduced/HEX actions; above the canvas below 980 px. The column spans the canvas and
+  palette rows, the palette aligns with the canvas’s left edge, and the editor hint sits at
+  the bottom of the free left column. After validation, every result offers Save and Copy.
 - **Quality:** export validation and palette compliance stay in the status line. The
   Quality section measures the current preview with CIEDE2000: mean, p95, max, a toggleable
   error map, and the 20 worst pixels. Contrast matrices are out of v1.1.
@@ -952,6 +953,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   stored by palette ID as normalized image coordinates, so reordering and locking do not
   move it; removing the entry or making it transparent removes it. Markers persist in the
   session but never enter palette JSON or hashes.
+  **Clearing the selection:** clicking empty space in the palette strip, or pressing
+  `Esc` while the palette has focus, clears the edited entry and HEX field. With no entry
+  selected, Pick fills the HEX field for **Add** instead of overwriting an existing color.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Adding, removing, or
@@ -974,16 +978,17 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 **Export panel** (left of the canvas on desktop, above it on mobile)
 
 - Primary: "Download indexed PNG".
-- Secondary: "Copy image", "Palette strip", "Reduced PNG", "Copy HEX".
-- **Copy image** writes the same validated indexed PNG to the clipboard as an
-  `image/png` `ClipboardItem`; the promise is created inside the click gesture so a slow
-  full-resolution encode keeps the user activation. Saving remains a separate action.
+- Secondary: "Palette strip", "Reduced PNG", "Copy HEX".
+- Every completed export appears as a validated file row with **Save file** and **Copy**.
+  Copy uses the already validated bytes: PNG results are written to the clipboard as
+  `image/png`; `.hex`, `.gpl`, and `.json` results are copied as text. Copy is never
+  offered before validation and never replaces Save.
 - While an export runs, show an indeterminate progress bar and stage label; mark the
   panel `aria-busy` and disable every export/copy button.
 - Only one export may be in flight. A second click, a different export button, or
   `Copy HEX` while busy is ignored. Changing image or settings cancels the stale export.
-- If image clipboard writes are unavailable or denied, say so and point to the Indexed
-  PNG save action instead of failing silently.
+- If image clipboard writes are unavailable or denied, say so and point to the matching
+  Save action instead of failing silently.
 - Indexed export uses the sorted palette and declared transparent index; it is decoded
   and compared to the index map.
 - Strip orientation toggle `N×1` / `1×N` with a filename preview.
@@ -1833,16 +1838,17 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** pending version bump and tag after review; `npm test` 146 passing and the
   browser pass at 1280/360 px are green.
 
-### M6.5 — compact desktop frame and clipboard image (implemented, unreleased)
+### M6.5 — compact desktop frame and validated clipboard copy (implemented, unreleased)
 
 - [x] Reduce the desktop header to 52 px, the stage toolbar to 28 px, and the status line
       to 24 px without shrinking touch targets below 600 px.
 - [x] Tighten desktop workspace gaps and padding so the canvas keeps the reclaimed height.
 - [x] Move the palette-editor hint into the free left export column, bottom-aligned with
       the palette, so changing hints and languages never resizes the canvas.
-- [x] Add **Copy image** for the validated indexed PNG with an in-gesture `ClipboardItem`
-      promise; keep Save as a separate validated download and report unsupported/denied
-      clipboard writes.
+- [x] Add Save and Copy to every validated result row; PNG results are copied as images
+      and palette files as text, with a clear fallback to Save when clipboard writes fail.
+- [x] Clear the palette selection by clicking empty strip space or pressing Esc while the
+      palette has focus, so Pick can fill the HEX field for Add.
 - [x] Add helper tests for image clipboard support and PNG blob creation.
 - **Exit:** pending version bump and tag after review; `npm test` 148 passing and the
   browser pass at 1280/360 px is green.
@@ -1986,7 +1992,8 @@ A change is done only when:
 | 2026-11-16 | Add picked-color anchors only for explicitly sampled colors | Extracted and imported colors have no source point; user-created anchors avoid 256 handles and arbitrary positions while keeping direct manipulation where a point actually exists. Markers stay UI/session state and never enter palette JSON or hashes. |
 | 2026-11-16 | Compact the desktop frame: 52 px header, 28 px toolbar, 24 px status line, and 8 px workspace gaps | The canvas is the working surface; desktop chrome was spending 127 px of height on header, toolbar, padding, and gaps. Touch layouts keep their 44 px targets, and the reclaimed height all goes to the canvas. |
 | 2026-11-16 | Move the palette-editor hint into the left export column | Hint text changes with Pick and with the language, and inside the palette card it resized the canvas. Bottom-aligning the hint in the free left column keeps the instruction visible without any layout shift. |
-| 2026-11-16 | Add Copy image next to Indexed PNG and keep Save | Copying the prepared indexed PNG removes the save dialog from the common handoff. The ClipboardItem receives a promise created inside the click gesture so full-resolution encoding does not lose activation; saving remains a separate validated link and unsupported clipboard writes fall back to a clear message. |
+| 2026-11-16 | Add Save and Copy to every validated export result | Copying belongs after validation and should work for any export, not only the indexed PNG: PNG results become image clipboard items and palette files become text. Placing Copy beside Save keeps the two post-validation handoffs together instead of creating a second pre-validation export path. |
+| 2026-11-16 | Clear the palette selection on empty-strip click or palette-scoped Esc | With an entry always selected, the eyedropper could only recolor an existing color; clearing the selection lets Pick fill HEX for Add. Scoping Esc to the palette avoids clearing the editor while closing Help or a tooltip. |
 
 ---
 

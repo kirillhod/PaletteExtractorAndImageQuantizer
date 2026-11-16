@@ -563,13 +563,12 @@ body instead of making the rail scroll.
 ### Export panel
 
 Export is its own column to the left of the canvas on desktop and above the canvas on
-mobile. It reads as the primary action area: a bright primary indexed-PNG button, a
-secondary **Copy image** action that copies the same validated PNG to the clipboard,
-quieter strip, reduced-PNG, and HEX buttons, then strip orientation. The desktop column
-is 180–220 px, so the canvas keeps its width; the export column spans the canvas and
-palette rows, and the palette aligns with the canvas’s left edge below it. The palette
-editor hint sits under the export panel at the bottom of that free left column, so
-changing the hint text never resizes the canvas.
+mobile. It reads as the primary action area: a bright primary indexed-PNG button, quieter
+strip, reduced-PNG, and HEX buttons, then strip orientation. The desktop column is
+180–220 px, so the canvas keeps its width; the export column spans the canvas and palette
+rows, and the palette aligns with the canvas’s left edge below it. The palette editor hint
+sits under the export panel at the bottom of that free left column, so changing the hint
+text never resizes the canvas.
 
 ```css
 .peiq-workspace {
@@ -611,6 +610,10 @@ changing the hint text never resizes the canvas.
   border-radius: var(--peiq-radius-lg);
   background: var(--peiq-bg-secondary);
 }
+.peiq-download-result__file {
+  display: grid;
+  gap: 6px;
+}
 ```
 
 Below 980 px the export column disappears as a box and its children join the one-column
@@ -621,10 +624,11 @@ While an export runs, a 6 px indeterminate bar and a short label appear in the p
 All export buttons are disabled, the panel gets `aria-busy="true"`, and the bar becomes a
 static half-opacity line under `prefers-reduced-motion`. Only one export can run at a
 time; a second click is ignored until the first completes or is cancelled by a settings
-or image change. **Copy image** starts a `ClipboardItem` write inside the click gesture
-with a promise for the validated PNG, so slow full-resolution encoding does not lose the
-user activation; when image clipboard writes are unavailable, the action reports it and
-points to the Save action. **Save** remains a real link and is never replaced by copy.
+or image change. After validation, each result file shows **Save file** and **Copy** in the
+same result block. Copy uses the already validated bytes: PNG exports go to the clipboard
+as `image/png`, palette files are copied as text. Saving remains a real link and is never
+replaced by copy; an unavailable or denied clipboard write reports it and points back to
+Save.
 
 ### Palette strip and sort bar
 

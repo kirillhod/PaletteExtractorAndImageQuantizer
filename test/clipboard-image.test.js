@@ -17,12 +17,14 @@ test('image clipboard support requires write and ClipboardItem', () => {
 
 test('the validated PNG export becomes an image/png clipboard blob', async () => {
   const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-  const blob = exportedPngBlob([
-    { mime: 'image/png', data: bytes.buffer, validation: { ok: true, detail: '' } },
-  ]);
+  const blob = exportedPngBlob({
+    mime: 'image/png',
+    data: bytes.buffer,
+    validation: { ok: true, detail: '' },
+  });
   assert.ok(blob);
   assert.equal(blob.type, 'image/png');
   assert.deepEqual(new Uint8Array(await blob.arrayBuffer()), bytes);
-  assert.equal(exportedPngBlob([{ mime: 'text/plain', data: bytes.buffer }]), null);
-  assert.equal(exportedPngBlob([]), null);
+  assert.equal(exportedPngBlob({ mime: 'text/plain', data: bytes.buffer }), null);
+  assert.equal(exportedPngBlob(null), null);
 });

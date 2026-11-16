@@ -255,6 +255,11 @@
   border-top: 1px solid var(--peiq-border);
 }
 
+.peiq-download-result__file {
+  display: grid;
+  gap: 6px;
+}
+
 .peiq-download-result .peiq-btn {
   text-decoration: none;
 }

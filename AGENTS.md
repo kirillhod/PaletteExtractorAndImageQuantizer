@@ -268,22 +268,23 @@ and the change is committed locally with a descriptive body (plan §16).
 - Plan: 1.3.1 complete; `DESIGN.md` complete (dark + light themes, auto + 3-state toggle);
   M0 complete to `v0.1.0`; M1 to `v0.2.2`; M2 to `v0.3.0`; M3 to `v0.4.0`; M4 to `v1.0.0`;
   M5 to `v1.1.0`; M6 to `v1.2.0`; M6.1 to `v1.3.0`; M6.2 to `v1.3.1` (148 tests).
-  Perceptual palette ordering, picked-color anchors, the compact desktop frame, and
-  clipboard image copy are implemented but not yet released.
+  Perceptual palette ordering, picked-color anchors, the compact desktop frame, validated
+  clipboard copy, and palette-selection clearing are implemented but not yet released.
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, loupe-based canvas
-  picking, add/remove, locks, ←/→ manual order, touch undo/redo icons, sticky
+  picking, add/remove, locks, ←/→ manual order, clear selection by empty-strip click or
+  palette-scoped Esc, touch undo/redo icons, sticky
   eyedropper picking, picked-color markers with drag and arrow-key nudging, perceptual
   palette ordering (smooth, color path, flow), CIEDE2000 quality stats/error map/worst
   pixels, versioned URL settings,
   IndexedDB session restore (image, palette, locks, undo/redo),
   English/Russian UI with auto-detection and a header language toggle, canonical and
   social SEO metadata, JSON-LD, themes, compact desktop frame with a scrollable rail,
-  left export column with clipboard image copy, contextual tooltips, Help drawer with
-  references and credits, LAN dev-server URLs.
-- Next: release the perceptual ordering, picked-marker, compact-frame, and clipboard-image
-  changes when requested; otherwise M7 — later / not planned for v1.x.
+  left export column with Save and Copy on every validated result, contextual tooltips,
+  Help drawer with references and credits, LAN dev-server URLs.
+- Next: release the perceptual ordering, picked-marker, compact-frame, validated-copy, and
+  selection-clearing changes when requested; otherwise M7 — later / not planned for v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 

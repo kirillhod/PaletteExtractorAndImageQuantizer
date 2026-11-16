@@ -1,5 +1,7 @@
 // @ts-check
+import { copyText } from './dom.js';
 import { t } from './i18n.js';
+import { toastKey } from './status.js';
 
 /** @type {string[]} */
 const activeUrls = [];
@@ -36,16 +38,55 @@ function renderDownloadLinks() {
     const url = URL.createObjectURL(blob);
     activeUrls.push(url);
 
+    const row = document.createElement('div');
+    row.className = 'peiq-download-result__file';
+
     const link = document.createElement('a');
     link.className = 'peiq-btn peiq-btn--primary';
     link.href = url;
     link.download = file.name;
     link.rel = 'noopener';
     link.textContent = t('export.saveFile', { name: file.name });
-    host.append(link);
+
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'peiq-btn peiq-btn--small';
+    copy.textContent = t('export.copyFile');
+    copy.setAttribute('aria-label', t('export.copyFileAria', { name: file.name }));
+    copy.addEventListener('click', () => copyFile(file));
+
+    row.append(link, copy);
+    host.append(row);
   }
 
   host.hidden = false;
+}
+
+/**
+ * Copy one already validated export. PNG files go to the clipboard as images;
+ * palette files are copied as text. The file bytes are ready, so no worker job
+ * or user-activation handoff is needed here.
+ *
+ * @param {{ name:string, mime:string, data:ArrayBuffer }} file
+ */
+async function copyFile(file) {
+  try {
+    if (file.mime === 'image/png') {
+      const ClipboardItemCtor = /** @type {any} */ (window).ClipboardItem;
+      if (!supportsImageClipboard(navigator.clipboard, ClipboardItemCtor)) {
+        throw new Error('image clipboard unavailable');
+      }
+      const blob = exportedPngBlob(file);
+      if (!blob) throw new Error('not a PNG export');
+      await navigator.clipboard.write([new ClipboardItemCtor({ 'image/png': blob })]);
+    } else {
+      const text = await new Blob([file.data]).text();
+      await copyText(text);
+    }
+    toastKey('toast.copiedFile', { name: file.name }, 'success');
+  } catch {
+    toastKey('toast.copyFileUnavailable', { name: file.name }, 'error');
+  }
 }
 
 function clearElements() {
@@ -69,7 +110,6 @@ export function clearDownloadLinks() {
 export function setExportEnabled(enabled) {
   for (const id of [
     'export-indexed',
-    'copy-image',
     'export-strip',
     'export-reduced',
     'copy-hex',
@@ -97,13 +137,12 @@ export function supportsImageClipboard(clipboard, ClipboardItemCtor) {
 }
 
 /**
- * Turn a validated export file into the PNG blob the clipboard expects.
+ * Turn a validated image export into the PNG blob the clipboard expects.
  *
- * @param {{ mime:string, data:ArrayBuffer }[]} files
+ * @param {{ mime:string, data:ArrayBuffer }} file
  * @returns {Blob|null}
  */
-export function exportedPngBlob(files) {
-  const file = files[0];
+export function exportedPngBlob(file) {
   if (!file || file.mime !== 'image/png') return null;
   return new Blob([file.data], { type: 'image/png' });
 }

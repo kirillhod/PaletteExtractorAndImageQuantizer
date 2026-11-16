@@ -47,8 +47,6 @@ const en = {
   'export.heading': 'Export',
   'export.indexed': 'Indexed PNG',
   'export.indexedAria': 'Download indexed PNG',
-  'export.copyImage': 'Copy image',
-  'export.copyImageAria': 'Copy indexed PNG to clipboard',
   'export.strip': 'Palette strip',
   'export.reduced': 'Reduced PNG',
   'export.copyHex': 'Copy HEX',
@@ -59,8 +57,10 @@ const en = {
   'export.save': 'Save',
   'export.preparing': 'Preparing export…',
   'export.checkHint': 'Decoded or parsed and checked before Save or copy.',
-  'export.validatedHint': 'Validated. Click Save to write the file.',
+  'export.validatedHint': 'Validated. Save the file or copy it.',
   'export.saveFile': 'Save {name}',
+  'export.copyFile': 'Copy',
+  'export.copyFileAria': 'Copy {name} to clipboard',
 
   'toolbar.changeImage': 'Change image',
   'toolbar.changeImageShort': 'Image',
@@ -110,7 +110,7 @@ const en = {
   'palette.undo': 'Undo palette edit',
   'palette.redo': 'Redo palette edit',
   'palette.editHint':
-    'Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.',
+    'Select a swatch; click empty space to clear it. Pick samples the canvas; Esc stops.',
   'palette.pickHint':
     'Pick stays active: tap or drag on the image for each swatch; release applies the color. Tap Pick again or press Esc to stop.',
   'palette.hintLabel': 'Hint',
@@ -229,9 +229,6 @@ const en = {
   'status.buildingStrip': 'Building and validating the palette strip…',
   'status.encodingReduced': 'Encoding the full-resolution PNG…',
   'status.encodingIndexed': 'Encoding and validating the indexed PNG…',
-  'status.copyingImage': 'Copying the indexed PNG to the clipboard…',
-  'status.copiedImage': 'Copied to the clipboard: {detail}',
-  'status.copyImageFailed': 'Could not copy the image',
   'status.savedSessionCouldNotClear': 'Saved session could not be cleared',
   'status.sessionRestoreFailed': 'Saved session could not be restored',
   'status.couldNotReadImage': 'Could not read image',
@@ -281,7 +278,7 @@ const en = {
     'Dither optionally, then encode, decode, and compare before offering the file.',
   'help.orderTitle': 'Palette order and the preview',
   'help.orderP':
-    'The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot.',
+    'The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette strip or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.',
   'help.perceptualP':
     'Perceptual orders compare colors with Delta E (CIEDE2000). Smooth keeps the light-to-dark flow while removing local jumps; Color path follows the closest perceptual route between the darkest and lightest colors; Flow maximizes local continuity without pinning the ends. Only the order and export indices change.',
   'help.markersP':
@@ -369,10 +366,9 @@ const en = {
   'toast.movedRight': 'Moved {hex} right',
   'toast.copiedHex': 'Copied {hex}',
   'toast.copiedHexValues': 'Copied {countLabel}',
-  'toast.copiedImage': 'Indexed PNG copied to the clipboard',
+  'toast.copiedFile': 'Copied {name} to the clipboard',
+  'toast.copyFileUnavailable': 'Could not copy {name}. Use Save instead.',
   'toast.clipboardUnavailable': 'Clipboard is unavailable',
-  'toast.clipboardImageUnavailable':
-    'Copying images is unavailable here. Use Indexed PNG to save instead.',
   'toast.paletteFileReady': 'Palette file ready. Click Save.',
   'toast.paletteBuildFailed': 'Could not build palette file: {detail}',
   'toast.paletteValidationFailed': 'Palette validation failed: {detail}',
@@ -498,8 +494,6 @@ const ru = {
   'export.heading': 'Экспорт',
   'export.indexed': 'Индексированный PNG',
   'export.indexedAria': 'Скачать индексированный PNG',
-  'export.copyImage': 'Копировать изображение',
-  'export.copyImageAria': 'Скопировать индексированный PNG в буфер обмена',
   'export.strip': 'Полоса палитры',
   'export.reduced': 'Уменьшенный PNG',
   'export.copyHex': 'Копировать HEX',
@@ -511,8 +505,10 @@ const ru = {
   'export.preparing': 'Подготовка экспорта…',
   'export.checkHint':
     'Файл декодируется или разбирается, а затем проверяется перед сохранением или копированием.',
-  'export.validatedHint': 'Проверка пройдена. Нажмите «Сохранить», чтобы записать файл.',
+  'export.validatedHint': 'Проверка пройдена. Сохраните файл или скопируйте его.',
   'export.saveFile': 'Сохранить {name}',
+  'export.copyFile': 'Копировать',
+  'export.copyFileAria': 'Скопировать {name} в буфер обмена',
 
   'toolbar.changeImage': 'Сменить изображение',
   'toolbar.changeImageShort': 'Файл',
@@ -561,7 +557,7 @@ const ru = {
   'palette.undo': 'Отменить изменение палитры',
   'palette.redo': 'Повторить изменение палитры',
   'palette.editHint':
-    'Выберите цвет. Пипетка берёт цвет с изображения; Esc отменяет. ← / → меняют только порядок экспорта; добавление, удаление или изменение влияют на предпросмотр.',
+    'Выберите цвет; нажмите на пустое место, чтобы снять выбор. Пипетка берёт цвет с изображения; Esc выключает.',
   'palette.pickHint':
     'Пипетка остаётся включённой: коснитесь изображения или ведите палец для каждого свотча; отпускание применяет цвет. Нажмите «Пипетка» ещё раз или Esc, чтобы выключить.',
   'palette.hintLabel': 'Подсказка',
@@ -685,9 +681,6 @@ const ru = {
   'status.buildingStrip': 'Создание и проверка полосы палитры…',
   'status.encodingReduced': 'Кодирование PNG полного разрешения…',
   'status.encodingIndexed': 'Кодирование и проверка индексированного PNG…',
-  'status.copyingImage': 'Копирование индексированного PNG в буфер обмена…',
-  'status.copiedImage': 'Скопировано в буфер обмена: {detail}',
-  'status.copyImageFailed': 'Не удалось скопировать изображение',
   'status.savedSessionCouldNotClear': 'Не удалось удалить сохранённую сессию',
   'status.sessionRestoreFailed': 'Не удалось восстановить сохранённую сессию',
   'status.couldNotReadImage': 'Не удалось прочитать изображение',
@@ -738,7 +731,7 @@ const ru = {
     'При необходимости включается дизеринг; затем файл кодируется, декодируется и сравнивается с исходным изображением перед сохранением.',
   'help.orderTitle': 'Порядок палитры и предпросмотр',
   'help.orderP':
-    'Предпросмотр и уменьшенный PNG используют цвета палитры. Перемещение цвета меняет порядок экспорта и индексы, но не набор цветов, поэтому изображение выглядит так же, кроме случая, когда для пикселя два цвета одинаково близки: тогда выбирается меньший индекс. Добавление, удаление или изменение цвета меняет сопоставление. В индексированном PNG видимые цвета после перемещения сохраняются (кроме случаев, когда два цвета одинаково близки), но порядок PLTE и индексная карта меняются; прозрачный индекс следует за своим цветом, а не за позицией.',
+    'Предпросмотр и уменьшенный PNG используют цвета палитры. Перемещение цвета меняет порядок экспорта и индексы, но не набор цветов, поэтому изображение выглядит так же, кроме случая, когда для пикселя два цвета одинаково близки: тогда выбирается меньший индекс. Добавление, удаление или изменение цвета меняет сопоставление. В индексированном PNG видимые цвета после перемещения сохраняются (кроме случаев, когда два цвета одинаково близки), но порядок PLTE и индексная карта меняются; прозрачный индекс следует за своим цветом, а не за позицией. Нажмите на пустое место в полосе палитры или Esc при фокусе в палитре, чтобы снять выбор; без выбранного цвета пипетка заполняет поле HEX для «Добавить».',
   'help.perceptualP':
     'Перцептивные порядки сравнивают цвета по Delta E (CIEDE2000). «Плавно» сохраняет переход от тёмного к светлому и убирает локальные скачки; «Цветовой путь» идёт по ближайшим цветам от самого тёмного к самому светлому; «Поток» максимизирует локальную плавность без фиксации концов. Меняются только порядок и индексы экспорта.',
   'help.markersP':
@@ -826,10 +819,9 @@ const ru = {
   'toast.movedRight': '{hex} перемещён вправо',
   'toast.copiedHex': 'Скопирован {hex}',
   'toast.copiedHexValues': 'Скопировано {countLabel}',
-  'toast.copiedImage': 'Индексированный PNG скопирован в буфер обмена',
+  'toast.copiedFile': 'Файл {name} скопирован в буфер обмена',
+  'toast.copyFileUnavailable': 'Не удалось скопировать {name}. Используйте «Сохранить».',
   'toast.clipboardUnavailable': 'Буфер обмена недоступен',
-  'toast.clipboardImageUnavailable':
-    'Копирование изображений здесь недоступно. Используйте «Индексированный PNG», чтобы сохранить файл.',
   'toast.paletteFileReady': 'Файл палитры готов. Нажмите «Сохранить».',
   'toast.paletteBuildFailed': 'Не удалось создать файл палитры: {detail}',
   'toast.paletteValidationFailed': 'Проверка палитры не пройдена: {detail}',
