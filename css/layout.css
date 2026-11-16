@@ -249,7 +249,7 @@
       "toolbar toolbar rail"
       "export canvas rail"
       "export palette rail"
-      "status status rail";
+      ". status rail";
     gap: var(--peiq-space-2);
     align-items: stretch;
     padding-block: var(--peiq-space-2);

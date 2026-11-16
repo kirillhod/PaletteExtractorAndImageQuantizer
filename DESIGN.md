@@ -1238,8 +1238,9 @@ screen block.
 - Stage actions (change image, zoom, fit, original) live in the stage toolbar. On desktop
   the toolbar row is 28 px with 28 px icon buttons; below 600 px the controls return to
   44 px touch targets.
-- The palette strip sits directly under the canvas; the status line reports dimensions,
-  unique colors, timings, and export validation.
+- The palette strip sits directly under the canvas, and the status line sits under the
+  palette in the same stage column; it reports dimensions, unique colors, timings, and
+  export validation. The line keeps its content and height while a preview runs.
 - The rail is a stack of collapsible sections, not tabs; the Extract/Map mode switch lives
   inside the Palette section.
 

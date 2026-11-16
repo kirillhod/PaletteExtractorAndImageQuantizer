@@ -1024,6 +1024,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 - Checkerboard behind alpha.
 - Largest canvas backing store: `min(devicePixelRatio, 2)`.
 - No layout shift while processing; keep the last result visible with a progress overlay.
+- Keep the previous status line and export controls during a preview. An export click while
+  a preview is in flight reports processing instead of exporting a stale palette.
 
 ### 8.4 Visual system
 
@@ -2002,6 +2004,7 @@ A change is done only when:
 | 2026-11-16 | Move the palette-editor hint into the left export column | Hint text changes with Pick and with the language, and inside the palette card it resized the canvas. Bottom-aligning the hint in the free left column keeps the instruction visible without any layout shift. |
 | 2026-11-16 | Add Save and Copy to every validated export result | Copying belongs after validation and should work for any export, not only the indexed PNG: PNG results become image clipboard items and palette files become text. Placing Copy beside Save keeps the two post-validation handoffs together instead of creating a second pre-validation export path. |
 | 2026-11-16 | Clear the palette selection on empty-strip click or palette-scoped Esc | With an entry always selected, the eyedropper could only recolor an existing color; clearing the selection lets Pick fill HEX for Add. Scoping Esc to the palette avoids clearing the editor while closing Help or a tooltip. |
+| 2026-11-16 | Keep the previous status line and export controls while a preview runs; place the status line under the palette | Replacing the image stats with a processing message and disabling every export button on each preview made both areas blink during slider edits. The last validated stats and controls now stay in place, and a click during the short preview window reports processing rather than exporting a stale palette. The desktop grid gives the status line the stage column, matching the layout and keeping it under the palette instead of stretching from the left edge. |
 
 ---
 

@@ -90,6 +90,7 @@ const app = {
   paletteEdited: false,
   hasResult: false,
   previewRequestId: 0,
+  previewBusy: false,
   exportRequestId: 0,
   exportBusy: false,
 };
@@ -249,7 +250,7 @@ function onWorkerMessage(event) {
   if (!message) return;
 
   if (message.type === 'progress') {
-    if (message.requestId === app.previewRequestId) {
+    if (message.requestId === app.previewRequestId && !app.hasResult) {
       setStatusMessage(
         message.stage === 'extract' ? 'status.extractingPalette' : 'status.processing',
       );
@@ -267,6 +268,7 @@ function onWorkerMessage(event) {
 
   if (message.type === 'result') {
     if (message.requestId !== app.previewRequestId) return;
+    app.previewBusy = false;
     if (!app.paletteEdited) app.palette = message.palette;
     app.reduced = {
       data: new Uint8ClampedArray(message.preview.data),
@@ -340,6 +342,7 @@ function onWorkerMessage(event) {
     } else if (qualityPanel.matches(message.requestId)) {
       qualityPanel.fail();
     } else {
+      app.previewBusy = false;
       if (sessionState.restoringSession) sessionState.restoringSession = false;
       updateExportState();
     }
@@ -456,6 +459,7 @@ function populateBuiltinPalettes() {
 
 function processPreview() {
   if (!app.preview) return;
+  app.previewBusy = true;
   qualityPanel.reset({ disable: true });
   if (mode === 'map' && fixedColors.length === 0) {
     if (!loadTargetPalette(paletteSelect?.value || 'pico-8')) return;
@@ -483,9 +487,11 @@ function processPreview() {
     [copy.buffer],
   );
 
-  setExportEnabled(false);
-  if (canvasEmpty && !app.hasResult) canvasEmpty.hidden = false;
-  setStatusMessage('status.processingPreview');
+  if (!app.hasResult) {
+    setExportEnabled(false);
+    if (canvasEmpty) canvasEmpty.hidden = false;
+    setStatusMessage('status.processingPreview');
+  }
 }
 
 /**

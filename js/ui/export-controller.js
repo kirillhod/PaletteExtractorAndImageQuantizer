@@ -20,6 +20,7 @@ import { setStatusMessage, toast, toastKey } from './status.js';
  * @property {number} height
  * @property {any[]} palette
  * @property {boolean} hasResult
+ * @property {boolean} previewBusy
  * @property {number} exportRequestId
  * @property {boolean} exportBusy
  */
@@ -74,6 +75,12 @@ export function createExportController(deps) {
    * @returns {number} request id, or 0 when an export is already running
    */
   function beginExport(labelKey) {
+    if (app.previewBusy) {
+      // The last result and its controls stay visible while a preview runs; say why
+      // a click during that short window does not start an export.
+      setStatusMessage('status.processingPreview');
+      return 0;
+    }
     if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return 0;
     const id = deps.nextRequestId();
     app.exportRequestId = id;
