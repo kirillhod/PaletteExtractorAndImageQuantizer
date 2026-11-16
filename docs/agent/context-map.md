@@ -4,8 +4,10 @@
 
 | File | Approx. tokens | Read instead |
 | --- | ---: | --- |
-| `IMPLEMENTATION_PLAN.md` | 30k | `node tools/spec.mjs plan 6.5` or `--list` |
-| `RESEARCH_REPORT.md` | 30k | `node tools/spec.mjs research 4.5`; only for sourced claims |
+| `IMPLEMENTATION_PLAN.md` | 2k | read it whole: status, index, Definition of Done |
+| `docs/spec/*.md` | 3–7k each | open only the topic you need; `node tools/spec.mjs plan 6.5` jumps to any section |
+| `docs/history/*.md` | 1–8k each | only for the reason behind a rule; never open for a normal change |
+| `RESEARCH_REPORT.md` | 30k | `node tools/spec.mjs research 4.5`; frozen evidence, only for sourced claims |
 | `DESIGN.md` | 15k | `node tools/spec.mjs design 5` |
 | `js/main.js` | 8k | grep the function name, read about 80 lines around it |
 | `js/content/messages.en.js` | 6k | grep the key; the RU table is a separate file |
@@ -15,6 +17,9 @@
 `AGENTS.md` is loaded automatically; do not re-read it.
 
 ## Task map
+
+Spec sections keep their original numbers. `plan §X` below means `node tools/spec.mjs
+plan X`, which finds the section in whichever file holds it.
 
 | Task | Start here | Spec | Focused test |
 | --- | --- | --- | --- |
@@ -39,7 +44,7 @@
 | URL state, session restore | `js/ui/session-url.js`, `js/core/url-state.js`, `js/core/session-state.js`, `js/ui/session-store.js` | plan §8.9-§8.10 | `test/url-state.test.js`, `test/session-state.test.js` |
 | Quality metrics | `js/core/metrics/index.js` | plan §6.9 | `test/metrics.test.js` |
 | SEO, Help, references | `index.html`, `js/content/references.js`, `js/ui/learn-view.js` | plan §8.8, §8.12 | `test/seo.test.js`, `test/references.test.js` |
-| Release and tagging | this repo's `AGENTS.md` §10 | plan §15, §17 | load skill `peiq-release` |
+| Release and tagging | this repo's `AGENTS.md` §10 | `docs/history/milestones.md`, `docs/history/releases.md` | load skill `peiq-release` |
 
 ## Reading recipe
 
@@ -55,7 +60,7 @@
 
 ## Budget signals
 
-- A single full-plan read is roughly one third of a 100k window.
+- Reading all of `docs/spec/` is about 25k tokens; one topic file is 3–7k. Open one.
 - `main.js` is about 8k tokens and each message table about 6-9k; reading both message
   tables plus `index.html` is already about 24k.
 - Screenshots and large tool output are expensive: print only the fields you need and

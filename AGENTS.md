@@ -26,26 +26,44 @@ post-1.0.
 | Storage keys | `peiq.*` |
 | Worker entry | `js/workers/pipeline.worker.js` |
 | Version constants | `js/core/version.js` → `APP_VERSION`, `ALGORITHM_VERSION` |
-| Plan | [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) |
+| Plan | [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md), [`docs/spec/`](docs/spec/), [`docs/history/`](docs/history/) |
 
 ## 2. Source of truth
 
-[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) is authoritative for scope, algorithms,
-behavior, contracts, tests, milestones, and the decision log.
+[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) is authoritative for scope,
+architecture, algorithms, behavior, contracts, tests, and release criteria. It is the
+entry point: the status table, the index of every part, and the Definition of Done. The
+normative text lives beside it in `docs/spec/`, split by topic, and the append-only record
+lives in `docs/history/`:
+
+- `docs/spec/product.md` — scope, constraints, palettes, backlog.
+- `docs/spec/architecture.md` — layers, data model, performance, errors, file map.
+- `docs/spec/algorithms.md` — color, extraction, mapping, dithering, indexing, QA,
+  determinism.
+- `docs/spec/ui.md` — layout, controls, canvas, motion, accessibility, URL, session, i18n,
+  Help.
+- `docs/spec/contracts.md` — tests and export contracts.
+- `docs/spec/appendix.md` — reference tables.
+- `docs/history/` — decision log, closed milestones, release records; a record, not a plan.
+
 [`DESIGN.md`](DESIGN.md) is authoritative for colors, typography, component styles,
 layout values, motion, and responsive rules.
 
-- Read §1–§4 before code, §5–§7 for color/mapping/dithering, §8 for UI behavior, §10–§12
-  for tests and output contracts, §14–§15 for the file map and current milestone.
+- The plan index maps every section number to its file. Section numbers never renumber, so
+  `node tools/spec.mjs plan 6.5` finds a section in whichever file holds it and old
+  references stay valid.
+- Read `product.md` and `architecture.md` before code, `algorithms.md` for color/mapping/
+  dithering/PNG/QA work, `ui.md` for UI behavior, and `contracts.md` for tests and output
+  contracts. `docs/history/` is a record, not a plan.
 - Read `DESIGN.md` before any UI work. If a visual value conflicts with the plan, DESIGN
   wins; if behavior conflicts, the plan wins.
-- Do not silently diverge from a **MUST**. Update the plan and decision log first.
+- Do not silently diverge from a **MUST**. Update the spec file and the decision log first.
 - Do not simplify a formula, constant, tie-break, or chunk layout without a test proving
   equivalence.
-- [`RESEARCH_REPORT.md`](RESEARCH_REPORT.md) is evidence, not a spec; do not edit it
+- [`RESEARCH_REPORT.md`](RESEARCH_REPORT.md) is frozen evidence, not a spec; do not edit it
   except for a sourced factual correction.
-- This file is the process contract; the plan is the product contract; DESIGN.md is the
-  visual contract.
+- This file is the process contract; the plan and its spec set are the product contract;
+  DESIGN.md is the visual contract.
 
 ## 3. Layout
 
@@ -65,12 +83,15 @@ layout values, motion, and responsive rules.
 /test/               node --test suites and fixture helpers
 /tools/              dev-server.mjs, gen-blue-noise.mjs, cdp.mjs
 /docs/agent/         agent procedures: context map, browser check, release
+/docs/spec/          normative plan by topic: product, architecture, algorithms, ui,
+                     contracts, appendix
+/docs/history/       append-only: decision log, closed milestones, release records
 /.opencode/skills/   thin adapters that register docs/agent procedures as skills
 /.github/workflows/  ci.yml, pages.yml
 ```
 
 Import direction is one-way: `ui → worker → core`. `content` is static data rendered by
-`ui`; it imports neither `core` nor `ui`. Full file map: plan §14.
+`ui`; it imports neither `core` nor `ui`. Full file map: `docs/spec/architecture.md` §14.
 
 ## 4. Environment
 
@@ -218,12 +239,16 @@ committed locally with a descriptive body (plan §16).
 
 ## 9. Documentation
 
-- Plan first: behavior belongs in `IMPLEMENTATION_PLAN.md`; visual design belongs in
-  `DESIGN.md`; `README.md` is user-facing; this file is process.
-- Update the plan and decision log in the same change when a fact or contract changes.
+- Spec first: behavior belongs in the matching `docs/spec/` file; visual design belongs in
+  `DESIGN.md`; `README.md` is user-facing; this file is process; `docs/history/` is a
+  record.
+- Update the spec file and the decision log in the same change when a fact or contract
+  changes. One fact has one home: do not restate a rule in `AGENTS.md` or `README.md`
+  when a spec file already owns it, link instead.
 - Use clickable canonical Markdown links on first mention; relative links for internal
   references; never bare URLs.
-- Do not create new design docs. Extend the plan.
+- Do not create new design docs and do not fork the plan. Add a section to the spec file
+  that owns the topic; create a new spec file only with owner approval.
 
 ## 10. Git
 
@@ -240,10 +265,10 @@ committed locally with a descriptive body (plan §16).
   Add Wu quantizer and its moment tests
 
   Wu gives the balanced photo path a deterministic, near-optimal box split.
-  The implementation follows plan section 6.4.3 and compares against
+  The implementation follows docs/spec/algorithms.md §6.4.3 and compares against
   brute-force MSE on small fixtures.
 
-  Refs: IMPLEMENTATION_PLAN.md 6.4.3, 10.2; M2
+  Refs: docs/spec/algorithms.md §6.4.3; docs/spec/contracts.md §10.2; M2
   ```
 
 - Release commits that bump the version get an annotated local tag
@@ -259,11 +284,11 @@ committed locally with a descriptive body (plan §16).
 
 ## 11. Agent workflow
 
-1. Read the relevant plan sections and check §15 for the current milestone. Read
+1. Read the relevant `docs/spec/` file and check plan §0 for the current state. Read
    `DESIGN.md` before UI work.
 2. Make the smallest coherent change that advances that milestone; do not start another.
 3. Implement, add tests, run `npm test`, then verify UI work in a browser.
-4. Update plan checkboxes and the decision log when behavior or contracts change.
+4. Update the owning spec file and the decision log when behavior or contracts change.
 5. Commit locally with a descriptive body.
 6. Report evidence: commands, results, limitations.
 7. If ambiguous, choose the option that preserves frozen contracts and document it. Ask
@@ -273,23 +298,21 @@ committed locally with a descriptive body (plan §16).
 10. Leave the repository green; fix flakiness instead of skipping silently.
 11. Keep context small. Load skill `peiq-context-map` or read
     [`docs/agent/context-map.md`](docs/agent/context-map.md) to locate files and specs, use
-    `node tools/spec.mjs <plan|design|research> <section>` instead of reading a whole
-    document, grep before reading, and read large files in slices. Never read
-    `IMPLEMENTATION_PLAN.md`, `DESIGN.md`, `RESEARCH_REPORT.md`, `js/main.js`, or a
-    `messages.*.js` table end to end. Send “where/how” questions to the `explore`
-    subagent and keep the main context for edits.
+    `node tools/spec.mjs <plan|algorithms|ui|contracts|design|research> <section>` instead
+    of reading a whole document, grep before reading, and read large files in slices. A
+    spec file is one topic: open the one you need, never sweep `docs/spec/`. Do not read
+    `DESIGN.md`, `RESEARCH_REPORT.md`, `docs/history/`, `js/main.js`, or a `messages.*.js`
+    table end to end. Send “where/how” questions to the `explore` subagent and keep the
+    main context for edits.
 
 ## 12. Current state and next task
 
-- Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
-  plan §18. Do not duplicate feature lists here.
-- Released `v1.5.0`; 196 tests in `main`. M6.3–M6.6 are complete; the bounded
-  hue-band, hue-perceptual, compact sort controls, full-screen palette preview, the
-  extraction Help guide, the confirmed footer session clear, the dithered preview alpha
-  fix, the Wu grid and occupancy fix, the faster error-diffusion decision path, the
-  full-resolution original with an area-budgeted mapping preview, the automatic
-  transparency slot on indexed export, and the canvas error map with numbered worst-pixel
-  markers are committed but unreleased.
+- Canonical status, the test count, and the unreleased list live in plan §0; decisions in
+  [`docs/history/decisions.md`](docs/history/decisions.md); closed milestones in
+  [`docs/history/milestones.md`](docs/history/milestones.md). Do not duplicate feature
+  lists or counts here.
+- Released `v1.5.0`; M6.3–M6.6 are complete. Several verified changes are committed but
+  unreleased; plan §0 names them.
 - Next: ship those changes with the next release; otherwise M7 — later / not planned for
   v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker
@@ -305,7 +328,8 @@ npm run dev                    # http://localhost:5173/ + LAN URLs
 node tools/dev-server.mjs 8080
 node tools/dev-server.mjs 8080 --host=localhost   # loopback only
 node tools/gen-blue-noise.mjs
-node tools/spec.mjs plan 6.5        # one plan section only
-node tools/spec.mjs plan --list
+node tools/spec.mjs plan 6.5        # one plan section, any file
+node tools/spec.mjs algorithms 6.6  # one spec file by topic
+node tools/spec.mjs plan --list     # combined contents
 git status
 ```

@@ -16,6 +16,22 @@
 > PNG, exact palette strip, and essential dithering. Batch, CLI, manifests, full QA,
 > palette editing, presets, and extra formats are parked. See [§4.5](#45-landscape-refresh-14-nov-2026)
 > for the evidence and the exact scope decision.
+>
+> **Status (frozen 2026-11-14).** This report is evidence for decisions, not a spec, and it
+> is not updated as the product ships. The product shipped as a zero-dependency, no-build
+> static browser tool under GPL-3.0-only: no Rust library, no CLI, no batch runner, no WASM
+> build, no accounts. Where §6 assumes that architecture, the
+> [implementation plan](IMPLEMENTATION_PLAN.md) wins.
+>
+> | Part | Standing on 2026-11-16 |
+> |---|---|
+> | §1 algorithms, §2 dithering and mapping, §3 literature, §5 domain constraints | Current; the plan follows them |
+> | §4 landscape and gap analysis, §4.5 refresh | Current as a dated snapshot; re-check before citing market claims |
+> | §6.1 point 1, §6.3, §6.6, §6.11, §6.12, §6.13, §6.14 | **Superseded**: Rust core, CLI, batch, WASM, and the week-by-week roadmap did not ship |
+> | §6.10 licensing | **Superseded**: the owner chose GPL-3.0-only, not Apache/MIT |
+> | References | Current; every citation stays a clickable source |
+>
+> Edit this file only for a sourced factual correction, never to track new work.
 
 ---
 
@@ -880,7 +896,7 @@ of these tools was independently benchmarked on a shared corpus.
 | Validated strip + reduced PNG + HEX copy | Long-form guide, deep links, URL state |
 | Sort, themes, responsive, tooltips, references | NES banks, animation, print, neural, accounts |
 
-The plan was reduced accordingly in [IMPLEMENTATION_PLAN.md §1–§2](IMPLEMENTATION_PLAN.md#1-product-definition).
+The plan was reduced accordingly in [docs/spec/product.md §1–§2](docs/spec/product.md#1-product-definition).
 The report’s earlier “palette compiler with CLI/batch/QA” thesis remains a possible
 long-term direction, but it is not the v1.0.0 release target.
 
@@ -1166,6 +1182,9 @@ Do not apply screen-space error diffusion to a 300 DPI print image and call it h
 
 ### 6.3 Data model (Rust sketch)
 
+> **Superseded.** The shipped data model is JSDoc in `js/core/types.js`, not Rust; see
+> `docs/spec/architecture.md` §4.3.
+
 ```rust
 pub struct Rgba8 { pub r: u8, pub g: u8, pub b: u8, pub a: u8 }
 
@@ -1247,6 +1266,9 @@ These are **engineering targets**, not measured results. They assume a modern la
 
 ### 6.6 CLI and API surface
 
+> **Superseded.** The shipped tool has no CLI or API surface; exports are browser
+> downloads validated in place. See `docs/spec/contracts.md` §12.
+
 ```
 # Extract a palette
 palettec extract photo.png -k 24 --space oklab --method kmeans --seed 42 -o palette.json
@@ -1321,6 +1343,9 @@ palettec check build/ --palette pico8.gpl --strict
 
 ### 6.11 MVP scope (MoSCoW)
 
+> **Superseded.** Batch, CLI, manifest, DTCG/CSS export, and the blue-noise and Yliluoma
+> presets are not in v1.x. The shipped scope is in `docs/spec/product.md` §2.
+
 | Priority | Feature | Acceptance criterion |
 |---|---|---|
 | **Must** | Extract: median cut, Wu, K-means (seeded) | Three modes produce valid palettes; deterministic |
@@ -1343,6 +1368,9 @@ palettec check build/ --palette pico8.gpl --strict
 | **Won't (v1)** | Cloud sync/accounts | Contradicts local-first |
 
 ### 6.12 Roadmap
+
+> **Superseded.** There is no Rust or WASM stage. The milestones that actually shipped,
+> M0–M6.6, are recorded in `docs/history/milestones.md`; the current state is plan §0.
 
 | Milestone | Duration | Deliverable | Exit criterion |
 |---|---:|---|---|

@@ -9,9 +9,10 @@ The version lives in two files and both must match in the tagged commit:
 2. Bump `package.json` and `js/core/version.js` in one commit. Do not touch `LICENSE`,
    the license fields, or the public name.
 3. Update the release records in the same change:
-   - plan §0 current state, §15 milestone, §17 checklist;
-   - plan §18 decision log only when a decision changed;
-   - `AGENTS.md` §12 and the test count in §12 and plan §0;
+   - plan §0 current state and the test count;
+   - a new milestone block in `docs/history/milestones.md` §15 when a milestone closes;
+   - a new checklist in `docs/history/releases.md` §17;
+   - `docs/history/decisions.md` §18 only when a decision changed;
    - `README.md` only when the user asked for user-facing changes.
 4. Run the full suite, not a subset:
 
