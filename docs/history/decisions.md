@@ -11,7 +11,7 @@ section numbers below are its original ones.
 
 | Date | Decision | Rationale |
 |---|---|---|
-| 2026-11-13 | Keep **GPL-3.0-only** | Owner decision; report’s MIT/Apache recommendation is not adopted |
+| 2026-11-13 | Keep **GPL-3.0-only** | The research recommended a permissive core for a multi-surface Rust library with studio adoption; that product did not ship. The shipped surface is a static web tool with no library, CLI, or WASM API, so permissive licensing buys no embedding today and gives up the guarantee that a closed clone of the tool stays closed. Revisit only if a reusable core, CLI, or package is planned, and before accepting outside contributions, because relicensing after that needs every contributor's consent. |
 | 2026-11-13 | Zero runtime dependencies, no build step | Static hosting, maintainability, supply-chain safety |
 | 2026-11-13 | This plan is the source of truth; AGENTS.md defers to it | Single contract surface |
 | 2026-11-13 | Oklab default, sRGB selectable | Report §1.3; content-dependent results (Maitra 2026) |

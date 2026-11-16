@@ -1329,6 +1329,11 @@ palettec check build/ --palette pico8.gpl --strict
 
 ### 6.10 Licensing
 
+> **Superseded.** The owner chose GPL-3.0-only for the shipped browser tool; this section
+> describes a permissive multi-surface product that did not ship. See
+> [`docs/history/decisions.md`](docs/history/decisions.md) for the trade-off and the trigger
+> to revisit it.
+
 | Component | license | Compatible with Apache/MIT core? |
 |---|---|---|
 | Core (original code) | Apache-2.0 OR MIT | Yes |
