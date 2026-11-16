@@ -236,7 +236,7 @@
     height: auto;
     min-height: 0;
     max-height: none;
-    margin-inline: calc(var(--peiq-space-4) * -1);
+    margin-inline: calc(50% - 50vw);
     overflow: auto;
   }
 

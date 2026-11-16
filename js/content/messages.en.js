@@ -34,7 +34,7 @@ export const EN_MESSAGES = {
   'hero.eyebrow': 'Local-first palette compiler',
   'hero.title': 'Turn any image into a usable palette.',
   'hero.subtitle':
-    'Drop an image, choose how many colors you need, compare the result, and export a validated palette strip or a reduced PNG. Nothing leaves your device.',
+    'Drop an image, extract a palette or choose a fixed one, compare the result, and export a validated indexed PNG, palette strip, or palette file. Nothing leaves your device.',
   'hero.dropTitle': 'Drop an image here',
   'hero.paste': 'or paste with',
   'hero.choose': 'Choose an image',

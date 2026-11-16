@@ -710,6 +710,15 @@ background: use a canvas-generated palette mosaic or the CSS gradients below.
     var(--peiq-bg);
   border-bottom: 1px solid var(--peiq-border-strong);
 }
+@media (min-width: 980px) {
+  /* Desktop fills the shell height; the negative margins make the glow full-bleed
+     so it is not clipped at the 1600 px shell edge on wide monitors. */
+  .peiq-hero {
+    height: auto;
+    max-height: none;
+    margin-inline: calc(50% - 50vw);
+  }
+}
 .peiq-hero__title {
   margin: 0 0 var(--peiq-space-2);
   font: 800 clamp(2.25rem, 5vw, 3.25rem) / 1 var(--peiq-font-ui);
@@ -1334,7 +1343,8 @@ screen block.
 - The rail is a single column of collapsible sections; never nest complex grids inside it.
 - The palette strip wraps; up to 256 swatches; it scrolls rather than widening the stage.
 - Grid children use `min-width: 0`; the canvas never causes horizontal overflow.
-- The empty-state hero spans the full shell and is hidden once an image is loaded.
+- The empty-state hero spans the viewport width and is hidden once an image is loaded;
+  its content stays inside the shell, and the glow is never clipped at the shell edge.
 
 ---
 
