@@ -83,6 +83,8 @@ export async function runPreview(job) {
     uniqueColors: hist.occupied.length,
     timings: {
       histogramMs: Math.round(t1 - t0),
+      // A palette override or Map mode skips extraction here, so t1..t2 only builds
+      // the palette. The near-0 result means "skipped", not a faster extraction.
       extractMs: Math.round(t2 - t1),
       mapMs: Math.round(t3 - t2),
     },
