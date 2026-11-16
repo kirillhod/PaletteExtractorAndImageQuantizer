@@ -767,10 +767,12 @@ Presets set controls; they do not lock them.
     Keeps the Oklab dark-to-light flow and removes local CIEDE2000 jumps.
   - `perceptual-path`: nearest-neighbor path from the darkest to the lightest Oklab L
     entry, then 2-opt with fixed ends. Both directions are tried; the lower total cost
-    wins.
+    wins. The fixed-endpoint idea follows
+    [colorsort](https://github.com/rowland-208/colorsort).
   - `perceptual-flow`: all-start nearest-neighbor cycle, 2-opt, cut at the largest
     CIEDE2000 edge, then orient dark-to-light by Oklab L. This is DCCW single-palette
-    sorting with deterministic 2-opt instead of LKH.
+    sorting ([Kim & Choi 2021](https://doi.org/10.1145/3450626.3459776)) with
+    deterministic 2-opt instead of LKH.
 - `dedupePalette` folds exact RGB duplicates into the first entry and records aliases;
   a “keep duplicates” option is out of scope for v1.
 - `paletteHash` covers canonical `{order, space, entries:[{index,rgb,alpha}]}`.

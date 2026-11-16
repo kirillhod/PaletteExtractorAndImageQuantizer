@@ -310,6 +310,7 @@ const en = {
   'help.creditsTitle': 'Credits and licenses',
 
   'references.group.extraction': 'Palette extraction',
+  'references.group.ordering': 'Palette ordering',
   'references.group.dithering': 'Dithering and halftoning',
   'references.group.color': 'Color science and output',
   'references.printNote': ' · print publication',
@@ -753,6 +754,7 @@ const ru = {
   'help.creditsTitle': 'Авторы и лицензии',
 
   'references.group.extraction': 'Извлечение палитры',
+  'references.group.ordering': 'Сортировка палитры',
   'references.group.dithering': 'Дизеринг и растрирование',
   'references.group.color': 'Цветовая наука и экспорт',
   'references.printNote': ' · печатное издание',

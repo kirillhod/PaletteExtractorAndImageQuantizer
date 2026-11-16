@@ -16,6 +16,8 @@ test('reference groups cover every implemented algorithm', () => {
     'gervautz-1988',
     'lbg-1980',
     'kmeanspp-2007',
+    'kim-2021-dccw',
+    'rowland-2024-colorsort',
     'floyd-steinberg-1976',
     'bayer-1973',
     'ulichney-1993',

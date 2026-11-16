@@ -89,6 +89,28 @@ export const REFERENCE_GROUPS = [
     ],
   },
   {
+    id: 'ordering',
+    title: 'Palette ordering',
+    items: [
+      {
+        id: 'kim-2021-dccw',
+        title: 'Dynamic Closest Color Warping to Sort and Compare Palettes',
+        authors: 'Suzi Kim, Sunghee Choi',
+        year: 2021,
+        venue: 'ACM Transactions on Graphics 40(4), SIGGRAPH 2021',
+        url: 'https://doi.org/10.1145/3450626.3459776',
+      },
+      {
+        id: 'rowland-2024-colorsort',
+        title: 'Sorting Colors',
+        authors: 'James Rowland',
+        year: 2024,
+        venue: 'colorsort article and implementation notes',
+        url: 'https://rowland-208.github.io/2024/08/30/sorting-colors.html',
+      },
+    ],
+  },
+  {
     id: 'dithering',
     title: 'Dithering and halftoning',
     items: [
