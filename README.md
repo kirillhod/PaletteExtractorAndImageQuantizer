@@ -6,10 +6,10 @@ Extract colors, map an image to a fixed palette, dither the result, and export
 engine-ready indexed PNGs, palette strips, and palette files. Everything runs on your
 device: no uploads, no accounts, no dependencies, no build step.
 
-![PEIQ workspace with a hydrangea photo, a 24-color palette, and the export panel](assets/screenshots/workspace-dark.png)
+![PEIQ workspace with a hydrangea photo, a 24-color palette, and the open palette editor](assets/screenshots/workspace-dark.png)
 
-*Extract up to 256 colors from a photo, compare before and after, and export a validated
-indexed PNG.*
+*Extract up to 256 colors from a photo, compare before and after, edit individual swatches,
+and export a validated indexed PNG.*
 
 ## What you can do
 
@@ -51,7 +51,8 @@ Constrain artwork to the palette your engine or hardware expects.
 - **Error diffusion:** Floyd–Steinberg, Atkinson, Stucki, Jarvis, Burkes, Sierra.
 - **Ordered:** Bayer 2×2, 4×4, and 8×8.
 - **Blue noise:** a generated 64×64 void-and-cluster mask.
-- Adjust strength, serpentine scan, and edge stop.
+- Adjust strength, serpentine scan, and edge stop; serpentine and edge stop apply to error
+  diffusion only.
 - Hover or tap the `?` next to any setting for a short explanation.
 
 ![Mapping the hydrangea photo to the Game Boy DMG palette with Floyd–Steinberg dithering](assets/screenshots/map-dither-dark.png)
@@ -77,23 +78,25 @@ looks right.*
 - **Save** and **Copy** on every validated result: PNGs copy as images, palette files as
   text.
 
-Indexed PNGs, strips, and palette files are parsed/decoded again and checked before the
-Save link appears. A mismatch blocks the download.
+Indexed PNGs, strips, reduced PNGs, and palette files are parsed or decoded again and
+checked before the Save link appears. A mismatch blocks the download.
 
 ### Work comfortably
 
 - Dark, light, and automatic themes.
 - Before/after divider, fit, 100% zoom, `+`/`−` buttons, pinch-to-zoom on touch, and
   original toggle.
-- Helpful tooltips and a Help drawer with a reference list.
+- Helpful tooltips and a Help drawer with the shortcuts and a reference list.
 - The settings rail collapses from the header so the canvas can take the full width; the
   choice is remembered between visits.
 - Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help,
   and `Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z` / `Ctrl/Cmd+Y` for undo and redo.
 - Settings live in the URL hash: a reload restores the mode, extractor, colors, working
-  space, dither, alpha, sort, and built-in palette. The image itself is never included in the URL.
-- The last image, palette edits, settings, locks, and undo/redo history come back after a
-  reload from local IndexedDB. Use **Forget saved session** in Help to remove them.
+  space, dither, alpha threshold, transparent index, sort, and built-in palette. The image
+  itself is never included in the URL.
+- The last image, palette edits, settings, locks, selection, picked-color markers, and
+  undo/redo history come back after a reload from local IndexedDB. Use **Forget saved
+  session** in Help to remove them.
 - Everything stays responsive down to phone width.
 
 ## How it works
@@ -122,18 +125,20 @@ You can also import any palette with up to 256 colors.
 
 Images are decoded and processed entirely in your browser. Nothing is uploaded, and the
 page makes no network requests after loading. No analytics, accounts, cookies, or
-third-party scripts. The theme preference and optional saved session stay in local
-storage; **Forget saved session** in Help removes the session.
+third-party scripts. Theme, language, and settings-rail preferences stay in local storage,
+and the optional saved session stays in local IndexedDB; **Forget saved session** in Help
+removes the session.
 
 ## Browser support
 
-Current Chrome, Edge, Firefox, and Safari. The app needs ES modules, Web Workers, canvas,
-and `createImageBitmap`; no extensions or WebAssembly are required.
+Chrome/Edge 111+, Firefox 113+, and Safari 16.4+. The app needs ES modules, Web Workers,
+Canvas 2D, `createImageBitmap`, `CompressionStream` / `DecompressionStream`, and
+`crypto.subtle`; no extensions or WebAssembly are required.
 
 ## Run it locally
 
 The app is a static page with no install or build step. Serve the folder and open it in a
-browser:
+browser (Node.js 22+ runs the development server):
 
 ```bash
 npm run dev
