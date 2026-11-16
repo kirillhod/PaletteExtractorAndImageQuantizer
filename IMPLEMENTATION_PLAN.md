@@ -39,7 +39,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers |
-| Tests | 183 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Tests | 186 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
 | Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
 | Next | Ship the hue-band, hue-perceptual, compact sort, palette-preview, and Help/session-clear changes with the next release; otherwise M7 — later / not planned for v1.x |
 
@@ -596,6 +596,13 @@ extract(hist, params) -> { colors: RGBA8[], weights: number[], stats }
 - Populate from bin representatives, then 3D prefix sums in `x→y→z` order.
 - Box moments via inclusion–exclusion over 8 corners.
 - Box variance = `Σsq − Σ²/w`; weight 0 boxes are skipped.
+- sRGB maps each 5-bit bin to one cell, so the grid already matches the histogram.
+  Oklab normalizes the occupied L, a, b ranges onto the 32 steps, because the fixed
+  full-gamut range collapses a narrow hue or lightness range into a handful of cells and
+  stops the split early; a degenerate span is grown around its center.
+- A second occupancy prefix counts the bins per cell. A box with no occupied cell is
+  empty, so an inclusion–exclusion residual from non-binary alpha weights can neither
+  become a representative nor block the split loop.
 - Choose the box with the largest weighted variance.
 - For each axis, try every cut 1..31; choose the cut minimizing `var(left)+var(right)`
   (maximizing reduction). Tie → lowest axis, then lowest cut.
@@ -2141,6 +2148,7 @@ A change is done only when:
 | 2026-11-16 | Add an extraction guide and compact the rest of Help | The drawer explained mapping but never named the five extractors or their trade-offs, so the extraction half of the workflow was opaque. A dedicated section now covers colors, alpha weighting, working space, refinement, and each method in one line. Redundant prose was trimmed, and references and credits became closed disclosures so the guide stays scannable without losing attribution. |
 | 2026-11-16 | Move Forget saved session from Help to the footer behind a confirmation dialog | The action sat near the bottom of a long drawer, so it was hard to find and easy to hit while reading. The footer is visible without scrolling on desktop and already carries the local-only claim; a text action there opens a native dialog with Cancel focused by default, and IndexedDB is cleared only after confirmation. The Help text now points to the footer. 178 tests |
 | 2026-11-16 | Keep the source alpha in the dithered preview | The dithered branch rebuilt the preview from the index map alone, so with the default transparent index None every fully transparent pixel became opaque palette entry 0, which reads as a black hole, and semi-transparent pixels lost their coverage; the nearest-color preview did neither. Index maps carry no alpha, so the preview is now composed from the source buffer, `indicesToRgba` validates the map and accepts an alpha source, and export validation keeps the binary `tRNS` expectation. 183 tests |
+| 2026-11-16 | Normalize the Wu grid and skip empty boxes in Oklab | The fixed Oklab grid covered the whole gamut at 32 steps per axis, so a single-hue or nearly gray image collapsed into a handful of cells: Wu stopped short of K and some images returned clipped empty-box means such as `#00ffff` or `#000200`. The grid now normalizes the occupied L, a, b ranges, and an occupancy prefix identifies empty boxes exactly, since non-binary alpha weights leave a rounding residual in the moment prefix. Narrow green fixtures now return 16 of 16 colors instead of 8 or 10 with extremes. 186 tests |
 
 ---
 

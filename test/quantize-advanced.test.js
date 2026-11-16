@@ -54,6 +54,59 @@ test('Wu works in sRGB as well as Oklab', () => {
   assert.ok(srgb.length <= 5);
 });
 
+test('Wu Oklab splits a narrow color range up to K', () => {
+  // 23 distinct 5-bit bins that differ mostly in lightness. The fixed full-gamut
+  // Oklab grid collapsed them into a few cells, so Wu returned fewer colors and
+  // filled the gap with clipped empty-box means.
+  const image = makeImage(23, 1, (x) => ({ r: 40 + x * 8, g: 150, b: 70 }));
+  const params = { method: 'wu', colors: 16, space: 'oklab' };
+  const palette = extract(image, params);
+  assert.equal(palette.length, 16);
+  for (const color of palette) {
+    assert.ok(color.r >= 20 && color.r <= 240, `r ${color.r}`);
+    assert.ok(color.g >= 120 && color.g <= 180, `g ${color.g}`);
+    assert.ok(color.b >= 40 && color.b <= 100, `b ${color.b}`);
+  }
+  assert.deepEqual(extract(image, params), palette);
+});
+
+test('Wu Oklab handles an almost achromatic range', () => {
+  const image = makeImage(16, 1, (x) => {
+    const value = 16 + x * 14;
+    return { r: value, g: value, b: value };
+  });
+  const palette = extract(image, { method: 'wu', colors: 8, space: 'oklab' });
+  assert.equal(palette.length, 8);
+  for (const color of palette) {
+    assert.ok(Math.abs(color.r - color.g) <= 2, JSON.stringify(color));
+    assert.ok(Math.abs(color.g - color.b) <= 2, JSON.stringify(color));
+  }
+});
+
+test('Wu Oklab ignores empty boxes left by floating-point moments', () => {
+  // Alpha weights are not binary fractions, so inclusion–exclusion leaves a tiny
+  // residual for a box with no bins. Without an occupancy check that residual was
+  // divided into the moment sums and produced clipped colors such as #000200.
+  const image = makeImage(60, 2, (x) => {
+    const t = x % 20;
+    return {
+      r: 30 + t * 6,
+      g: 120 + t * 2,
+      b: 50 + t,
+      a: x < 20 ? 255 : x < 40 ? 128 : 0,
+    };
+  });
+  const params = { method: 'wu', colors: 16, space: 'oklab' };
+  const palette = extract(image, params);
+  assert.equal(palette.length, 16);
+  for (const color of palette) {
+    assert.ok(color.r >= 25 && color.r <= 160, `r ${color.r}`);
+    assert.ok(color.g >= 110 && color.g <= 170, `g ${color.g}`);
+    assert.ok(color.b >= 40 && color.b <= 90, `b ${color.b}`);
+  }
+  assert.deepEqual(extract(image, params), palette);
+});
+
 test('k-means uses the seed deterministically', () => {
   const image = quadrantsImage(16);
   const a = extract(image, { method: 'kmeans', colors: 3, space: 'oklab', seed: 7, maxIters: 10 });

@@ -8,6 +8,7 @@ import { oklabToRgb8 } from '../color.js';
 const GRID = 32;
 const STRIDE = 33;
 const SIZE = STRIDE * STRIDE * STRIDE;
+const MIN_SPAN = 1e-4;
 
 /**
  * @param {number} x
@@ -20,8 +21,10 @@ function index(x, y, z) {
 
 /**
  * Moment-based Wu quantizer over a 3D grid in the selected working space.
- * Oklab uses L∈[0,1], a,b∈[-0.4,0.4]; sRGB uses 0..255. The grid is only a
- * splitting structure; moments use the actual coordinates.
+ * sRGB uses the 5-bit histogram grid (0..255 in 32 steps); Oklab normalizes the
+ * occupied L, a, b ranges onto the same 32 steps. The grid is only a splitting
+ * structure; moments use the actual coordinates, and an occupancy prefix keeps
+ * floating-point residuals from turning an empty box into a color.
  *
  * @param {Histogram} hist
  * @param {{ colors: number, space: 'oklab'|'srgb' }} params
@@ -31,6 +34,7 @@ export function extractWu(hist, params) {
   const space = params.space;
   const bins = histogramBins(hist);
   if (!bins.length) return [];
+  const bounds = gridBounds(bins, space);
 
   const w = new Float64Array(SIZE);
   const sL = new Float64Array(SIZE);
@@ -42,12 +46,17 @@ export function extractWu(hist, params) {
   const sLa = new Float64Array(SIZE);
   const sLb = new Float64Array(SIZE);
   const sab = new Float64Array(SIZE);
+  // Occupancy per grid cell. Inclusion–exclusion over the weight prefix can leave a
+  // tiny positive residual for an empty box; a count prefix identifies empty boxes
+  // exactly, so they never contribute a mean or block the split loop.
+  const cells = new Int32Array(SIZE);
 
   for (const bin of bins) {
-    const { x, y, z, coords } = gridOf(bin, space);
+    const { x, y, z, coords } = gridOf(bin, space, bounds);
     const i = index(x + 1, y + 1, z + 1);
     const weight = bin.weight;
     const [a, b, c] = coords;
+    cells[i] += 1;
     w[i] += weight;
     sL[i] += weight * a;
     sa[i] += weight * b;
@@ -70,8 +79,9 @@ export function extractWu(hist, params) {
   prefix(sLa);
   prefix(sLb);
   prefix(sab);
+  prefix(cells);
 
-  const moments = { w, sL, sa, sb, sLL, saa, sbb, sLa, sLb, sab };
+  const moments = { w, sL, sa, sb, sLL, saa, sbb, sLa, sLb, sab, cells };
 
   /**
    * @typedef {{ id:number, x0:number, y0:number, z0:number, x1:number, y1:number, z1:number, splittable:boolean }} WuBox
@@ -115,16 +125,64 @@ export function extractWu(hist, params) {
 }
 
 /**
+ * Grid bounds for the working space. sRGB already has one grid cell per 5-bit bin, so
+ * it needs no normalization. Oklab has no such grid: the full gamut spans roughly
+ * L 0..1 and a,b -0.4..0.4, which collapses a narrow hue or lightness range into a few
+ * cells. Map the occupied range onto the grid instead, so a monochrome or single-hue
+ * image can still split up to K boxes. A degenerate span is grown around its center.
+ *
+ * @param {HistogramBin[]} bins
+ * @param {'oklab'|'srgb'} space
+ * @returns {{ L: AxisBounds, a: AxisBounds, b: AxisBounds } | null}
+ */
+function gridBounds(bins, space) {
+  if (space !== 'oklab') return null;
+  let minL = Infinity;
+  let maxL = -Infinity;
+  let minA = Infinity;
+  let maxA = -Infinity;
+  let minB = Infinity;
+  let maxB = -Infinity;
+  for (const bin of bins) {
+    const { L, a, b } = bin.oklab;
+    if (L < minL) minL = L;
+    if (L > maxL) maxL = L;
+    if (a < minA) minA = a;
+    if (a > maxA) maxA = a;
+    if (b < minB) minB = b;
+    if (b > maxB) maxB = b;
+  }
+  return { L: axisBounds(minL, maxL), a: axisBounds(minA, maxA), b: axisBounds(minB, maxB) };
+}
+
+/**
+ * @typedef {{ min:number, size:number }} AxisBounds
+ */
+
+/**
+ * @param {number} min
+ * @param {number} max
+ * @returns {AxisBounds}
+ */
+function axisBounds(min, max) {
+  const span = max - min;
+  if (span >= MIN_SPAN) return { min, size: span };
+  const grow = (MIN_SPAN - span) / 2;
+  return { min: min - grow, size: MIN_SPAN };
+}
+
+/**
  * @param {HistogramBin} bin
  * @param {'oklab'|'srgb'} space
+ * @param {{ L: AxisBounds, a: AxisBounds, b: AxisBounds } | null} bounds
  */
-function gridOf(bin, space) {
-  if (space === 'oklab') {
+function gridOf(bin, space, bounds) {
+  if (space === 'oklab' && bounds) {
     const { L, a, b } = bin.oklab;
     return {
-      x: clampGrid(Math.floor(L * GRID)),
-      y: clampGrid(Math.floor(((a + 0.4) / 0.8) * GRID)),
-      z: clampGrid(Math.floor(((b + 0.4) / 0.8) * GRID)),
+      x: clampGrid(Math.floor(((L - bounds.L.min) / bounds.L.size) * GRID)),
+      y: clampGrid(Math.floor(((a - bounds.a.min) / bounds.a.size) * GRID)),
+      z: clampGrid(Math.floor(((b - bounds.b.min) / bounds.b.size) * GRID)),
       coords: [L, a, b],
     };
   }
@@ -144,7 +202,7 @@ function clampGrid(value) {
 }
 
 /**
- * @param {Float64Array} array
+ * @param {Float64Array|Int32Array} array
  */
 function prefix(array) {
   for (let x = 1; x <= GRID; x++) {
@@ -166,9 +224,12 @@ function prefix(array) {
 
 /**
  * @param {{ x0:number,y0:number,z0:number,x1:number,y1:number,z1:number }} box
- * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array,sLL:Float64Array,saa:Float64Array,sbb:Float64Array,sLa:Float64Array,sLb:Float64Array,sab:Float64Array }} m
+ * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array,sLL:Float64Array,saa:Float64Array,sbb:Float64Array,sLa:Float64Array,sLb:Float64Array,sab:Float64Array,cells:Int32Array }} m
  */
 function boxMoments(box, m) {
+  if (boxCellCount(box, m) <= 0) {
+    return { weight: 0, L: 0, a: 0, b: 0, variance: 0 };
+  }
   const weight = boxSum(m.w, box);
   if (weight <= 0) {
     return { weight: 0, L: 0, a: 0, b: 0, variance: 0 };
@@ -201,7 +262,7 @@ function boxMoments(box, m) {
 }
 
 /**
- * @param {Float64Array} array
+ * @param {Float64Array|Int32Array} array
  * @param {{ x0:number,y0:number,z0:number,x1:number,y1:number,z1:number }} box
  */
 function boxSum(array, box) {
@@ -224,8 +285,19 @@ function boxSum(array, box) {
 }
 
 /**
+ * Occupied bins inside a box. Exact, unlike the weight residual left by
+ * inclusion–exclusion over floating-point weights.
+ *
+ * @param {{ x0:number,y0:number,z0:number,x1:number,y1:number,z1:number }} box
+ * @param {{ cells:Int32Array }} m
+ */
+function boxCellCount(box, m) {
+  return boxSum(m.cells, box);
+}
+
+/**
  * @param {{ id:number,x0:number,y0:number,z0:number,x1:number,y1:number,z1:number,splittable:boolean }} box
- * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array,sLL:Float64Array,saa:Float64Array,sbb:Float64Array,sLa:Float64Array,sLb:Float64Array,sab:Float64Array }} m
+ * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array,sLL:Float64Array,saa:Float64Array,sbb:Float64Array,sLa:Float64Array,sLb:Float64Array,sab:Float64Array,cells:Int32Array }} m
  * @param {number} nextId
  */
 function splitBox(box, m, nextId) {
@@ -269,10 +341,11 @@ function splitBox(box, m, nextId) {
 
 /**
  * @param {{ id:number,x0:number,y0:number,z0:number,x1:number,y1:number,z1:number }} box
- * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array }} m
+ * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array,cells:Int32Array }} m
  * @param {'oklab'|'srgb'} space
  */
 function meanColor(box, m, space) {
+  if (boxCellCount(box, m) <= 0) return { r: 0, g: 0, b: 0, weight: 0 };
   const weight = boxSum(m.w, box);
   if (weight <= 0) return { r: 0, g: 0, b: 0, weight: 0 };
   const L = boxSum(m.sL, box) / weight;
@@ -291,7 +364,7 @@ function meanColor(box, m, space) {
 
 /**
  * @param {{ id:number,x0:number,y0:number,z0:number,x1:number,y1:number,z1:number }[]} boxes
- * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array }} m
+ * @param {{ w:Float64Array,sL:Float64Array,sa:Float64Array,sb:Float64Array,cells:Int32Array }} m
  * @param {'oklab'|'srgb'} space
  */
 function uniqueColors(boxes, m, space) {
