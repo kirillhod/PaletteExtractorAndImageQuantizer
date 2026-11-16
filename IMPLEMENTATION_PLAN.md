@@ -39,7 +39,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers |
-| Tests | 188 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Tests | 193 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, preview sizing, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
 | Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
 | Next | Ship the hue-band, hue-perceptual, compact sort, palette-preview, and Help/session-clear changes with the next release; otherwise M7 — later / not planned for v1.x |
 
@@ -394,8 +394,10 @@ Rules:
 `empty → decoding → processing → ready | error`
 
 - `decoding` runs on the main thread; the worker is idle.
-- `processing` sends a preview-sized image (≤1024 px long edge, unless the source is
-  smaller); the full-resolution image is decoded again only for export.
+- `processing` sends the mapping preview: the full image up to a 4,194,304-pixel budget,
+  otherwise the same aspect ratio scaled by area to sit just under it. The full-resolution
+  decode is kept for the original half of the canvas, and export re-decodes the file for a
+  fresh full-resolution copy.
 - `ready` means the preview and palette are consistent.
 - A parameter change triggers `processing` after a 150 ms debounce.
 - Export while processing is disabled.
@@ -1310,12 +1312,16 @@ site. Learning is opt-in, contextual, and dismissible.
 | FS 1024² | 100–300 ms |
 | Indexed PNG encode 1024² | 60–150 ms |
 | Full preview pass | < 700 ms |
+| Full preview pass at 4 MP | < 2 s |
 | 4096² K=64, no dither | < 8 s |
 
 ### 9.2 Strategies
 
 - Web Worker for all core work; decode on main thread.
-- Preview cap: 1024 px long edge; final pass explicit.
+- Full image up to a 4,194,304-pixel preview budget; above it, scale by area so the preview
+  lands just under the budget and keeps the source aspect ratio. The original half of the
+  canvas always draws the full-resolution decode; the status line names the preview size
+  when it differs from the source.
 - 5-bit histogram; Oklab per bin/unique color; 6-bit mapper LUT.
 - Exact mapper for ≤65,536 unique colors.
 - ED error rows as `Float32Array`; avoid per-pixel object allocation.
@@ -2161,6 +2167,7 @@ A change is done only when:
 | 2026-11-16 | Keep the source alpha in the dithered preview | The dithered branch rebuilt the preview from the index map alone, so with the default transparent index None every fully transparent pixel became opaque palette entry 0, which reads as a black hole, and semi-transparent pixels lost their coverage; the nearest-color preview did neither. Index maps carry no alpha, so the preview is now composed from the source buffer, `indicesToRgba` validates the map and accepts an alpha source, and export validation keeps the binary `tRNS` expectation. 183 tests |
 | 2026-11-16 | Normalize the Wu grid and skip empty boxes in Oklab | The fixed Oklab grid covered the whole gamut at 32 steps per axis, so a single-hue or nearly gray image collapsed into a handful of cells: Wu stopped short of K and some images returned clipped empty-box means such as `#00ffff` or `#000200`. The grid now normalizes the occupied L, a, b ranges, and an occupancy prefix identifies empty boxes exactly, since non-binary alpha weights leave a rounding residual in the moment prefix. Narrow green fixtures now return 16 of 16 colors instead of 8 or 10 with extremes. 186 tests |
 | 2026-11-16 | Answer error-diffusion decisions from a working-space cell cache | Every dithered pixel paid `rgb8ToOklab` (three cube roots), `oklabToRgb8` (three cubes plus gamma) and `Math.hypot`, so Floyd–Steinberg on a 16 MP file took 7.9 s and even a 1024² preview took 0.6 s, above the plan's own 100–300 ms budget. Source coordinates now come from a cached 6-bit table per space, the nearest palette entry comes from a lazily filled 128-step Oklab cell grid (sRGB keeps the mapper's 6-bit grid), and the clamp uses squared magnitude with one `sqrt`. A 16 MP Floyd–Steinberg pass drops to 1.4 s and a 1024² preview to 0.25 s; CIEDE2000 mean error stays within 0.05 of the previous output across K = 8, 24, 256 in both spaces, and the pass stays deterministic because a cell always resolves from its own center. `strength = 0` now returns the plain mapping directly. 188 tests |
+| 2026-11-16 | Draw the original at full resolution and spend a 4 MP budget on the mapping preview | Both halves of the canvas drew a ≤1024 px copy, so 100% zoom showed a quarter of a 4096 px source and the dither on screen could not be compared with the export. The session now keeps the full-resolution decode and draws the original half from it; the mapping preview keeps the full image up to 4,194,304 pixels and scales larger images by area, preserving the aspect ratio, instead of stopping at a fixed long edge. Picking and the loupe read the full-resolution decode through a scratch canvas, so enlarging the preview does not cost sample accuracy, and the status line names the preview size whenever it differs from the source. Supersedes the 2026-11-15 decision to keep only a preview copy: one full-resolution bitmap is cheaper than a 64 MiB RGBA copy plus its canvas. 193 tests |
 
 ---
 

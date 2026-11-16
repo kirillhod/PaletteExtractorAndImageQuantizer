@@ -2,7 +2,28 @@
 import { recenterOffsets } from '../core/view-offsets.js';
 
 /**
+ * Pixel buffer used for sampling.
  * @typedef {{ data: Uint8ClampedArray, width:number, height:number }} ImageLike
+ */
+
+/**
+ * Original image input. `bitmap` keeps the full-resolution decode for drawing and
+ * sampling; without it the ImageData is copied into a canvas.
+ * @typedef {Object} OriginalInput
+ * @property {number} width
+ * @property {number} height
+ * @property {Uint8ClampedArray} [data]
+ * @property {ImageBitmap|null} [bitmap]
+ */
+
+/**
+ * A rectangular read of one side, in that side's pixel coordinates.
+ * @typedef {Object} SamplePatch
+ * @property {Uint8ClampedArray} data
+ * @property {number} width
+ * @property {number} height
+ * @property {number} originX
+ * @property {number} originY
  */
 
 /**
@@ -12,14 +33,19 @@ export function createCanvasView(options) {
   const { canvas, frame, divider, onRender } = options;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas 2D is unavailable');
+  // Reading a few pixels out of an ImageBitmap needs a canvas: drawImage copies the exact
+  // source pixels, so picking and the loupe stay full-resolution.
+  const readCanvas = document.createElement('canvas');
+  const readContext = readCanvas.getContext('2d', { willReadFrequently: true });
+  if (!readContext) throw new Error('Canvas 2D is unavailable');
 
   const handle = /** @type {HTMLElement|null} */ (divider.querySelector('.peiq-divider__handle'));
 
-  /** @type {ImageLike|null} */
+  /** @type {{ width:number, height:number, data:Uint8ClampedArray|null }|null} */
   let original = null;
   /** @type {ImageLike|null} */
   let reduced = null;
-  /** @type {HTMLCanvasElement|null} */
+  /** @type {CanvasImageSource|null} */
   let originalBuffer = null;
   /** @type {HTMLCanvasElement|null} */
   let reducedBuffer = null;
@@ -160,7 +186,7 @@ export function createCanvasView(options) {
     context.translate(offsetX, offsetY);
     context.scale(scale, scale);
     context.imageSmoothingEnabled = scale < 1;
-    context.drawImage(originalBuffer, 0, 0);
+    context.drawImage(originalBuffer, 0, 0, original.width, original.height);
     context.restore();
 
     if (reduced && reducedBuffer && !showOriginal) {
@@ -175,7 +201,19 @@ export function createCanvasView(options) {
       context.translate(offsetX, offsetY);
       context.scale(scale, scale);
       context.imageSmoothingEnabled = scale < 1;
-      context.drawImage(reducedBuffer, 0, 0);
+      // The reduced buffer is the mapping preview, which may be smaller than the original.
+      // Stretch it over the same logical box so the divider compares the same frame.
+      context.drawImage(
+        reducedBuffer,
+        0,
+        0,
+        reduced.width,
+        reduced.height,
+        0,
+        0,
+        original.width,
+        original.height,
+      );
       context.restore();
     }
     onRender?.();
@@ -315,13 +353,96 @@ export function createCanvasView(options) {
   });
 
   /**
+   * Copy a rectangle out of an ImageData-like buffer, clamped to its bounds.
+   *
+   * @param {ImageLike} image
+   * @param {number} x
+   * @param {number} y
+   * @param {number} width
+   * @param {number} height
+   * @returns {SamplePatch}
+   */
+  function patchFrom(image, x, y, width, height) {
+    const originX = Math.max(0, Math.min(image.width - 1, Math.floor(x)));
+    const originY = Math.max(0, Math.min(image.height - 1, Math.floor(y)));
+    const patchWidth = Math.max(1, Math.min(width, image.width - originX));
+    const patchHeight = Math.max(1, Math.min(height, image.height - originY));
+    const data = new Uint8ClampedArray(patchWidth * patchHeight * 4);
+    for (let row = 0; row < patchHeight; row++) {
+      const from = ((originY + row) * image.width + originX) * 4;
+      data.set(image.data.subarray(from, from + patchWidth * 4), row * patchWidth * 4);
+    }
+    return { data, width: patchWidth, height: patchHeight, originX, originY };
+  }
+
+  /**
+   * Read a rectangle from the original image. A retained ImageBitmap has no JS pixels, so
+   * the exact source rectangle is copied through a scratch canvas first.
+   *
+   * @param {number} x
+   * @param {number} y
+   * @param {number} width
+   * @param {number} height
+   * @returns {SamplePatch|null}
+   */
+  function originalPatch(x, y, width, height) {
+    if (!original) return null;
+    if (original.data) {
+      return patchFrom(
+        { data: original.data, width: original.width, height: original.height },
+        x,
+        y,
+        width,
+        height,
+      );
+    }
+    if (!originalBuffer) return null;
+    const originX = Math.max(0, Math.min(original.width - 1, Math.floor(x)));
+    const originY = Math.max(0, Math.min(original.height - 1, Math.floor(y)));
+    const patchWidth = Math.max(1, Math.min(width, original.width - originX));
+    const patchHeight = Math.max(1, Math.min(height, original.height - originY));
+    readCanvas.width = patchWidth;
+    readCanvas.height = patchHeight;
+    readContext.clearRect(0, 0, patchWidth, patchHeight);
+    readContext.drawImage(
+      originalBuffer,
+      originX,
+      originY,
+      patchWidth,
+      patchHeight,
+      0,
+      0,
+      patchWidth,
+      patchHeight,
+    );
+    const image = readContext.getImageData(0, 0, patchWidth, patchHeight);
+    return { data: image.data, width: patchWidth, height: patchHeight, originX, originY };
+  }
+
+  /**
+   * @param {'original'|'reduced'} side
+   * @param {number} x
+   * @param {number} y
+   * @param {number} radius
+   * @returns {SamplePatch|null}
+   */
+  function samplePatch(side, x, y, radius) {
+    const size = radius * 2 + 1;
+    if (side === 'reduced') {
+      if (!reduced) return null;
+      return patchFrom(reduced, x - radius, y - radius, size, size);
+    }
+    return originalPatch(x - radius, y - radius, size, size);
+  }
+
+  /**
    * Sample the preview under a client point. The reduced side is sampled when the
    * point is right of the divider, so the eyedropper can also pick mapped colors.
    * Returns null outside the image.
    *
    * @param {number} clientX
    * @param {number} clientY
-   * @returns {{ color: { r:number, g:number, b:number, a:number }, source: ImageLike, x:number, y:number }|null}
+   * @returns {{ color: { r:number, g:number, b:number, a:number }, source: { width:number, height:number }, side: 'original'|'reduced', x:number, y:number }|null}
    */
   function pickSample(clientX, clientY) {
     if (!original) return null;
@@ -340,19 +461,44 @@ export function createCanvasView(options) {
     }
     const useReduced =
       !showOriginal && reduced !== null && localX >= rect.width * dividerFraction;
-    const source = useReduced ? reduced : original;
-    if (!source || imageX >= source.width || imageY >= source.height) return null;
-    const offset = (imageY * source.width + imageX) * 4;
+    if (useReduced && reduced) {
+      // The reduced half is stretched over the original box, so the pointer has to be
+      // mapped into preview pixels before the color is read.
+      const x = Math.min(
+        reduced.width - 1,
+        Math.floor((imageX * reduced.width) / original.width),
+      );
+      const y = Math.min(
+        reduced.height - 1,
+        Math.floor((imageY * reduced.height) / original.height),
+      );
+      const offset = (y * reduced.width + x) * 4;
+      return {
+        color: {
+          r: reduced.data[offset],
+          g: reduced.data[offset + 1],
+          b: reduced.data[offset + 2],
+          a: reduced.data[offset + 3],
+        },
+        source: { width: reduced.width, height: reduced.height },
+        side: 'reduced',
+        x,
+        y,
+      };
+    }
+    const patch = originalPatch(imageX, imageY, 1, 1);
+    if (!patch) return null;
     return {
       color: {
-        r: source.data[offset],
-        g: source.data[offset + 1],
-        b: source.data[offset + 2],
-        a: source.data[offset + 3],
+        r: patch.data[0],
+        g: patch.data[1],
+        b: patch.data[2],
+        a: patch.data[3],
       },
-      source,
-      x: imageX,
-      y: imageY,
+      source: { width: original.width, height: original.height },
+      side: 'original',
+      x: patch.originX,
+      y: patch.originY,
     };
   }
 
@@ -393,12 +539,13 @@ export function createCanvasView(options) {
     if (!original) return null;
     const x = Math.min(original.width - 1, Math.max(0, Math.floor(u * original.width)));
     const y = Math.min(original.height - 1, Math.max(0, Math.floor(v * original.height)));
-    const offset = (y * original.width + x) * 4;
+    const patch = originalPatch(x, y, 1, 1);
+    if (!patch) return null;
     return {
-      r: original.data[offset],
-      g: original.data[offset + 1],
-      b: original.data[offset + 2],
-      a: original.data[offset + 3],
+      r: patch.data[0],
+      g: patch.data[1],
+      b: patch.data[2],
+      a: patch.data[3],
     };
   }
 
@@ -433,10 +580,19 @@ export function createCanvasView(options) {
   resizeObserver.observe(frame);
 
   return {
-    /** @param {ImageLike|null} image */
+    /**
+     * @param {OriginalInput|null} image
+     */
     setOriginal(image) {
-      original = image;
-      originalBuffer = toCanvas(image);
+      original = image
+        ? { width: image.width, height: image.height, data: image.data ?? null }
+        : null;
+      originalBuffer = image
+        ? (image.bitmap ??
+          (image.data
+            ? toCanvas({ data: image.data, width: image.width, height: image.height })
+            : null))
+        : null;
       reduced = null;
       reducedBuffer = null;
       autoFit = true;
@@ -462,6 +618,7 @@ export function createCanvasView(options) {
     setDivider,
     pickColor,
     pickSample,
+    samplePatch,
     pickColorAtImagePoint,
     imagePointToFrame,
   };

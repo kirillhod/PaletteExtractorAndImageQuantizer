@@ -137,7 +137,7 @@ export const EN_MESSAGES = {
   'rail.show': 'Show settings',
   'rail.announce.shown': 'Settings shown',
   'rail.announce.hidden': 'Settings hidden',
-  'rail.previewHint': 'Preview uses a downscaled copy. Export always uses the full image.',
+  'rail.previewHint': 'Export always uses the full-resolution image.',
 
   'mode.label': 'Mode',
   'mode.tooltip':
@@ -222,6 +222,7 @@ export const EN_MESSAGES = {
 
   'status.ms': '{value} ms',
   'status.source': 'source',
+  'status.preview': 'preview',
   'status.unique': 'unique',
   'status.extract': 'extract',
   'status.map': 'map',

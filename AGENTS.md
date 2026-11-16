@@ -117,8 +117,11 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
    chunks `IHDR`, `PLTE`, optional `tRNS`, `IDAT`, `IEND` only; filter 0; indices packed
    MSB-first; no ICC/gAMA/sRGB/pHYs/tEXt. Strip: exact `N×1` or `1×N`, 8-bit, no padding
    or profile. Every export is decoded and compared; a mismatch aborts the download.
-8. **Never silently downscale or crop the final output.** Preview may use ≤1024 px long
-   edge; export re-decodes the original at full resolution. Reject > 16,777,216 pixels
+8. **Never silently downscale or crop the final output.** The original half of the canvas
+   always draws the full-resolution decode. The mapping preview keeps the full image up to
+   a 4,194,304-pixel budget and scales anything larger by area to sit just under it, keeping
+   the aspect ratio; the status line names the preview size whenever it differs from the
+   source. Export re-decodes the original at full resolution. Reject > 16,777,216 pixels
    with a clear error. Reduced-size export requires an explicit opt-in and a warning in the
    export result.
 9. **Worker protocol.** Monotonic `requestId`; stale results ignored; buffers transferred,
@@ -278,11 +281,12 @@ committed locally with a descriptive body (plan §16).
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.5.0`; 188 tests in `main`. M6.3–M6.6 are complete; the bounded
+- Released `v1.5.0`; 193 tests in `main`. M6.3–M6.6 are complete; the bounded
   hue-band, hue-perceptual, compact sort controls, full-screen palette preview, the
   extraction Help guide, the confirmed footer session clear, the dithered preview alpha
-  fix, the Wu grid and occupancy fix, and the faster error-diffusion decision path are
-  committed but unreleased.
+  fix, the Wu grid and occupancy fix, the faster error-diffusion decision path, and the
+  full-resolution original with an area-budgeted mapping preview are committed but
+  unreleased.
 - Next: ship those changes with the next release; otherwise M7 — later / not planned for
   v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker

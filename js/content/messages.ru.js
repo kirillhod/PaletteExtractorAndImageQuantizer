@@ -138,8 +138,7 @@ export const RU_MESSAGES = {
   'rail.show': 'Показать настройки',
   'rail.announce.shown': 'Настройки показаны',
   'rail.announce.hidden': 'Настройки скрыты',
-  'rail.previewHint':
-    'Предпросмотр использует уменьшенную копию. Экспорт всегда использует полное изображение.',
+  'rail.previewHint': 'Экспорт всегда использует изображение в полном разрешении.',
 
   'mode.label': 'Режим',
   'mode.tooltip':
@@ -225,6 +224,7 @@ export const RU_MESSAGES = {
 
   'status.ms': '{value} мс',
   'status.source': 'размер',
+  'status.preview': 'превью',
   'status.unique': 'уникальных цветов',
   'status.extract': 'на извлечение',
   'status.map': 'на сопоставление',

@@ -10,6 +10,7 @@ import {
   sortPalette,
 } from './core/palette.js';
 import { pickedMarkersFromArray } from './core/picked-markers.js';
+import { previewSize } from './core/preview-size.js';
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
@@ -45,7 +46,6 @@ import { initTooltips } from './ui/tooltips.js';
 import { clearSession } from './ui/session-store.js';
 
 const MAX_PIXELS = 16_777_216;
-const PREVIEW_EDGE = 1024;
 
 const versionLabel = document.getElementById('app-version');
 const helpVersionLabel = document.getElementById('help-version');
@@ -100,6 +100,8 @@ const app = {
   preview: null,
   /** @type {{ data: Uint8ClampedArray, width:number, height:number }|null} */
   reduced: null,
+  /** @type {ImageBitmap|null} */
+  originalBitmap: null,
   /** @type {any[]} */
   palette: [],
   paletteEdited: false,
@@ -345,7 +347,7 @@ function onWorkerMessage(event) {
     if (canvasEmpty) canvasEmpty.hidden = true;
     // Map mode never extracts, so an "extract 0 ms" item would suggest otherwise.
     const statusItems = [
-      { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
+      ...sourceStatusItems(),
       { value: formatN(message.uniqueColors, 0), labelKey: 'status.unique' },
       { value: app.palette.length, labelKey: 'unit.colors', count: app.palette.length },
     ];
@@ -368,7 +370,7 @@ function onWorkerMessage(event) {
       toastKey('toast.fullyTransparent', {}, 'error');
       setStatus([
         { valueKey: 'status.warning', labelKey: 'status.fullyTransparent' },
-        { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
+        ...sourceStatusItems(),
       ]);
     }
     if (paletteState.pendingTransparentRemap) {
@@ -676,13 +678,18 @@ async function loadFile(file, restore = null) {
         );
       }
 
-      const scale = Math.min(1, PREVIEW_EDGE / Math.max(width, height));
-      const previewWidth = Math.max(1, Math.round(width * scale));
-      const previewHeight = Math.max(1, Math.round(height * scale));
-      preview = drawToImageData(bitmap, previewWidth, previewHeight, true);
-    } finally {
+      const target = previewSize(width, height);
+      // A full-resolution preview copies the source pixels exactly; a downscaled one is
+      // smoothed so the mapping does not alias.
+      preview = drawToImageData(bitmap, target.width, target.height, target.scaled);
+    } catch (error) {
       bitmap.close?.();
+      throw error;
     }
+    // The original half of the canvas draws this decode at full resolution, so it stays
+    // open for the whole session. Export still re-decodes the file for a fresh copy.
+    app.originalBitmap?.close?.();
+    app.originalBitmap = bitmap;
 
     app.name = file.name || 'image';
     app.width = width;
@@ -752,7 +759,7 @@ async function loadFile(file, restore = null) {
     if (hero) hero.hidden = true;
     if (workspace) workspace.hidden = false;
     rail.setAvailable(true);
-    canvasView.setOriginal(preview);
+    canvasView.setOriginal({ width, height, bitmap });
     paletteEditor.renderCurrentPalette();
     if (restore && restore.transparentId !== null && restore.transparentId !== undefined) {
       const position = app.palette.findIndex((entry) => entry.id === restore.transparentId);
@@ -893,6 +900,26 @@ function renderOriginalLabels() {
   const shortLabel = document.getElementById('toggle-original-short');
   if (longLabel) longLabel.textContent = label;
   if (shortLabel) shortLabel.textContent = shortLabelText;
+}
+
+/**
+ * The source line always names the full image; the preview size is added only when the
+ * mapping pass runs on a smaller copy, because that is the resolution the export does not
+ * share.
+ * @returns {{ value: string, labelKey: string }[]}
+ */
+function sourceStatusItems() {
+  const items = [{ value: `${app.width}×${app.height}`, labelKey: 'status.source' }];
+  if (
+    app.preview &&
+    (app.preview.width !== app.width || app.preview.height !== app.height)
+  ) {
+    items.push({
+      value: `${app.preview.width}×${app.preview.height}`,
+      labelKey: 'status.preview',
+    });
+  }
+  return items;
 }
 
 function refreshDynamicUi() {

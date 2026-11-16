@@ -113,8 +113,10 @@ checked before the Save link appears. A mismatch blocks the download.
 3. **Dither** if you want to trade sharp dots for smoother gradients.
 4. **Export** an indexed PNG, a palette strip, a reduced image, or a palette file.
 
-The preview uses a downscaled copy for speed. Export always processes the original image
-at full resolution.
+The original half of the canvas is drawn from the full-resolution image; the mapping pass
+keeps the full image up to about 4 MP and scales larger images down to that budget. The
+status line names the preview size whenever it differs from the source. Export always
+processes the original image at full resolution.
 
 ## Built-in palettes
 

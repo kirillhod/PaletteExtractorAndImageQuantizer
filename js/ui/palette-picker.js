@@ -11,7 +11,7 @@ const PICK_LOUPE_CELL = PICK_LOUPE_SIZE / PICK_LOUPE_CELLS;
 const PICK_LOUPE_RADIUS = (PICK_LOUPE_CELLS - 1) / 2;
 
 /**
- * @param {{ source: { width:number, height:number }, x:number, y:number }} sample
+ * @param {{ side: 'original'|'reduced', source: { width:number, height:number }, x:number, y:number }} sample
  * @returns {{ u:number, v:number }}
  */
 function normalizePickPoint(sample) {
@@ -112,12 +112,14 @@ export function createPalettePicker(deps) {
   /**
    * Draw a magnified crop around the sampled pixel. The extra context makes touch
    * picking possible: the finger no longer covers the only visible sample.
-   * @param {{ color: { r:number,g:number,b:number,a:number }, source: { data: Uint8ClampedArray, width:number, height:number }, x:number, y:number }} sample
+   * @param {{ color: { r:number,g:number,b:number,a:number }, side: 'original'|'reduced', x:number, y:number }} sample
    */
   function drawPickLoupe(sample) {
     if (!pickLoupeCanvas) return;
     const ctx = pickLoupeCanvas.getContext('2d');
     if (!ctx) return;
+    const patch = canvasView.samplePatch(sample.side, sample.x, sample.y, PICK_LOUPE_RADIUS);
+    if (!patch) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const pixels = Math.round(PICK_LOUPE_SIZE * dpr);
     if (pickLoupeCanvas.width !== pixels || pickLoupeCanvas.height !== pixels) {
@@ -127,18 +129,17 @@ export function createPalettePicker(deps) {
     ctx.setTransform(pixels / PICK_LOUPE_SIZE, 0, 0, pixels / PICK_LOUPE_SIZE, 0, 0);
     ctx.clearRect(0, 0, PICK_LOUPE_SIZE, PICK_LOUPE_SIZE);
 
-    const { source, x, y } = sample;
     for (let dy = -PICK_LOUPE_RADIUS; dy <= PICK_LOUPE_RADIUS; dy++) {
       for (let dx = -PICK_LOUPE_RADIUS; dx <= PICK_LOUPE_RADIUS; dx++) {
-        const sourceX = x + dx;
-        const sourceY = y + dy;
-        if (sourceX < 0 || sourceY < 0 || sourceX >= source.width || sourceY >= source.height) {
+        const patchX = sample.x + dx - patch.originX;
+        const patchY = sample.y + dy - patch.originY;
+        if (patchX < 0 || patchY < 0 || patchX >= patch.width || patchY >= patch.height) {
           continue;
         }
-        const offset = (sourceY * source.width + sourceX) * 4;
-        const alpha = source.data[offset + 3];
+        const offset = (patchY * patch.width + patchX) * 4;
+        const alpha = patch.data[offset + 3];
         if (alpha === 0) continue;
-        ctx.fillStyle = `rgba(${source.data[offset]}, ${source.data[offset + 1]}, ${source.data[offset + 2]}, ${alpha / 255})`;
+        ctx.fillStyle = `rgba(${patch.data[offset]}, ${patch.data[offset + 1]}, ${patch.data[offset + 2]}, ${alpha / 255})`;
         ctx.fillRect(
           (dx + PICK_LOUPE_RADIUS) * PICK_LOUPE_CELL,
           (dy + PICK_LOUPE_RADIUS) * PICK_LOUPE_CELL,
