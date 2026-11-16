@@ -68,7 +68,10 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
   the bottom of the free left column. After validation, every result offers Save and Copy.
 - **Quality:** export validation and palette compliance stay in the status line. The
   Quality section measures the current preview with CIEDE2000: mean, p95, max, a toggleable
-  error map, and the 20 worst pixels. Contrast matrices are out of v1.1.
+  error map, and the 20 worst pixels. Once the error map is on it stays on: every new
+  preview of the same image re-measures and redraws the map and markers, so a settings or
+  palette change never silently turns the overlay off. Loading another image clears it.
+  Contrast matrices are out of v1.1.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
   with an `aria-label`/`title` carrying the full name. The document title uses the full
   name.

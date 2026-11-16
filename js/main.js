@@ -383,6 +383,9 @@ function onWorkerMessage(event) {
       sessionState.restoringSession = false;
       scheduleSessionSave();
     }
+    // Settings, palette, and mode changes all arrive as a new preview. Re-measure now
+    // so an enabled error map keeps describing the current result instead of vanishing.
+    qualityPanel.autoMeasure();
     return;
   }
 
@@ -781,6 +784,7 @@ async function loadFile(file, restore = null) {
       { value: `${width}×${height}`, labelKey: 'status.source' },
       { value: file.name || t('status.file'), labelKey: 'status.file' },
     ]);
+    qualityPanel.clearIntent();
     processPreview();
   } catch (error) {
     if (requestId !== loadRequestId) return;

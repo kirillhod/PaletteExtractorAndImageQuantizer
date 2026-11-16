@@ -35,6 +35,43 @@ export function createQualityPanel(deps) {
   let requestId = 0;
   let busy = false;
   let failed = false;
+  // The user's intent, not the checkbox or the map buffers: it survives a preview
+  // reset so a settings or palette change re-measures and redraws the overlay.
+  let mapOn = false;
+  // A slider drag produces a preview every few hundred ms. Waiting a little after the
+  // last one keeps the synchronous CIEDE2000 pass from delaying the next preview.
+  let measureTimer = 0;
+  const AUTO_MEASURE_DELAY = 350;
+
+  function cancelAutoMeasure() {
+    if (!measureTimer) return;
+    clearTimeout(measureTimer);
+    measureTimer = 0;
+  }
+
+  /**
+   * Mirror `mapOn` and `result` onto the toggle, the map, and the markers.
+   */
+  function applyMap() {
+    if (qaErrorToggle) qaErrorToggle.checked = mapOn;
+    // Keep the toggle reachable while a re-measure is pending, even without stats.
+    if (qaErrorField) qaErrorField.hidden = !mapOn && !result;
+    if (!mapOn || !result) {
+      clearMap();
+      return;
+    }
+    const view = deps.getCanvasView();
+    if (!view) return;
+    view.setErrorMap(result.errorMap);
+    view.setWorstPixels(result.worstPixels);
+  }
+
+  /** @param {boolean} on */
+  function setMapIntent(on) {
+    mapOn = on;
+    if (!on) cancelAutoMeasure();
+    applyMap();
+  }
 
   function updateAvailability() {
     if (!qaRun) return;
@@ -44,9 +81,12 @@ export function createQualityPanel(deps) {
   }
 
   /**
+   * Drop the current measurement but keep the user's error-map intent, so a new
+   * preview of the same image can re-measure and redraw it.
    * @param {{ disable?: boolean }} [options]
    */
   function reset(options = {}) {
+    cancelAutoMeasure();
     if (requestId) {
       deps.getWorker().postMessage({ type: 'cancel', requestId });
       requestId = 0;
@@ -55,8 +95,8 @@ export function createQualityPanel(deps) {
     failed = false;
     result = null;
     if (qaStats) qaStats.hidden = true;
-    if (qaErrorField) qaErrorField.hidden = true;
-    if (qaErrorToggle) qaErrorToggle.checked = false;
+    if (qaErrorToggle) qaErrorToggle.checked = mapOn;
+    if (qaErrorField) qaErrorField.hidden = !mapOn;
     clearMap();
     if (qaWorst) {
       qaWorst.hidden = true;
@@ -99,8 +139,7 @@ export function createQualityPanel(deps) {
     if (qaP95) qaP95.textContent = result.deltaE00P95.toFixed(2);
     if (qaMax) qaMax.textContent = result.deltaE00Max.toFixed(2);
     if (qaErrorField) qaErrorField.hidden = false;
-    if (qaErrorToggle) qaErrorToggle.checked = false;
-    clearMap();
+    applyMap();
     if (qaWorst) {
       qaWorst.hidden = false;
       qaWorst.replaceChildren();
@@ -130,24 +169,37 @@ export function createQualityPanel(deps) {
   }
 
   function showMap() {
-    if (!result || !qaErrorToggle) return;
-    const view = deps.getCanvasView();
-    if (!view) return;
-    if (!qaErrorToggle.checked) {
-      view.setErrorMap(null);
-      view.setWorstPixels(null);
-      return;
-    }
-    view.setErrorMap(result.errorMap);
-    view.setWorstPixels(result.worstPixels);
+    if (!qaErrorToggle) return;
+    setMapIntent(qaErrorToggle.checked);
   }
 
   function toggleMap() {
-    if (!result || !qaErrorToggle) return;
+    if (!qaErrorToggle) return;
+    // Before the first measurement the only meaningful action is to turn a pending
+    // overlay off; enabling it without stats has nothing to draw.
+    if (!result && !mapOn) return;
     const section = document.getElementById('qa-section');
     if (section) /** @type {HTMLDetailsElement} */ (section).open = true;
-    qaErrorToggle.checked = !qaErrorToggle.checked;
-    showMap();
+    setMapIntent(!mapOn);
+  }
+
+  /**
+   * Called after a preview result. The error map is a persistent overlay: if it is
+   * on, measure the new preview and put the map back without a click. The short delay
+   * lets a slider drag settle so only the last preview is measured.
+   */
+  function autoMeasure() {
+    if (!mapOn || result) return;
+    cancelAutoMeasure();
+    measureTimer = setTimeout(() => {
+      measureTimer = 0;
+      if (!mapOn || result) return;
+      if (busy) {
+        autoMeasure();
+        return;
+      }
+      run();
+    }, AUTO_MEASURE_DELAY);
   }
 
   /**
@@ -198,10 +250,18 @@ export function createQualityPanel(deps) {
     }
   }
 
+  function clearIntent() {
+    mapOn = false;
+    cancelAutoMeasure();
+    applyMap();
+  }
+
   qaRun?.addEventListener('click', run);
   qaErrorToggle?.addEventListener('change', showMap);
 
   return {
+    autoMeasure,
+    clearIntent,
     fail,
     handleMessage,
     matches,

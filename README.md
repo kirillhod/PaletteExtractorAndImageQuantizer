@@ -65,7 +65,8 @@ looks right.*
 
 - CIEDE2000 **mean**, **p95**, and **max** between the source and the mapped preview.
 - A toggleable CIEDE2000 error map on the right half of the canvas, from near-zero (dark
-  blue) to 20+ (red).
+  blue) to 20+ (red). It stays on across settings and palette changes and re-measures the
+  new preview automatically.
 - The 20 worst pixels with coordinates, located by numbered markers on the error map.
 - Measurements use the preview; fully transparent pixels are skipped.
 
