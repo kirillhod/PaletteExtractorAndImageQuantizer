@@ -92,7 +92,8 @@ checked before the Save link appears. A mismatch blocks the download.
 - Dark, light, and automatic themes.
 - Before/after divider, fit, 100% zoom, `+`/`−` buttons, pinch-to-zoom on touch, and
   original toggle.
-- Helpful tooltips and a Help drawer with the shortcuts and a reference list.
+- Helpful tooltips and a Help drawer with extraction and mapping guides, shortcuts, and
+  collapsed references.
 - The settings rail collapses from the header so the canvas can take the full width; the
   choice is remembered between visits.
 - Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help,
@@ -101,8 +102,8 @@ checked before the Save link appears. A mismatch blocks the download.
   space, dither, alpha threshold, transparent index, sort, and built-in palette. The image
   itself is never included in the URL.
 - The last image, palette edits, settings, locks, selection, picked-color markers, and
-  undo/redo history come back after a reload from local IndexedDB. Use **Forget saved
-  session** in Help to remove them.
+  undo/redo history come back after a reload from local IndexedDB. **Forget saved
+  session** in the footer removes them after a confirmation.
 - Everything stays responsive down to phone width.
 
 ## How it works
@@ -132,8 +133,8 @@ You can also import any palette with up to 256 colors.
 Images are decoded and processed entirely in your browser. Nothing is uploaded, and the
 page makes no network requests after loading. No analytics, accounts, cookies, or
 third-party scripts. Theme, language, and settings-rail preferences stay in local storage,
-and the optional saved session stays in local IndexedDB; **Forget saved session** in Help
-removes the session.
+and the optional saved session stays in local IndexedDB; **Forget saved session** in the
+footer removes the session after a confirmation.
 
 ## Browser support
 

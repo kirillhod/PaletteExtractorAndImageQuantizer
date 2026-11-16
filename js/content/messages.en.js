@@ -268,6 +268,12 @@ export const EN_MESSAGES = {
 
   'session.saved': 'Saved locally.',
   'session.cleared': 'Saved session cleared.',
+  'session.forget': 'Forget saved session',
+  'session.forgetTitle': 'Forget saved session?',
+  'session.forgetText':
+    'This removes the stored image, settings, palette, and undo history from this browser. Files you already exported are not affected.',
+  'session.cancel': 'Cancel',
+  'session.forgetConfirm': 'Forget',
 
   'footer.local': 'Runs locally. No uploads, no accounts, no tracking.',
   'footer.github': 'GitHub repository',
@@ -277,31 +283,47 @@ export const EN_MESSAGES = {
   'help.openAria': 'Open help',
   'help.closeAria': 'Close help',
   'help.intro':
-    'Load an image, extract a palette or choose a fixed one, compare the result, and export an indexed PNG, palette strip, palette file, or reduced PNG. Every result is checked before download and can also be copied to the clipboard. Edit colors, locks, and order as needed; undo and redo cover palette and settings changes.',
+    'Load an image, extract a palette or choose a fixed one, then export a validated indexed PNG, palette strip, palette file, or reduced PNG. Everything runs in this browser.',
   'help.current':
-    'includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.',
+    'adds palette editing, ordering, picked colors, quality metrics, shareable settings, and a saved session.',
   'help.howTitle': 'How it works',
-  'help.how1': 'Build a 5-bit, alpha-weighted color histogram.',
+  'help.how1': 'Build an alpha-weighted 5-bit color histogram.',
   'help.how2':
-    'Extract a palette or load a fixed one; Map replaces every pixel with a palette color. Edit colors, locks, and order.',
-  'help.how3':
-    'Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.',
-  'help.how4':
-    'Dither optionally, then encode, decode, and compare the result before offering the file.',
+    'Extract colors or load a fixed palette, then map each pixel to its nearest entry.',
+  'help.how3': 'Dither optionally, or leave plain nearest-color mapping.',
+  'help.how4': 'Encode, decode, and compare the result before offering the file.',
+  'help.extractTitle': 'Extracting a palette',
+  'help.extractLead':
+    'In Extract mode, the method trades speed, color balance, and smoothness.',
+  'help.extractP':
+    'Colors sets the palette size from 2 to 256; fewer may come back when the image has fewer distinct colors. Alpha weights each pixel, and fully transparent pixels are ignored. Oklab is recommended; sRGB matches legacy tools. Median cut and Wu add two refinement passes.',
+  'help.extractPopularity': 'Popularity',
+  'help.extractPopularityText':
+    'keeps the most frequent colors; best for flat art and pixel art.',
+  'help.extractMedian': 'Median cut',
+  'help.extractMedianText':
+    'splits the color space by weighted error and refines the boxes.',
+  'help.extractWu': 'Wu (balanced)',
+  'help.extractWuText': 'splits by color moments; the balanced default for photos.',
+  'help.extractOctree': 'Octree (fast)',
+  'help.extractOctreeText': 'merges a color tree quickly; lower quality.',
+  'help.extractKmeans': 'K-means++ (max quality)',
+  'help.extractKmeansText':
+    'iterates clusters for the smoothest result; usually the slowest.',
   'help.mapTitle': 'Mapping to a palette',
   'help.mapLead': 'Map replaces colors; it does not add them.',
   'help.mapP':
-    'Every pixel takes the closest color in the target palette, so a photo can come out with four colors. Distances use the working space (Oklab by default); exact ties go to the lowest palette index. The left half of the preview is the source and the right half is the result; drag the divider or press O to compare. Dithering spreads the error to neighboring pixels so small areas can suggest colors the palette does not contain. Leave the transparent index at None to keep every color visible; choosing one removes every pixel assigned to that entry.',
-  'help.orderTitle': 'Palette order and the preview',
+    'Every pixel takes the closest palette color in the working space; exact ties go to the lowest index. The left half of the preview is the source and the right half the result; drag the divider or press O to compare. Dithering spreads the error to neighboring pixels so small areas can suggest colors the palette does not contain. Leave the transparent index at None to keep every color visible; choosing one removes every pixel assigned to that entry.',
+  'help.orderTitle': 'Palette order and preview',
   'help.orderLead': 'Export order changes, the color set does not.',
   'help.orderP':
-    'A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add. The preview button opens the current palette as one full-screen strip on a neutral gray background; you can switch between two grays or pick any color, and the choice is remembered. The preview never changes the export.',
+    'Sort changes export indices and the HEX list, not the color set. An indexed PNG keeps its visible colors but rewrites PLTE and the index map; the transparent index follows its color, and exact ties go to the lowest index. Click empty palette space or press Esc to clear the selection; with none, Pick fills HEX for Add. The preview button opens one full-screen strip on a neutral background; two gray presets and a color picker are remembered, and the preview never changes the export.',
   'help.hueLead': 'Hue order',
   'help.hueP':
-    'groups similar hues into bands and sorts each band from dark to light. Hue · grouped keeps each band as a strict lightness ramp. Hue · perceptual refines each band with Delta E (CIEDE2000) and may reverse a band so neighboring bands join at their closest ends. The direction button next to Sort switches both Hue modes and Lightness between dark → light and light → dark.',
+    'groups similar hues into bands and orders each band by lightness. Hue · grouped keeps a strict ramp. Hue · perceptual may reverse a band so neighboring bands meet at their closest ends. The direction button switches both Hue modes and Lightness between dark → light and light → dark.',
   'help.perceptualLead': 'Perceptual orders',
   'help.perceptualP':
-    'compare colors with Delta E (CIEDE2000). Only the order and export indices change. These orders have a fixed direction, so the direction button is disabled.',
+    'compare colors with Delta E (CIEDE2000) and change only the order and export indices. Their direction is fixed, so the direction button is disabled.',
   'help.perceptualSmooth': 'Smooth',
   'help.perceptualSmoothText': 'keeps the light-to-dark flow and removes local jumps.',
   'help.perceptualPath': 'Color path',
@@ -311,20 +333,19 @@ export const EN_MESSAGES = {
     'keeps neighboring colors as close as possible without pinning the ends.',
   'help.markersLead': 'Picked colors',
   'help.markersP':
-    'keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.',
+    'keep a marker on the image while Edit is on. Drag a marker or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors get no marker until you pick them. Markers stay in the session and never enter exports.',
   'help.qualityTitle': 'Quality',
   'help.qualityLead': 'Lower ΔE00 means a closer preview.',
   'help.qualityP':
-    'Mean, p95, and max summarize the CIEDE2000 error between the preview and the source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast is not checked.',
+    'Mean, p95, and max summarize the CIEDE2000 error between preview and source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Transparent pixels are skipped; contrast is not checked.',
   'help.urlTitle': 'Shareable settings',
   'help.urlLead': 'The URL hash stores settings only.',
   'help.urlP':
-    'It covers mode, extractor, colors, working space, built-in palette, dither method, strength, serpentine, edge stop, alpha threshold, sort, and transparent index. The image, palette edits, locks, and quality results never enter it.',
+    'It stores mode, extractor, colors, working space, fixed palette, dither method, strength, serpentine, edge stop, alpha threshold, sort, and transparent index. The image, palette edits, locks, and quality results never enter it.',
   'help.sessionTitle': 'Saved session',
   'help.sessionLead': 'The last session stays in this browser.',
   'help.sessionP':
-    "It keeps the image, settings, palette entries, locks, order, selection, markers, edit mode, and the undo history for palette and settings in IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove the stored copy.",
-  'help.forget': 'Forget saved session',
+    'It keeps the image, settings, palette, locks, order, selection, markers, edit mode, and undo history in IndexedDB. A URL with different settings takes precedence and re-extracts the palette. Forget saved session in the footer removes the stored copy.',
   'help.shortcutsTitle': 'Shortcuts',
   'help.key': 'Key',
   'help.keyPinch': 'Pinch',

@@ -233,6 +233,12 @@
     padding-inline: var(--peiq-space-3);
   }
 
+  .peiq-footer__forget {
+    min-height: 44px;
+    margin-block: 0;
+    padding-block: 8px;
+  }
+
   .peiq-toast-host {
     right: var(--peiq-space-3);
     bottom: var(--peiq-space-3);

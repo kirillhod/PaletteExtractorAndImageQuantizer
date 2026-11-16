@@ -56,6 +56,7 @@ const REQUIRED_TOKENS = [
   '--peiq-shadow-card-lg',
   '--peiq-shadow-popover',
   '--peiq-shadow-drawer',
+  '--peiq-overlay',
   '--peiq-brand-soft',
   '--peiq-brand-text',
   '--peiq-brand-ink',

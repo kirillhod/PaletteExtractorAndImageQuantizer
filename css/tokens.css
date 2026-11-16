@@ -85,6 +85,7 @@
   --peiq-shadow-card-lg: rgba(5, 5, 6, 0.20) 0 8px 24px;
   --peiq-shadow-popover: 0 16px 40px rgba(5, 5, 6, 0.32);
   --peiq-shadow-drawer: -24px 0 64px rgba(5, 5, 6, 0.32);
+  --peiq-overlay: rgba(5, 5, 6, 0.55);
 
   --peiq-radius: 6px;
   --peiq-radius-lg: 12px;
@@ -156,6 +157,7 @@
   --peiq-shadow-card-lg: rgba(149, 157, 165, 0.20) 0 8px 24px;
   --peiq-shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.18);
   --peiq-shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.18);
+  --peiq-overlay: rgba(0, 0, 0, 0.35);
   --peiq-brand-soft: rgba(237, 143, 49, 0.12);
 
   --peiq-text-on-accent: #0b1220;

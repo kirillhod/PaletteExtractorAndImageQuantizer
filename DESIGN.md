@@ -164,6 +164,7 @@ and light-theme variables.
   --peiq-shadow-card-lg: rgba(5, 5, 6, 0.20) 0 8px 24px;
   --peiq-shadow-popover: 0 16px 40px rgba(5, 5, 6, 0.32);
   --peiq-shadow-drawer: -24px 0 64px rgba(5, 5, 6, 0.32);
+  --peiq-overlay: rgba(5, 5, 6, 0.55);
 
   /* Geometry (site: .6rem / 1.2rem at a 10px root) */
   --peiq-radius: 6px;
@@ -230,6 +231,7 @@ and light-theme variables.
   --peiq-shadow-card-lg: rgba(149, 157, 165, 0.20) 0 8px 24px;
   --peiq-shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.18);
   --peiq-shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.18);
+  --peiq-overlay: rgba(0, 0, 0, 0.35);
   --peiq-brand-soft: rgba(237, 143, 49, 0.12);
 
   --peiq-checker-a: #e9ecef;
@@ -1237,6 +1239,22 @@ light “paper” sheet.
   color: var(--peiq-text-strong);
   font-weight: 600;
 }
+.peiq-drawer__details {
+  margin-top: var(--peiq-space-4);
+  border-top: 1px solid var(--peiq-border);
+}
+.peiq-drawer__summary {
+  padding-top: var(--peiq-space-3);
+  color: var(--peiq-text-strong);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.peiq-drawer__summary:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
 
 .peiq-popover {
   z-index: 50;
@@ -1365,9 +1383,11 @@ It reports dimensions, unique colors, stage/progress, timings, and export valida
 
 ### Footer
 
-The footer is a compact single row: privacy statement on the left, GPL and GitHub
-repository links on the right. It is 33 px tall at 1280 px and never takes a whole
-screen block.
+The footer is a compact single row: privacy statement, version, and the saved-session
+action on the left, GPL and GitHub repository links on the right. It is 33 px tall at
+1280 px and never takes a whole screen block. **Forget saved session** is a quiet
+underlined text button there, not a filled destructive button; it opens the confirmation
+dialog below. On phones it gets a 44 px touch target.
 
 ```css
 .peiq-footer {
@@ -1385,6 +1405,73 @@ screen block.
 .peiq-footer__links { display: flex; flex-wrap: wrap; gap: 16px; }
 .peiq-footer a { color: var(--peiq-text-secondary); }
 .peiq-footer a:hover { color: var(--peiq-link); }
+.peiq-footer__session {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-inline-start: 8px;
+}
+.peiq-footer__session::before { content: '·'; margin-inline-end: 4px; }
+.peiq-footer__session-status:empty { display: none; }
+.peiq-footer__forget {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 0;
+  margin: -4px 0;
+  border: 0;
+  background: none;
+  color: var(--peiq-text-secondary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.peiq-footer__forget:hover { color: var(--peiq-danger-text); }
+.peiq-footer__forget:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+```
+
+### Confirmation dialog
+
+The saved-session confirmation uses the native `<dialog>` element with `showModal()`, so
+the browser supplies the focus trap, `Esc` cancel, and focus return. Cancel is focused by
+default; Forget uses the danger fill. The backdrop is `--peiq-overlay`.
+
+```css
+.peiq-confirm {
+  width: min(420px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  color: var(--peiq-text);
+  box-shadow: var(--peiq-shadow-popover);
+}
+.peiq-confirm::backdrop { background: var(--peiq-overlay); }
+.peiq-confirm__form { padding: 24px; }
+.peiq-confirm__title {
+  margin: 0 0 8px;
+  color: var(--peiq-text-strong);
+  font-size: 1.0625rem;
+  line-height: 1.3;
+}
+.peiq-confirm__text {
+  margin: 0 0 24px;
+  color: var(--peiq-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.peiq-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
 ```
 
 ### Keyboard hint
@@ -1757,6 +1844,9 @@ img, canvas, video { max-width: 100%; }
   are announced and update `<html lang>`.
 - The Help drawer is a labelled dialog; focus moves in on open and returns on close;
   `Esc` closes it.
+- The saved-session confirmation is a native modal `<dialog>`: Cancel is focused first,
+  `Esc` cancels, focus returns to the footer trigger, and the destructive action is never
+  the default.
 
 ---
 
@@ -1846,7 +1936,7 @@ inspected locally. The following values were extracted, not guessed:
   `--peiq-danger`, `--peiq-danger-bg`, `--peiq-danger-text`,
   `--peiq-info`, `--peiq-info-bg`, `--peiq-info-text`,
   `--peiq-shadow-card`, `--peiq-shadow-card-lg`, `--peiq-shadow-popover`,
-  `--peiq-shadow-drawer`, `--peiq-brand-soft`, `--peiq-brand-text`,
+  `--peiq-shadow-drawer`, `--peiq-overlay`, `--peiq-brand-soft`, `--peiq-brand-text`,
   `--peiq-brand-ink`,
   `--peiq-checker-a`, `--peiq-checker-b`, `--peiq-text-on-accent`.
 - Shared tokens (identical in both themes): accent, accent-hover/pressed/bg, brand,

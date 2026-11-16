@@ -38,10 +38,10 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with references and credits, picked-color markers |
-| Tests | 176 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers |
+| Tests | 178 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
 | Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
-| Next | Ship the hue-band, hue-perceptual, compact sort, and palette-preview changes with the next release; otherwise M7 — later / not planned for v1.x |
+| Next | Ship the hue-band, hue-perceptual, compact sort, palette-preview, and Help/session-clear changes with the next release; otherwise M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -1153,6 +1153,11 @@ site. Learning is opt-in, contextual, and dismissible.
 - The drawer header uses the page header height (`--peiq-header-height`) and the same
   inline padding, its title matches the brand's 18 px/800 scale, and the close button is
   an 18 px icon. The two bottom borders line up when the drawer is open.
+- Current order: How it works, Extracting a palette, Mapping to a palette, Palette order
+  and preview, Picked colors, Quality, Shareable settings, Saved session, and Shortcuts.
+  Extraction names the five methods and their trade-offs; Mapping stays a separate
+  section. References and credits are native `<details>` disclosures, closed by default,
+  so the guide stays short without removing attribution.
 - Topic list (minimum 12):
   1. `quantization-basics` — what quantization is and what it trades away.
   2. `popularity` — dominant-color selection.
@@ -1173,8 +1178,13 @@ site. Learning is opt-in, contextual, and dismissible.
 
 **Content and safety**
 
-- v1.0 Help content: How it works, shortcuts, references, and credits. There is no
-  long-form Guide, topic tabs, or deep-link routing in this release.
+- v1.0 Help content: How it works, extraction and mapping, ordering and preview, picked
+  colors, quality, shareable settings, saved session, shortcuts, references, and credits.
+  There is no long-form Guide, topic tabs, or deep-link routing in this release.
+- **Forget saved session** is not in the drawer. It sits in the footer next to the
+  privacy statement, so it is visible without scrolling; the button opens a native
+  confirmation dialog with Cancel focused by default and clears IndexedDB only after the
+  user confirms.
 - `js/content/references.js` holds canonical references:
   `{ id, title, authors, year, venue, url }`; it is the single source for UI links.
 - Rendered with `createElement`/`textContent`; no Markdown parser, no `innerHTML`, no
@@ -1213,8 +1223,9 @@ site. Learning is opt-in, contextual, and dismissible.
 - A newer image load owns the UI. If the user drops or chooses an image while the saved
   session is being read or decoded, the restore is abandoned and must not apply settings,
   replace the image, or surface its own decode error afterwards.
-- **Forget saved session** in Help clears the stored image and state; a failed decode,
-  invalid record, unavailable storage, or quota error falls back without trapping the user.
+- **Forget saved session** in the footer clears the stored image and state after a
+  confirmation dialog; a failed decode, invalid record, unavailable storage, or quota
+  error falls back without trapping the user.
 - Imported palette contents and QA results are not part of the session.
 
 ### 8.11 Localization
@@ -1850,8 +1861,8 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Persist settings, palette colors/order/locks, selection, edit mode, and undo/redo
       history.
 - [x] URL settings take precedence when the hash differs from the saved session.
-- [x] Provide **Forget saved session** in Help and fall back to the hero on empty, invalid,
-      or unavailable storage.
+- [x] Provide **Forget saved session** (now the footer; see §8.10) and fall back to the
+      hero on empty, invalid, or unavailable storage.
 - **Exit:** `1.2.0` tagged; reload restores the image, palette, locks, and undo history.
 
 ### M6.1 — v1.3: mobile editing and load resilience (complete)
@@ -2120,6 +2131,8 @@ A change is done only when:
 | 2026-11-16 | Bound hue bands and add hue-perceptual modes | The first-pass gap rule still left a continuous blue-purple region as one huge band, so L order interleaved hue and lightness. Hue bands now split at the most balanced internal gap until every band is at most 30°, and `hue-perceptual-asc` / `hue-perceptual-desc` refine each band with deterministic CIEDE2000 2-opt seeded by L. Per-band L ramps still left an 84 Delta E jump on the extracted 72-color StoneBlock palette, so the perceptual modes also choose each band's direction to minimize the join; the plain hue modes remain strict L ramps. Old hue URLs still load; their order and palette hash change again before release, so `ALGORITHM_VERSION` stays 3 because the banded hue change is unreleased; 172 tests |
 | 2026-11-16 | Show sort families with a direction button | Eleven select rows made the order list slow to scan, and six of them differed only by direction. The select now has eight rows: source, manual, hue grouped, hue perceptual, lightness, perceptual smooth, perceptual color path, and perceptual flow. One direction button maps the three directional families to their `-asc`/`-desc` keys and is disabled for fixed-direction orders. Stored keys, URLs, sessions, and export order keep the full key, so old links and saved sessions still load; 173 tests |
 | 2026-11-16 | Add a full-screen palette preview | Judging a palette against a page or sprite at real size needs a clean, full-width strip without the editor around it. A preview button in the palette bar opens the current order as one full-screen strip on a neutral gray background, with each color block inset in its slot so neighbors keep a gap of about 15% of the block width; two gray presets and a native color picker set the background, which is remembered under `peiq.previewBg`. The overlay is read-only, traps Tab, closes on Esc, the close button, or a backdrop click, and returns focus to its trigger. The user-chosen background is data, so it is the second permitted inline style after `--swatch`; it never enters the palette, hash, URL, or session. 176 tests |
+| 2026-11-16 | Add an extraction guide and compact the rest of Help | The drawer explained mapping but never named the five extractors or their trade-offs, so the extraction half of the workflow was opaque. A dedicated section now covers colors, alpha weighting, working space, refinement, and each method in one line. Redundant prose was trimmed, and references and credits became closed disclosures so the guide stays scannable without losing attribution. |
+| 2026-11-16 | Move Forget saved session from Help to the footer behind a confirmation dialog | The action sat near the bottom of a long drawer, so it was hard to find and easy to hit while reading. The footer is visible without scrolling on desktop and already carries the local-only claim; a text action there opens a native dialog with Cancel focused by default, and IndexedDB is cleared only after confirmation. The Help text now points to the footer. 178 tests |
 
 ---
 

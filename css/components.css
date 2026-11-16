@@ -47,6 +47,46 @@
   color: var(--peiq-link);
 }
 
+.peiq-footer__session {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--peiq-space-2);
+  margin-inline-start: var(--peiq-space-2);
+}
+
+.peiq-footer__session::before {
+  content: '·';
+  margin-inline-end: var(--peiq-space-1);
+}
+
+.peiq-footer__session-status:empty {
+  display: none;
+}
+
+.peiq-footer__forget {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 0;
+  margin: -4px 0;
+  border: 0;
+  background: none;
+  color: var(--peiq-text-secondary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.peiq-footer__forget:hover {
+  color: var(--peiq-danger-text);
+}
+
+.peiq-footer__forget:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .peiq-btn {
   display: inline-flex;
   align-items: center;
@@ -111,6 +151,16 @@
 .peiq-btn--ghost:hover {
   background: var(--peiq-accent-bg);
   color: var(--peiq-accent-hover);
+}
+
+.peiq-btn--danger {
+  background: var(--peiq-danger-bg);
+  color: var(--peiq-danger-text);
+}
+
+.peiq-btn--danger:hover {
+  background: var(--peiq-danger);
+  color: var(--peiq-text-on-accent);
 }
 
 .peiq-btn--small {
@@ -664,6 +714,47 @@ html.peiq-preview-open body {
   inset-block: 0;
   inset-inline: 6.5%;
   background: var(--swatch);
+}
+
+.peiq-confirm {
+  width: min(420px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  color: var(--peiq-text);
+  box-shadow: var(--peiq-shadow-popover);
+}
+
+.peiq-confirm::backdrop {
+  background: var(--peiq-overlay);
+}
+
+.peiq-confirm__form {
+  padding: var(--peiq-space-4);
+}
+
+.peiq-confirm__title {
+  margin: 0 0 var(--peiq-space-2);
+  color: var(--peiq-text-strong);
+  font-size: 1.0625rem;
+  line-height: 1.3;
+}
+
+.peiq-confirm__text {
+  margin: 0 0 var(--peiq-space-4);
+  color: var(--peiq-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.peiq-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--peiq-space-2);
 }
 
 .peiq-palette-editor-slot {
@@ -1262,6 +1353,25 @@ html.peiq-preview-open body {
 
 .peiq-drawer__body li {
   margin-bottom: var(--peiq-space-1);
+}
+
+.peiq-drawer__details {
+  margin-top: var(--peiq-space-4);
+  border-top: 1px solid var(--peiq-border);
+}
+
+.peiq-drawer__summary {
+  padding-top: var(--peiq-space-3);
+  color: var(--peiq-text-strong);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.peiq-drawer__summary:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
 }
 
 .peiq-help-terms {

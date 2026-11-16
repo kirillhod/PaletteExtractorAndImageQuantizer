@@ -83,6 +83,9 @@ export function createSessionUrl(deps) {
   const sessionClear = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('session-clear')
   );
+  const sessionClearDialog = /** @type {HTMLDialogElement|null} */ (
+    document.getElementById('session-clear-dialog')
+  );
   const sessionStatus = document.getElementById('session-status');
 
   function buildUrlState() {
@@ -220,6 +223,17 @@ export function createSessionUrl(deps) {
     }
   }
 
+  function openForgetDialog() {
+    if (!sessionClearDialog || typeof sessionClearDialog.showModal !== 'function') {
+      // Older browsers still get a confirmation instead of a silent no-op.
+      if (window.confirm(t('session.forgetText'))) forgetSavedSession();
+      return;
+    }
+    if (sessionClearDialog.open) return;
+    sessionClearDialog.returnValue = '';
+    sessionClearDialog.showModal();
+  }
+
   async function forgetSavedSession() {
     try {
       await clearSession();
@@ -307,7 +321,10 @@ export function createSessionUrl(deps) {
   }
 
   function bindEvents() {
-    sessionClear?.addEventListener('click', forgetSavedSession);
+    sessionClear?.addEventListener('click', openForgetDialog);
+    sessionClearDialog?.addEventListener('close', () => {
+      if (sessionClearDialog.returnValue === 'confirm') forgetSavedSession();
+    });
     window.addEventListener('hashchange', () => {
       if (session.applyingUrlState) return;
       applyUrlState(decodeUrlState(location.hash));
