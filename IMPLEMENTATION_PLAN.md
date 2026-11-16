@@ -39,7 +39,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers |
-| Tests | 178 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Tests | 183 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
 | Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands, hue-perceptual modes, compact sort controls, and the full-screen palette preview with `ALGORITHM_VERSION` 3 |
 | Next | Ship the hue-band, hue-perceptual, compact sort, palette-preview, and Help/session-clear changes with the next release; otherwise M7 — later / not planned for v1.x |
 
@@ -491,6 +491,11 @@ Z = 0.0193339 r + 0.1191920 g + 0.9503041 b
 - Pixels with `alpha < alphaThreshold` become transparent in indexed output.
 - Semi-transparent pixels in `(0, 255)` are reported as a warning; indexed PNG has only
   binary transparency (`tRNS`). RGBA PNG export preserves alpha exactly.
+- The preview keeps the source alpha in both the nearest-color and the dithered path:
+  fully transparent pixels stay invisible and semi-transparent pixels keep their
+  coverage. An index map carries no alpha, so a dithered preview is composed from the
+  source buffer rather than from the palette alone; the reserved index is always
+  transparent. Export validation still expects the binary `tRNS` result.
 - A reserved transparent index removes one usable opaque slot: `colors` includes it.
 
 ### 5.5 Distances and precision
@@ -2135,6 +2140,7 @@ A change is done only when:
 | 2026-11-16 | Add a full-screen palette preview | Judging a palette against a page or sprite at real size needs a clean, full-width strip without the editor around it. A preview button in the palette bar opens the current order as one full-screen strip on a neutral gray background, with each color block inset in its slot so neighbors keep a gap of about 15% of the block width; two gray presets and a native color picker set the background, which is remembered under `peiq.previewBg`. The overlay is read-only, traps Tab, closes on Esc, the close button, or a backdrop click, and returns focus to its trigger. The user-chosen background is data, so it is the second permitted inline style after `--swatch`; it never enters the palette, hash, URL, or session. 176 tests |
 | 2026-11-16 | Add an extraction guide and compact the rest of Help | The drawer explained mapping but never named the five extractors or their trade-offs, so the extraction half of the workflow was opaque. A dedicated section now covers colors, alpha weighting, working space, refinement, and each method in one line. Redundant prose was trimmed, and references and credits became closed disclosures so the guide stays scannable without losing attribution. |
 | 2026-11-16 | Move Forget saved session from Help to the footer behind a confirmation dialog | The action sat near the bottom of a long drawer, so it was hard to find and easy to hit while reading. The footer is visible without scrolling on desktop and already carries the local-only claim; a text action there opens a native dialog with Cancel focused by default, and IndexedDB is cleared only after confirmation. The Help text now points to the footer. 178 tests |
+| 2026-11-16 | Keep the source alpha in the dithered preview | The dithered branch rebuilt the preview from the index map alone, so with the default transparent index None every fully transparent pixel became opaque palette entry 0, which reads as a black hole, and semi-transparent pixels lost their coverage; the nearest-color preview did neither. Index maps carry no alpha, so the preview is now composed from the source buffer, `indicesToRgba` validates the map and accepts an alpha source, and export validation keeps the binary `tRNS` expectation. 183 tests |
 
 ---
 

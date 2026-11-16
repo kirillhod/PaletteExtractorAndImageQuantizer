@@ -278,10 +278,10 @@ committed locally with a descriptive body (plan §16).
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.5.0`; 178 tests in `main`. M6.3–M6.6 are complete; the bounded
+- Released `v1.5.0`; 183 tests in `main`. M6.3–M6.6 are complete; the bounded
   hue-band, hue-perceptual, compact sort controls, full-screen palette preview, the
-  extraction Help guide, and the confirmed footer session clear are committed but
-  unreleased.
+  extraction Help guide, the confirmed footer session clear, and the dithered preview
+  alpha fix are committed but unreleased.
 - Next: ship those changes with the next release; otherwise M7 — later / not planned for
   v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker

@@ -250,25 +250,41 @@ export function mapIndices(image, palette, options = {}) {
 }
 
 /**
- * Convert an index map to an RGBA preview. The reserved index is fully transparent.
+ * Convert an index map to RGBA. The reserved index is always fully transparent.
+ *
+ * With `alphaSource` (the source RGBA buffer) the result is a preview: each pixel keeps
+ * its source coverage, so fully transparent pixels stay invisible and semi-transparent
+ * pixels keep their alpha. Without it every non-reserved pixel is opaque, which is the
+ * binary `tRNS` expectation used to validate an indexed export.
+ *
  * @param {Uint8Array} indices
  * @param {number} width
  * @param {number} height
  * @param {Palette} palette
- * @param {{ transparentIndex?: number }} [options]
+ * @param {{ transparentIndex?: number, alphaSource?: Uint8ClampedArray }} [options]
  */
 export function indicesToRgba(indices, width, height, palette, options = {}) {
   const transparentIndex = options.transparentIndex ?? -1;
+  const alphaSource = options.alphaSource ?? null;
+  if (indices.length !== width * height) {
+    throw new RangeError('index map length must equal width * height');
+  }
+  if (alphaSource && alphaSource.length !== indices.length * 4) {
+    throw new RangeError('alphaSource length must equal width * height * 4');
+  }
   const out = new Uint8ClampedArray(width * height * 4);
   for (let p = 0; p < indices.length; p++) {
     const index = indices[p];
     const offset = p * 4;
+    if (index >= palette.length) {
+      throw new RangeError(`palette index ${index} is outside the palette`);
+    }
     if (index === transparentIndex && transparentIndex >= 0) continue;
     const color = palette[index].color;
     out[offset] = color.r;
     out[offset + 1] = color.g;
     out[offset + 2] = color.b;
-    out[offset + 3] = color.a ?? 255;
+    out[offset + 3] = alphaSource ? alphaSource[offset + 3] : (color.a ?? 255);
   }
   return { data: out, width, height };
 }

@@ -71,8 +71,12 @@ export async function runPreview(job) {
       transparentIndex,
       mapper,
     });
+    // The index map carries no alpha. Reuse the source coverage so dithering does not
+    // paint fully transparent pixels with palette[0] (a real color when no transparent
+    // index is reserved) and does not flatten semi-transparent pixels.
     preview = indicesToRgba(dithered.indices, image.width, image.height, palette, {
       transparentIndex,
+      alphaSource: image.data,
     });
   }
   const t3 = now();
