@@ -659,8 +659,10 @@ own action.
 The preview button between redo and Edit opens a full-screen, read-only palette strip. The
 bar uses `--peiq-surface` with `--peiq-text-strong` and the page inline padding; the stage
 is the user-chosen `--peiq-preview-bg` (default `#808080`, plus `#767676` and a native color
-picker), so the strip is judged against a neutral field. The strip is edge-to-edge,
-`height: clamp(140px, 40vh, 440px)`, with equal flex segments and no gaps. Desktop controls
+picker), so the strip is judged against a neutral field. The strip spans the viewport,
+`height: clamp(140px, 40vh, 440px)`, with equal flex slots. Each color block fills 87% of
+its slot, leaving a gap of about 15% of the block width between neighboring colors at any
+palette size, with a matching half-inset at the strip ends. Desktop controls
 are 28–32 px; below 600 px the bar becomes two rows, the visible Background label becomes
 screen-reader-only, and presets, picker, and close are 44 px. The overlay covers the page,
 locks body scroll, traps Tab, and closes on `Esc`, the close button, or a backdrop click.
@@ -752,8 +754,15 @@ locks body scroll, traps Tab, and closes on `Esc`, the close button, or a backdr
   height: clamp(140px, 40vh, 440px);
 }
 .peiq-palette-preview__swatch {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
+}
+.peiq-palette-preview__swatch::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 6.5%;
   background: var(--swatch);
 }
 .peiq-select--compact {

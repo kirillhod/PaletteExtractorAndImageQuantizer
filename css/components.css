@@ -651,8 +651,18 @@ html.peiq-preview-open body {
 }
 
 .peiq-palette-preview__swatch {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
+}
+
+/* The color block fills 87% of its slot, so neighboring colors keep a gap of about
+   15% of the block width regardless of the palette size. */
+.peiq-palette-preview__swatch::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 6.5%;
   background: var(--swatch);
 }
 

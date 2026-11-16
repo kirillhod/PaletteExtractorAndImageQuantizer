@@ -25,8 +25,9 @@ Choose the colors that define your image.
 - Sort the result by source order, bounded hue bands, hue-perceptual bands, or lightness
   — switch direction with one button — or use one of three perceptual orders that keep
   neighboring colors close.
-- Preview the sorted palette full-screen as one edge-to-edge strip on a neutral gray
-  background; switch between two grays or pick any color, and the choice is remembered.
+- Preview the sorted palette full-screen as one strip with clear gaps between colors on a
+  neutral gray background; switch between two grays or pick any color, and the choice is
+  remembered.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
   their place when sorting, move colors left/right in Manual order, pick colors straight
   from the canvas (each sampled color gets a draggable anchor), and undo or redo palette
