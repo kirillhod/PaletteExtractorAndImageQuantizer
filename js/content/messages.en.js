@@ -103,8 +103,8 @@ export const EN_MESSAGES = {
   'palette.unlock': 'Unlock',
   'palette.moveLeft': 'Move color left',
   'palette.moveRight': 'Move color right',
-  'palette.undo': 'Undo palette edit',
-  'palette.redo': 'Redo palette edit',
+  'palette.undo': 'Undo last change',
+  'palette.redo': 'Redo last change',
   'palette.editHint':
     'Select a swatch; click empty space to clear it. Pick samples the canvas; Esc stops.',
   'palette.pickHint':
@@ -262,7 +262,7 @@ export const EN_MESSAGES = {
   'help.openAria': 'Open help',
   'help.closeAria': 'Close help',
   'help.intro':
-    'Load an image, extract a palette or choose a fixed one, compare the result, and export an indexed PNG, palette strip, palette file, or reduced PNG. Every result is checked before download and can also be copied to the clipboard. Edit colors, locks, and order as needed; undo and redo work while editing.',
+    'Load an image, extract a palette or choose a fixed one, compare the result, and export an indexed PNG, palette strip, palette file, or reduced PNG. Every result is checked before download and can also be copied to the clipboard. Edit colors, locks, and order as needed; undo and redo cover palette and settings changes.',
   'help.current':
     'includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.',
   'help.howTitle': 'How it works',
@@ -300,7 +300,7 @@ export const EN_MESSAGES = {
   'help.sessionTitle': 'Saved session',
   'help.sessionLead': 'The last session stays in this browser.',
   'help.sessionP':
-    "It keeps the image, settings, palette entries, locks, order, selection, markers, edit mode, and undo/redo history in IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove the stored copy.",
+    "It keeps the image, settings, palette entries, locks, order, selection, markers, edit mode, and the undo history for palette and settings in IndexedDB. A URL with different settings overrides the saved settings and re-extracts the palette. Use Forget saved session to remove the stored copy.",
   'help.forget': 'Forget saved session',
   'help.shortcutsTitle': 'Shortcuts',
   'help.key': 'Key',
@@ -315,8 +315,8 @@ export const EN_MESSAGES = {
   'help.original': 'Toggle original',
   'help.errorMap': 'Toggle error map',
   'help.theme': 'Cycle theme',
-  'help.undo': 'Undo palette edit (editing)',
-  'help.redo': 'Redo palette edit (editing)',
+  'help.undo': 'Undo last palette or settings change',
+  'help.redo': 'Redo last palette or settings change',
   'help.toggleDrawer': 'Toggle this drawer',
   'help.esc': 'Close tooltip or help; cancel picking',
   'help.referencesTitle': 'References',
@@ -360,8 +360,8 @@ export const EN_MESSAGES = {
   'toast.exportFailedValidation': 'Export failed validation: {detail}',
   'toast.validatedDownload': 'Validated. Click Save to download.',
   'toast.processingFailed': 'Processing failed',
-  'toast.undo': 'Undid palette edit',
-  'toast.redo': 'Redid palette edit',
+  'toast.undo': 'Undid last change',
+  'toast.redo': 'Redid last change',
   'toast.pickOutside': 'Click a visible part of the image',
   'toast.pickTransparent': 'That pixel is transparent',
   'toast.picked': 'Picked {hex}. Press Add to append it.',

@@ -50,6 +50,15 @@ export function initControls(handlers) {
     };
   }
 
+  /** @param {{ method?:string, colors?:number, space?:string }} params */
+  function setParams(params) {
+    if (method) method.value = normalizeMethod(params.method);
+    const next = clampColorCount(Number(params.colors));
+    if (colors) colors.value = String(next);
+    if (colorsNumber) colorsNumber.value = String(next);
+    if (space) space.value = params.space === 'srgb' ? 'srgb' : 'oklab';
+  }
+
   const emit = debounce(() => handlers.onChange(getParams()), 150);
 
   function syncFromRange() {
@@ -83,5 +92,5 @@ export function initControls(handlers) {
   colorsNumber?.addEventListener('change', handleNumberCommit);
   space?.addEventListener('change', emit);
 
-  return { getParams };
+  return { getParams, setParams };
 }

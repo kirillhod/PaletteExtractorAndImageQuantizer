@@ -633,7 +633,11 @@ Save.
 ### Palette strip and sort bar
 
 The palette card contains a compact bar and the swatches. The sort select controls the
-swatch order, the HEX list, and the exported strip.
+swatch order, the HEX list, and the exported strip. The bar also carries the undo/redo
+icon buttons: the history covers palette edits and settings changes, so the controls stay
+reachable when Edit is off. The editor uses an icon-only Pick button; when Pick is armed,
+the button switches to the accent background and an inset accent ring instead of relying
+on the hint alone.
 
 ```css
 .peiq-palette-panel {
@@ -661,6 +665,11 @@ swatch order, the HEX list, and the exported strip.
   min-height: 32px;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
+}
+.peiq-palette-pick[aria-pressed="true"] {
+  background: var(--peiq-accent-bg-hover);
+  color: var(--peiq-accent);
+  box-shadow: inset 0 0 0 1px var(--peiq-accent);
 }
 .peiq-palette-strip {
   display: flex;
@@ -1015,18 +1024,16 @@ blue fill, with dark text for contrast.
   position: relative;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--peiq-border-strong);
+  border: 0;
   border-radius: var(--peiq-radius);
   background: var(--swatch, var(--peiq-surface-hover));
   cursor: pointer;
   transition:
     transform 150ms ease-out,
-    box-shadow 150ms ease-out,
-    border-color 150ms ease-out;
+    box-shadow 150ms ease-out;
 }
 .peiq-swatch:hover {
   transform: scale(1.06);
-  border-color: var(--peiq-text-strong);
 }
 .peiq-swatch:active { transform: scale(0.98); }
 .peiq-swatch:focus-visible {
@@ -1035,9 +1042,7 @@ blue fill, with dark text for contrast.
 }
 .peiq-swatch[aria-pressed="true"],
 .peiq-swatch--selected {
-  box-shadow:
-    0 0 0 2px var(--peiq-bg),
-    0 0 0 4px var(--peiq-accent);
+  box-shadow: 0 0 0 2px var(--peiq-accent);
 }
 .peiq-swatch:disabled { opacity: 0.55; cursor: not-allowed; }
 ```

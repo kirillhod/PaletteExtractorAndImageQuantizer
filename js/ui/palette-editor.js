@@ -42,6 +42,8 @@ import { toast, toastKey } from './status.js';
  * @property {() => string} getSortOrder
  * @property {(order: string) => void} setSortOrder
  * @property {() => any} getLastFile
+ * @property {() => any} getSettings
+ * @property {(settings:any) => void} applySettings
  * @property {() => void} onPaletteEdited
  * @property {() => void} requestPreview
  * @property {() => void} scheduleSessionSave
@@ -237,11 +239,11 @@ export function createPaletteEditor(deps) {
     }
     if (paletteUndo) {
       paletteUndo.disabled =
-        !active || app.exportBusy || state.history.past.length === 0;
+        !app.hasResult || app.exportBusy || state.history.past.length === 0;
     }
     if (paletteRedo) {
       paletteRedo.disabled =
-        !active || app.exportBusy || state.history.future.length === 0;
+        !app.hasResult || app.exportBusy || state.history.future.length === 0;
     }
   }
 
@@ -270,6 +272,8 @@ export function createPaletteEditor(deps) {
       selectedId: state.selectedId,
       transparentId: currentTransparentId(),
       markers: pickedMarkersToArray(pickState.markers),
+      paletteEdited: app.paletteEdited,
+      settings: deps.getSettings(),
     };
   }
 
@@ -291,7 +295,10 @@ export function createPaletteEditor(deps) {
     state.selectedId = snapshot.selectedId;
     pickState.markers = pickedMarkersFromArray(snapshot.markers);
     pickState.pendingPoint = null;
-    markPaletteEdited();
+    app.paletteEdited =
+      typeof snapshot.paletteEdited === 'boolean' ? snapshot.paletteEdited : true;
+    deps.onPaletteEdited();
+    if (snapshot.settings) deps.applySettings(snapshot.settings);
     renderCurrentPalette();
     const selected = selectedPaletteEntry();
     if (paletteHex) paletteHex.value = selected?.hex ?? '';
@@ -307,7 +314,7 @@ export function createPaletteEditor(deps) {
   }
 
   function undoPaletteEdit() {
-    if (!state.editMode || state.history.past.length === 0) return;
+    if (!app.hasResult || app.exportBusy || state.history.past.length === 0) return;
     state.history.future.push(paletteSnapshot());
     const snapshot = state.history.past.pop();
     restorePaletteSnapshot(snapshot);
@@ -315,7 +322,7 @@ export function createPaletteEditor(deps) {
   }
 
   function redoPaletteEdit() {
-    if (!state.editMode || state.history.future.length === 0) return;
+    if (!app.hasResult || app.exportBusy || state.history.future.length === 0) return;
     state.history.past.push(paletteSnapshot());
     const snapshot = state.history.future.pop();
     restorePaletteSnapshot(snapshot);
@@ -340,6 +347,26 @@ export function createPaletteEditor(deps) {
     state.selectedId = null;
     if (paletteHex) paletteHex.value = '';
     updatePaletteEditor();
+  }
+
+  /**
+   * A new extraction replaces the color set, so the previous manual edits and
+   * their markers no longer describe it. History keeps the editable state, so an
+   * undo restores the palette, markers, and selection together with the settings.
+   */
+  function clearEditsForExtraction() {
+    if (!app.paletteEdited && state.selectedId === null && pickState.markers.size === 0) {
+      return;
+    }
+    deps.cancelMarkerDrag();
+    deps.stopPickMode();
+    pickState.markers.clear();
+    pickState.pendingPoint = null;
+    app.paletteEdited = false;
+    state.selectedId = null;
+    if (paletteHex) paletteHex.value = '';
+    deps.renderPickedMarkers();
+    renderCurrentPalette();
   }
 
   /** @returns {string} */
@@ -611,18 +638,22 @@ export function createPaletteEditor(deps) {
       pickState.pendingPoint = null;
     });
     document.addEventListener('keydown', (event) => {
-      if (!state.editMode || app.exportBusy) return;
+      if (!app.hasResult || app.exportBusy) return;
       if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
       const target = /** @type {HTMLElement|null} */ (event.target);
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'SELECT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
+      // Text entry keeps its native undo; selects and sliders have none, so the
+      // shared history still owns Ctrl/Cmd+Z there.
+      const tag = target?.tagName;
+      const inputType = tag === 'INPUT' ? /** @type {HTMLInputElement} */ (target).type : '';
+      const isTextField =
+        tag === 'TEXTAREA' ||
+        Boolean(target?.isContentEditable) ||
+        (tag === 'INPUT' &&
+          inputType !== 'range' &&
+          inputType !== 'checkbox' &&
+          inputType !== 'radio' &&
+          inputType !== 'button');
+      if (isTextField) return;
       const key = event.key.toLowerCase();
       const code = event.code;
       if (code === 'KeyZ' || key === 'z') {
@@ -640,6 +671,7 @@ export function createPaletteEditor(deps) {
     addPaletteColor,
     applyPaletteHex,
     bindEvents,
+    clearEditsForExtraction,
     clearPaletteSelection,
     currentTransparentId,
     markPaletteEdited,

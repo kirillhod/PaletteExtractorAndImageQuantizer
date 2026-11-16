@@ -41,6 +41,37 @@ test('history snapshots clone independently', () => {
   assert.deepEqual(clonePaletteSnapshot(snapshot), snapshot);
 });
 
+test('history snapshots keep palette edits and settings together', () => {
+  const settings = {
+    method: 'wu',
+    colors: 16,
+    space: 'oklab',
+    alphaThreshold: 128,
+    dither: {
+      method: 'floyd-steinberg',
+      strength: 0.8,
+      serpentine: true,
+      edgeStop: 0.5,
+    },
+  };
+  const snapshot = {
+    palette,
+    sortOrder: 'manual',
+    selectedId: 1,
+    transparentId: 2,
+    markers: [],
+    paletteEdited: true,
+    settings,
+  };
+  const copy = clonePaletteSnapshot(snapshot);
+  assert.deepEqual(copy, snapshot);
+  copy.settings.colors = 2;
+  copy.settings.dither.strength = 0;
+  assert.equal(settings.colors, 16);
+  assert.equal(settings.dither.strength, 0.8);
+  assert.equal('settings' in clonePaletteSnapshot({ ...snapshot, settings: undefined }), false);
+});
+
 test('session records require a version, image bytes, palette, and history', () => {
   const valid = {
     version: SESSION_VERSION,

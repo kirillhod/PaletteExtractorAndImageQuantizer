@@ -14,7 +14,25 @@ export function clonePalette(palette) {
 }
 
 /**
- * @param {{ palette: Palette, sortOrder: string, selectedId:number|null, transparentId:number|null, markers?: {id:number,u:number,v:number}[] }} snapshot
+ * @param {{ method:string, colors:number, space:string, dither:{ method:string, strength:number, serpentine:boolean, edgeStop:number }, alphaThreshold:number }} settings
+ */
+export function cloneSettings(settings) {
+  return {
+    method: settings.method,
+    colors: settings.colors,
+    space: settings.space,
+    alphaThreshold: settings.alphaThreshold,
+    dither: {
+      method: settings.dither?.method,
+      strength: settings.dither?.strength,
+      serpentine: settings.dither?.serpentine,
+      edgeStop: settings.dither?.edgeStop,
+    },
+  };
+}
+
+/**
+ * @param {{ palette: Palette, sortOrder: string, selectedId:number|null, transparentId:number|null, markers?: {id:number,u:number,v:number}[], paletteEdited?:boolean, settings?:any }} snapshot
  */
 export function clonePaletteSnapshot(snapshot) {
   return {
@@ -22,9 +40,15 @@ export function clonePaletteSnapshot(snapshot) {
     sortOrder: snapshot.sortOrder,
     selectedId: snapshot.selectedId,
     transparentId: snapshot.transparentId,
+    ...(typeof snapshot.paletteEdited === 'boolean'
+      ? { paletteEdited: snapshot.paletteEdited }
+      : {}),
     markers: Array.isArray(snapshot.markers)
       ? snapshot.markers.map(({ id, u, v }) => ({ id, u, v }))
       : [],
+    ...(snapshot.settings && typeof snapshot.settings === 'object'
+      ? { settings: cloneSettings(snapshot.settings) }
+      : {}),
   };
 }
 

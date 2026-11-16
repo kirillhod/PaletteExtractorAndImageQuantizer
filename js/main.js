@@ -130,6 +130,9 @@ const pickState = {
   /** @type {{ id:number, before: any, moved:boolean }|null} */
   drag: null,
 };
+/** Settings and palette as they were before the current settings gesture. */
+let settingsBaseline = null;
+let settingsPushed = false;
 /** @type {File|Blob|null} */
 let lastFile = null;
 let loadRequestId = 0;
@@ -160,7 +163,10 @@ const paletteEditor = createPaletteEditor({
   getSortOrder: () => sortOrder,
   setSortOrder,
   getLastFile: () => lastFile,
+  getSettings: () => readSettings(),
+  applySettings: (settings) => applySettingsSnapshot(settings),
   onPaletteEdited: () => {
+    settingsBaseline = null;
     if (mode === 'map') fixedColors = app.palette.map((entry) => ({ ...entry.color }));
   },
   requestPreview: () => processPreview(),
@@ -357,18 +363,96 @@ function updateExportState() {
   qualityPanel.updateAvailability();
 }
 
+function readDitherSettings() {
+  return {
+    method: ditherMethod?.value || 'none',
+    strength: Number(ditherStrength?.value ?? 80) / 100,
+    serpentine: ditherSerpentine?.checked ?? true,
+    edgeStop: Number(edgeStop?.value ?? 50) / 100,
+  };
+}
+
+/** Everything an undo step must restore besides the palette itself. */
+function readSettings() {
+  return {
+    ...controls.getParams(),
+    dither: readDitherSettings(),
+    alphaThreshold: Number(alphaThreshold?.value ?? 128),
+  };
+}
+
+/** @param {any} next @param {any} previous */
+function settingsEqual(next, previous) {
+  if (!next || !previous) return false;
+  const nextDither = next.dither ?? {};
+  const previousDither = previous.dither ?? {};
+  return (
+    next.method === previous.method &&
+    next.colors === previous.colors &&
+    next.space === previous.space &&
+    next.alphaThreshold === previous.alphaThreshold &&
+    nextDither.method === previousDither.method &&
+    nextDither.strength === previousDither.strength &&
+    nextDither.serpentine === previousDither.serpentine &&
+    nextDither.edgeStop === previousDither.edgeStop
+  );
+}
+
+/**
+ * Restore controls from a history snapshot. Assigning values does not emit input
+ * or change events, so no new history step is recorded.
+ * @param {any} settings
+ */
+function applySettingsSnapshot(settings) {
+  if (!settings || typeof settings !== 'object') return;
+  settingsBaseline = null;
+  settingsPushed = false;
+  controls.setParams(settings);
+  const dither = settings.dither ?? {};
+  if (ditherMethod && typeof dither.method === 'string') ditherMethod.value = dither.method;
+  if (ditherStrength && Number.isFinite(Number(dither.strength))) {
+    ditherStrength.value = String(Math.round(Number(dither.strength) * 100));
+  }
+  if (ditherSerpentine && typeof dither.serpentine === 'boolean') {
+    ditherSerpentine.checked = dither.serpentine;
+  }
+  if (edgeStop && Number.isFinite(Number(dither.edgeStop))) {
+    edgeStop.value = String(Math.round(Number(dither.edgeStop) * 100));
+  }
+  if (alphaThreshold && Number.isFinite(Number(settings.alphaThreshold))) {
+    alphaThreshold.value = String(Math.round(Number(settings.alphaThreshold)));
+  }
+  updateDitherLabels();
+  updateDitherControls();
+}
+
+/** The state just before a settings gesture, including the current palette edits. */
+function captureSettingsBaseline() {
+  if (!app.hasResult || app.exportBusy) return;
+  settingsBaseline = paletteEditor.paletteSnapshot();
+  settingsPushed = false;
+}
+
+function commitSettingsHistory() {
+  if (!settingsBaseline || settingsPushed || !app.hasResult) return;
+  const current = paletteEditor.paletteSnapshot();
+  if (
+    settingsEqual(settingsBaseline.settings, current.settings) &&
+    settingsBaseline.transparentId === current.transparentId
+  ) {
+    return;
+  }
+  paletteEditor.pushPaletteHistory(settingsBaseline);
+  settingsPushed = true;
+}
+
 function getParams() {
   const base = controls.getParams();
   return {
     mode,
     ...base,
     palette: mode === 'map' ? fixedColors : undefined,
-    dither: {
-      method: ditherMethod?.value || 'none',
-      strength: Number(ditherStrength?.value ?? 80) / 100,
-      serpentine: ditherSerpentine?.checked ?? true,
-      edgeStop: Number(edgeStop?.value ?? 50) / 100,
-    },
+    dither: readDitherSettings(),
     alphaThreshold: Number(alphaThreshold?.value ?? 128),
     transparentIndex: Number(transparentIndex?.value ?? -1),
   };
@@ -386,6 +470,8 @@ function getProcessParams() {
 function setMode(next) {
   if (next !== 'extract' && next !== 'map') return;
   paletteEditor.resetPaletteEdits();
+  settingsBaseline = null;
+  settingsPushed = false;
   mode = next;
   modeExtract?.setAttribute('aria-selected', String(next === 'extract'));
   modeMap?.setAttribute('aria-selected', String(next === 'map'));
@@ -415,6 +501,8 @@ function setMode(next) {
  */
 function loadTargetPalette(value) {
   paletteEditor.resetPaletteEdits();
+  settingsBaseline = null;
+  settingsPushed = false;
   /** @type {{ r:number,g:number,b:number,a:number }[]} */
   let colors = [];
   let name = '';
@@ -547,6 +635,8 @@ async function loadFile(file, restore = null) {
     app.palette = [];
     app.hasResult = false;
     paletteEditor.resetPaletteEdits();
+    settingsBaseline = null;
+    settingsPushed = false;
     if (restore) {
       app.palette = clonePalette(Array.isArray(restore.palette) ? restore.palette : []);
       app.paletteEdited = Boolean(restore.paletteEdited) || mode === 'map';
@@ -768,11 +858,45 @@ function refreshDynamicUi() {
 
 const controls = initControls({
   onChange: () => {
-    if (mode === 'extract') paletteEditor.resetPaletteEdits();
+    commitSettingsHistory();
     processPreview();
     sessionUrl?.syncUrlState();
   },
 });
+
+// Extractor settings replace the color set, so manual edits and their markers no
+// longer describe it. History keeps the prior state and undo restores it.
+for (const id of ['method', 'space']) {
+  document
+    .getElementById(id)
+    ?.addEventListener('change', () => paletteEditor.clearEditsForExtraction());
+}
+for (const id of ['colors', 'colors-number']) {
+  document
+    .getElementById(id)
+    ?.addEventListener('input', () => paletteEditor.clearEditsForExtraction());
+}
+
+// One history step per gesture: capture the pre-change state on interaction start,
+// then commit it once the debounced control handler reports a real change.
+for (const id of [
+  'method',
+  'colors',
+  'colors-number',
+  'space',
+  'dither-method',
+  'dither-strength',
+  'dither-serpentine',
+  'edge-stop',
+  'alpha-threshold',
+  'transparent-index',
+]) {
+  const control = document.getElementById(id);
+  if (!control) continue;
+  control.addEventListener('pointerdown', captureSettingsBaseline);
+  if (id === 'colors-number') control.addEventListener('focusin', captureSettingsBaseline);
+  else control.addEventListener('keydown', captureSettingsBaseline);
+}
 initTooltips();
 
 initDropzone({
@@ -862,30 +986,36 @@ paletteInput?.addEventListener('change', async () => {
 });
 
 ditherMethod?.addEventListener('change', () => {
+  commitSettingsHistory();
   updateDitherControls();
   scheduleProcess();
   sessionUrl?.syncUrlState();
 });
 ditherStrength?.addEventListener('input', () => {
+  commitSettingsHistory();
   updateDitherLabels();
   scheduleProcess();
   syncUrlStateDebounced();
 });
 ditherSerpentine?.addEventListener('change', () => {
+  commitSettingsHistory();
   scheduleProcess();
   sessionUrl?.syncUrlState();
 });
 edgeStop?.addEventListener('input', () => {
+  commitSettingsHistory();
   updateDitherLabels();
   scheduleProcess();
   syncUrlStateDebounced();
 });
 alphaThreshold?.addEventListener('input', () => {
+  commitSettingsHistory();
   updateDitherLabels();
   scheduleProcess();
   syncUrlStateDebounced();
 });
 transparentIndex?.addEventListener('change', () => {
+  commitSettingsHistory();
   palettePicker?.renderMarkers();
   scheduleProcess();
   sessionUrl?.syncUrlState();
@@ -932,6 +1062,11 @@ window.addEventListener(
   },
   { passive: true },
 );
+
+window.addEventListener('hashchange', () => {
+  settingsBaseline = null;
+  settingsPushed = false;
+});
 
 window.addEventListener('beforeunload', () => {
   worker.terminate();

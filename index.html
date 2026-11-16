@@ -192,25 +192,27 @@
               </select>
             </label>
             <span class="peiq-hint" id="palette-count" data-i18n="palette.countZero">0 colors</span>
+            <button class="peiq-icon-btn peiq-palette-history" id="palette-undo" type="button" data-i18n-aria-label="palette.undo" data-i18n-title="palette.undo" aria-label="Undo last change" title="Undo last change" disabled>
+              <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a6 6 0 0 1 0 12h-3"/></svg>
+            </button>
+            <button class="peiq-icon-btn peiq-palette-history" id="palette-redo" type="button" data-i18n-aria-label="palette.redo" data-i18n-title="palette.redo" aria-label="Redo last change" title="Redo last change" disabled>
+              <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a6 6 0 0 0 0 12h3"/></svg>
+            </button>
             <button class="peiq-btn peiq-btn--small" id="palette-edit" type="button" aria-pressed="false" data-i18n="palette.edit" disabled>Edit</button>
           </div>
           <div class="peiq-palette-strip" id="palette-strip" data-i18n-aria-label="palette.currentAria" aria-label="Current palette"></div>
           <div class="peiq-palette-editor" id="palette-editor" hidden>
             <label class="peiq-label" for="palette-hex">HEX</label>
             <input class="peiq-input" id="palette-hex" type="text" autocomplete="off" spellcheck="false" placeholder="#rrggbb" aria-describedby="palette-edit-hint">
-            <button class="peiq-btn peiq-btn--small" id="palette-pick" type="button" aria-pressed="false" data-i18n="palette.pick" disabled>Pick</button>
+            <button class="peiq-icon-btn peiq-palette-pick" id="palette-pick" type="button" aria-pressed="false" data-i18n-aria-label="palette.pick" data-i18n-title="palette.pick" aria-label="Pick" title="Pick" disabled>
+              <svg class="peiq-palette-pick__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 22l1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>
+            </button>
             <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" data-i18n="palette.apply" disabled>Apply</button>
             <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" data-i18n="palette.add" disabled>Add</button>
             <button class="peiq-btn peiq-btn--small" id="palette-move-left" type="button" data-i18n-aria-label="palette.moveLeft" data-i18n-title="palette.moveLeft" aria-label="Move color left" title="Move color left" disabled>←</button>
             <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" data-i18n-aria-label="palette.moveRight" data-i18n-title="palette.moveRight" aria-label="Move color right" title="Move color right" disabled>→</button>
             <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" data-i18n="palette.remove" disabled>Remove</button>
             <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" data-i18n="palette.lock" disabled>Lock</button>
-            <button class="peiq-icon-btn peiq-palette-history" id="palette-undo" type="button" data-i18n-aria-label="palette.undo" data-i18n-title="palette.undo" aria-label="Undo palette edit" title="Undo palette edit" disabled>
-              <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a6 6 0 0 1 0 12h-3"/></svg>
-            </button>
-            <button class="peiq-icon-btn peiq-palette-history" id="palette-redo" type="button" data-i18n-aria-label="palette.redo" data-i18n-title="palette.redo" aria-label="Redo palette edit" title="Redo palette edit" disabled>
-              <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a6 6 0 0 0 0 12h3"/></svg>
-            </button>
           </div>
         </div>
 

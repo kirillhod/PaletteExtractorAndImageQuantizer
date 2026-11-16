@@ -39,9 +39,9 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 157 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
+| Tests | 158 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
 | Version | `js/core/version.js`; `v1.4.0` tagged; M6.3–M6.5 complete |
-| Next | Ship the Help version fix with the next release; otherwise M7 — later / not planned for v1.x |
+| Next | Ship the Help version fix and post-release polish with the next release; otherwise M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -941,8 +941,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   swatches, HEX list, and strip export follow it. Perceptual modes are labeled by their
   result, not by the metric name; Oklab and CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds **Pick / Apply / Add / ← / → / Remove / Lock**, plus compact undo/redo icon
-  buttons on touch layouts. **Pick** arms a canvas eyedropper with a floating color/HEX
+  adds an icon **Pick** button plus **Apply / Add / ← / → / Remove / Lock**. The palette
+  bar carries compact undo/redo icon buttons next to Edit. **Pick** is an icon button with
+  a visible pressed state; it arms a canvas eyedropper with a floating color/HEX
   preview under the pointer: press and drag to sample the visible preview (the reduced
   side when the point is right of the divider), watch the magnified loupe, and release to
   apply it to the selected entry or fill the HEX field for **Add**. A mouse click applies
@@ -965,10 +966,13 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   editing a color changes the candidate set and therefore the preview and Reduced PNG.
   Locked entries keep their slot, and a move that would cross one is blocked. Locks pin an
   entry to its current slot during sorting and block removal.
-  The editor keeps up to 50 palette snapshots (colors, order, locks, selection, sort,
-  transparent index, and picked-color markers); `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z` work
-  outside text fields, and the touch-only icon buttons expose the same history without a
-  keyboard.
+  The editor keeps up to 50 snapshots of the editable state (settings, colors, order,
+  locks, selection, sort, transparent index, and picked-color markers). Palette edits and
+  settings changes share one timeline: extractor, dither, alpha, and transparent-index
+  changes commit one step per gesture, and changing the extractor starts a fresh
+  extraction and drops manual edits while undo restores them. `Ctrl/Cmd+Z` and
+  `Ctrl/Cmd+Shift+Z` work outside text fields whether or not Edit is on, and the undo/redo
+  icon buttons are always visible in the palette bar.
   Rename, roles, and drag reordering remain post-1.1.
 
 **Dither rail section**
@@ -1047,12 +1051,14 @@ All colors, typography, component styles, depth, motion, and breakpoints are def
 | `O` | Toggle original |
 | `E` | Toggle error map |
 | `T` | Cycle theme: auto → light → dark |
-| `Ctrl/Cmd+Z` | Undo palette edit while editing |
-| `Ctrl/Cmd+Shift+Z`, `Ctrl/Cmd+Y` | Redo palette edit while editing |
+| `Ctrl/Cmd+Z` | Undo the last palette or settings change |
+| `Ctrl/Cmd+Shift+Z`, `Ctrl/Cmd+Y` | Redo the last palette or settings change |
 | `?` | Toggle Help drawer |
 | `Esc` | Close help, popover, or picking mode |
 
-Shortcuts are disabled while an input/textarea/select has focus.
+Single-key shortcuts are disabled while an input, textarea, or select has focus. Text
+entry keeps its native undo; Ctrl/Cmd+Z and Ctrl/Cmd+Y still reach the shared history
+when a select, range slider, or checkbox is focused.
 
 ### 8.6 Accessibility
 
@@ -1153,8 +1159,9 @@ site. Learning is opt-in, contextual, and dismissible.
 ### 8.10 Session persistence
 
 - IndexedDB stores the last image as encoded bytes (`ArrayBuffer`), plus settings, palette
-  entries, locks, order, selected entry, edit mode, transparent color id, and the undo/redo
-  history. Version 1 records with a Blob are read once and upgraded on the next save.
+  entries, locks, order, selected entry, edit mode, transparent color id, and the
+  palette/settings undo history. Version 1 records with a Blob are read once and upgraded
+  on the next save.
 - On load, a saved session reopens the editor directly. The URL hash remains a portable
   settings config: if it differs from the saved settings, it wins and the palette is
   re-extracted from the image instead of restoring local edits.
@@ -2021,6 +2028,8 @@ A change is done only when:
 | 2026-11-16 | Release 1.4.0: M6.3–M6.5 complete | Perceptual ordering, picked-color anchors, the compact desktop frame, validated Copy, palette-selection clearing, and preview/status stability ship as one minor release. URL v1, session v2, palette JSON v1, filenames, and `ALGORITHM_VERSION` stay compatible, so no major bump is warranted; 156 tests |
 | 2026-11-16 | Widen the desktop Help drawer to 680 px and set its body at 1rem/1.6 | The 360 px drawer wrapped long explanations into narrow columns and forced heavy scrolling; a wider sheet with larger text reads as prose while staying an overlay that does not relayout the canvas. Bold section takeaways and the three order names keep the key facts scannable. |
 | 2026-11-16 | Make the empty-state hero background full-bleed and name the indexed PNG in its subtitle | Inside the 1600 px shell the blue radial was clipped at the shell edge, leaving a visible vertical seam on wide monitors; extending the hero to the viewport with `calc(50% - 50vw)` margins keeps the content in the shell and lets the glow fade naturally. The old subtitle offered only a strip or reduced PNG, omitting the indexed PNG and palette file that the tool is built around. |
+| 2026-11-16 | Put palette and settings changes on one undo timeline and move the undo/redo buttons into the palette bar | Settings changes used to clear the palette history and exit Edit, so an accidental dither or extractor change was unrecoverable. Snapshots now carry the settings and `paletteEdited` flag; each settings gesture commits one step, undo restores settings and palette together, and the extractor path starts a fresh extraction. The bar is always visible, so desktop users no longer depend on a hidden touch-only control. |
+| 2026-11-16 | Show Pick as an icon button with a pressed state and use a single ring for the selected swatch | The text button competed with Apply/Add for width and gave no visual confirmation beyond the hint. An eyedropper icon with an accent background and inset ring when armed matches the toolbar, and the 2 px gap plus accent ring read as a double border on every selected swatch, so the gap was removed. |
 
 ---
 

@@ -26,9 +26,8 @@ Choose the colors that define your image.
   three perceptual orders that keep neighboring colors close.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
   their place when sorting, move colors left/right in Manual order, pick colors straight
-  from the canvas (each sampled color gets a draggable anchor), and undo or redo edits
-  with `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, or
-  `Ctrl/Cmd+Y` while editing.
+  from the canvas (each sampled color gets a draggable anchor), and undo or redo palette
+  and settings changes with `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, or `Ctrl/Cmd+Y`.
   Reordering changes the exported index order; the preview and Reduced PNG stay the same
   because the color set is unchanged, apart from exact ties. Adding, removing, or editing
   a color changes the mapping. A move cannot cross a locked entry.
@@ -86,11 +85,11 @@ Save link appears. A mismatch blocks the download.
   original toggle.
 - Helpful tooltips and a Help drawer with a reference list.
 - Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help,
-  and `Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z` / `Ctrl/Cmd+Y` for undo and redo while editing.
+  and `Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z` / `Ctrl/Cmd+Y` for undo and redo.
 - Settings live in the URL hash: a reload restores the mode, extractor, colors, working
   space, dither, alpha, sort, and built-in palette. The image itself is never included in the URL.
-- The last image, palette edits, locks, and undo/redo history come back after a reload
-  from local IndexedDB. Use **Forget saved session** in Help to remove them.
+- The last image, palette edits, settings, locks, and undo/redo history come back after a
+  reload from local IndexedDB. Use **Forget saved session** in Help to remove them.
 - Everything stays responsive down to phone width.
 
 ## How it works
