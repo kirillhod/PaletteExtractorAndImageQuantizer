@@ -23,8 +23,8 @@ Choose the colors that define your image.
 - Work in **Oklab** for perceptual results or **sRGB** for legacy pipelines.
 - Median cut and Wu get a Lloyd refinement pass for cleaner clusters.
 - Sort the result by source order, bounded hue bands, hue-perceptual bands, or lightness
-  — both directions — or use one of three perceptual orders that keep neighboring colors
-  close.
+  — switch direction with one button — or use one of three perceptual orders that keep
+  neighboring colors close.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
   their place when sorting, move colors left/right in Manual order, pick colors straight
   from the canvas (each sampled color gets a draggable anchor), and undo or redo palette

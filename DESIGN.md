@@ -636,9 +636,15 @@ Save.
 ### Palette strip and sort bar
 
 The palette card contains a compact bar and the swatches. The sort select controls the
-swatch order, the HEX list, and the exported strip. The bar also carries the undo/redo
-icon buttons: the history covers palette edits and settings changes, so the controls stay
-reachable when Edit is off. Edit is a pressed-toggle button with a fixed label; switching
+swatch order, the HEX list, and the exported strip. It shows one row per family: source,
+manual, hue grouped, hue perceptual, lightness, perceptual smooth, perceptual color path,
+and perceptual flow. A compact arrow button in the same `.peiq-sort-control` row flips hue,
+hue perceptual, and lightness between dark→light and light→dark; it is disabled for
+fixed-direction orders. Below 600 px the row takes the full bar width and the visible
+"Sort" label becomes screen-reader-only, so the longer Russian labels still fit without
+horizontal overflow. The bar also carries the undo/redo icon buttons: the history covers
+palette edits and settings changes, so the controls stay reachable when Edit is off. Edit
+is a pressed-toggle button with a fixed label; switching
 its label to Done rewrapped the bar and resized the canvas. Its editor row lives in a
 0fr/1fr grid slot that opens over 150 ms, so the canvas refits in step instead of jumping.
 The editor uses an icon-only Pick button; when Pick is armed, both Pick and Edit switch to
@@ -663,13 +669,31 @@ own action.
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  min-width: 0;
   gap: var(--peiq-space-2);
 }
 .peiq-palette-bar > .peiq-label { margin-right: auto; }
+.peiq-sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-1);
+}
 .peiq-palette-sort {
   display: inline-flex;
   align-items: center;
   gap: var(--peiq-space-2);
+}
+.peiq-sort-direction__icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.peiq-sort-direction[data-direction='desc'] .peiq-sort-direction__icon {
+  transform: rotate(180deg);
 }
 .peiq-select--compact {
   width: auto;
@@ -726,9 +750,11 @@ own action.
 }
 ```
 
-Sort options: source order, hue dark→light, hue light→dark, lightness dark→light,
-lightness light→dark. Hue sorting groups similar hues (circular order) and keeps the
-requested lightness direction inside each group.
+Sort options: source order, manual order, hue grouped, hue perceptual, lightness,
+perceptual smooth, perceptual color path, and perceptual flow. A direction button flips
+hue and lightness between dark→light and light→dark. Hue sorting groups similar hues
+(circular order) and keeps the requested lightness direction inside each group; hue
+perceptual may reverse a band so neighboring bands join at their closest ends.
 
 ### Empty state / hero
 

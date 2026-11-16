@@ -1,7 +1,14 @@
 // @ts-check
 import { parseHex } from './core/color.js';
 import { cloneHistory, clonePalette } from './core/session-state.js';
-import { createPalette, sortPalette } from './core/palette.js';
+import {
+  createPalette,
+  isDirectionalSort,
+  sortDirection,
+  sortFamily,
+  sortOrderFor,
+  sortPalette,
+} from './core/palette.js';
 import { pickedMarkersFromArray } from './core/picked-markers.js';
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
@@ -50,6 +57,9 @@ const frame = /** @type {HTMLElement} */ (document.getElementById('canvas-frame'
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('view-canvas'));
 const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
 const sortSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-sort'));
+const sortDirectionButton = /** @type {HTMLButtonElement|null} */ (
+  document.getElementById('palette-sort-direction')
+);
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
 const extractControls = document.getElementById('extract-controls');
@@ -102,6 +112,8 @@ const app = {
 let nextRequestId = 1;
 let worker = createWorker();
 let sortOrder = 'source';
+/** @type {'asc'|'desc'} */
+let sortDirectionState = 'asc';
 /** @type {'extract'|'map'} */
 let mode = 'extract';
 /** @type {ReturnType<typeof createPalettePicker>|null} */
@@ -152,10 +164,43 @@ let fixedName = '';
 let importedColors = [];
 let importedName = '';
 
+/**
+ * The select shows one row per family; the adjacent button flips its direction.
+ * `sortOrder` stays a full key so URLs, sessions, and export order keep working.
+ * @param {boolean} [hasPalette]
+ */
+function renderSortControls(hasPalette = app.palette.length > 0) {
+  const family = sortFamily(sortOrder);
+  const direction = sortDirection(sortOrder);
+  if (sortSelect) {
+    sortSelect.value = family;
+    sortSelect.disabled = !hasPalette;
+  }
+  if (!sortDirectionButton) return;
+  const directional = isDirectionalSort(family);
+  sortDirectionButton.disabled = !hasPalette || !directional;
+  sortDirectionButton.dataset.direction = direction ?? 'asc';
+  const labelKey = directional
+    ? direction === 'desc'
+      ? 'palette.sort.directionDesc'
+      : 'palette.sort.directionAsc'
+    : 'palette.sort.directionFixed';
+  const label = t(labelKey);
+  sortDirectionButton.setAttribute('aria-label', label);
+  sortDirectionButton.setAttribute('title', label);
+}
+
 /** @param {string} order */
 function setSortOrder(order) {
-  sortOrder = order || 'source';
-  if (sortSelect) sortSelect.value = sortOrder;
+  const family = sortFamily(order || 'source');
+  const normalized = sortOrderFor(
+    family,
+    sortDirection(order) ?? sortDirectionState,
+  );
+  sortOrder = normalized;
+  const direction = sortDirection(normalized);
+  if (direction) sortDirectionState = direction;
+  renderSortControls();
 }
 
 const paletteEditor = createPaletteEditor({
@@ -164,6 +209,7 @@ const paletteEditor = createPaletteEditor({
   pickState,
   getSortOrder: () => sortOrder,
   setSortOrder,
+  renderSortControls,
   getLastFile: () => lastFile,
   getSettings: () => readSettings(),
   applySettings: (settings) => applySettingsSnapshot(settings),
@@ -645,8 +691,7 @@ async function loadFile(file, restore = null) {
     if (restore) {
       app.palette = clonePalette(Array.isArray(restore.palette) ? restore.palette : []);
       app.paletteEdited = Boolean(restore.paletteEdited) || mode === 'map';
-      sortOrder = restore.sortOrder || 'source';
-      if (sortSelect) sortSelect.value = sortOrder;
+      setSortOrder(restore.sortOrder || 'source');
       const history = cloneHistory(restore.history ?? { past: [], future: [] });
       paletteState.history.past = history.past;
       paletteState.history.future = history.future;
@@ -939,6 +984,17 @@ document.getElementById('zoom-in')?.addEventListener('click', () => canvasView.z
 paletteEditor.bindEvents();
 palettePicker?.bindEvents();
 
+sortDirectionButton?.addEventListener('click', () => {
+  const direction = sortDirection(sortOrder);
+  if (!direction) return;
+  setSortOrder(
+    sortOrderFor(sortFamily(sortOrder), direction === 'asc' ? 'desc' : 'asc'),
+  );
+  paletteEditor.renderCurrentPalette();
+  clearDownloadLinks();
+  sessionUrl?.syncUrlState();
+});
+
 const scheduleProcess = debounce(processPreview, 150);
 const syncUrlStateDebounced = debounce(() => sessionUrl?.syncUrlState(), 150);
 const scheduleSessionSave = debounce(
@@ -950,6 +1006,7 @@ populateBuiltinPalettes();
 updateDitherLabels();
 updateDitherControls();
 paletteEditor.updatePaletteEditor();
+renderSortControls();
 
 sessionUrl?.bindEvents();
 

@@ -272,8 +272,8 @@ and the change is committed locally with a descriptive body (plan §16).
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.5.0`; 172 tests in `main`. M6.3–M6.6 are complete; the bounded
-  hue-band and hue-perceptual sort modes are committed but unreleased.
+- Released `v1.5.0`; 173 tests in `main`. M6.3–M6.6 are complete; the bounded
+  hue-band, hue-perceptual, and compact sort controls are committed but unreleased.
 - Next: ship that fix with the next release; otherwise M7 — later / not planned for
   v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker

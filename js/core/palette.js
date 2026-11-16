@@ -12,6 +12,7 @@ import { sha256Hex, stableStringify } from './hash.js';
 /** @typedef {import('./types.js').RGB8} RGB8 */
 /** @typedef {import('./types.js').Palette} Palette */
 /** @typedef {import('./types.js').PaletteEntry} PaletteEntry */
+/** @typedef {'source'|'manual'|'hue-asc'|'hue-desc'|'hue-perceptual-asc'|'hue-perceptual-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} SortOrder */
 
 /**
  * @typedef {Object} HueItem
@@ -168,6 +169,51 @@ function assertUniqueColor(palette, color, skipPosition) {
   if (duplicate) throw new Error('color already exists in the palette');
 }
 
+const DIRECTIONAL_SORT_FAMILIES = new Set(['hue', 'hue-perceptual', 'lightness']);
+
+/**
+ * Map a stored sort key to the family shown in the sort select. Directional orders
+ * share one select entry and use the direction button.
+ * @param {string} order
+ * @returns {string}
+ */
+export function sortFamily(order) {
+  if (order === 'hue-asc' || order === 'hue-desc') return 'hue';
+  if (order === 'hue-perceptual-asc' || order === 'hue-perceptual-desc') {
+    return 'hue-perceptual';
+  }
+  if (order === 'lightness-asc' || order === 'lightness-desc') return 'lightness';
+  return order;
+}
+
+/**
+ * @param {string} order
+ * @returns {'asc'|'desc'|null}
+ */
+export function sortDirection(order) {
+  if (order.endsWith('-desc')) return 'desc';
+  if (order.endsWith('-asc')) return 'asc';
+  return null;
+}
+
+/**
+ * @param {string} family
+ * @param {'asc'|'desc'|null|undefined} [direction]
+ * @returns {string}
+ */
+export function sortOrderFor(family, direction) {
+  if (!DIRECTIONAL_SORT_FAMILIES.has(family)) return family;
+  return `${family}-${direction === 'desc' ? 'desc' : 'asc'}`;
+}
+
+/**
+ * @param {string} value full sort key or select family
+ * @returns {boolean}
+ */
+export function isDirectionalSort(value) {
+  return DIRECTIONAL_SORT_FAMILIES.has(sortFamily(value));
+}
+
 /**
  * Return a new palette in the requested order. IDs survive; indices are reassigned.
  * `source` uses the stable id, so switching back restores extraction order.
@@ -181,13 +227,15 @@ function assertUniqueColor(palette, color, skipPosition) {
  * - `manual` — keep the current array order (used by the move buttons)
  * - `hue-asc` / `hue-desc` — achromatic first, then hue groups in a circular order,
  *   with lightness ascending/descending inside each group.
+ * - `hue-perceptual-asc` / `hue-perceptual-desc` — the same hue bands with a
+ *   CIEDE2000 path inside each band and a smoother join between bands.
  * - `lightness-asc` / `lightness-desc`
  * - `perceptual` — lightness seed refined by CIEDE2000 2-opt
  * - `perceptual-path` — fixed-endpoint TSP path by CIEDE2000
  * - `perceptual-flow` — DCCW-style cycle cut by CIEDE2000
  *
  * @param {Palette} palette
- * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'hue-perceptual-asc'|'hue-perceptual-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
+ * @param {SortOrder} order
  * @returns {Palette}
  */
 export function sortPalette(palette, order = 'source') {
@@ -208,7 +256,7 @@ export function sortPalette(palette, order = 'source') {
  * `sortPalette` assigns indices after merging with locked slots.
  *
  * @param {Palette} entries
- * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'hue-perceptual-asc'|'hue-perceptual-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
+ * @param {SortOrder} order
  * @returns {Palette}
  */
 function sortUnlockedEntries(entries, order) {

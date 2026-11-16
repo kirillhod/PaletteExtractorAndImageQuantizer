@@ -41,6 +41,7 @@ import { toast, toastKey } from './status.js';
  * @property {PickState} pickState
  * @property {() => string} getSortOrder
  * @property {(order: string) => void} setSortOrder
+ * @property {(hasPalette: boolean) => void} renderSortControls
  * @property {() => any} getLastFile
  * @property {() => any} getSettings
  * @property {(settings:any) => void} applySettings
@@ -125,7 +126,7 @@ export function createPaletteEditor(deps) {
     if (paletteCount) {
       paletteCount.textContent = countLabel('count.colors', app.palette.length);
     }
-    if (sortSelect) sortSelect.disabled = app.palette.length === 0;
+    deps.renderSortControls(app.palette.length > 0);
   }
 
   /**

@@ -6,9 +6,13 @@ import { deltaE00, oklabToRgb8, parseHex, rgb8ToLab, rgb8ToOklab } from '../js/c
 import {
   addPaletteEntry,
   createPalette,
+  isDirectionalSort,
   movePaletteEntry,
   removePaletteEntry,
   setPaletteLock,
+  sortDirection,
+  sortFamily,
+  sortOrderFor,
   sortPalette,
   updatePaletteEntry,
 } from '../js/core/palette.js';
@@ -193,6 +197,37 @@ test('hue sorting is deterministic', () => {
     const a = sortPalette(palette, order);
     const b = sortPalette(palette, order);
     assert.deepEqual(a, b);
+  }
+});
+
+test('sort families map to their directional keys', () => {
+  const families = [
+    ['hue', 'hue-asc', 'hue-desc'],
+    ['hue-perceptual', 'hue-perceptual-asc', 'hue-perceptual-desc'],
+    ['lightness', 'lightness-asc', 'lightness-desc'],
+  ];
+  for (const [family, asc, desc] of families) {
+    assert.equal(sortFamily(asc), family);
+    assert.equal(sortFamily(desc), family);
+    assert.equal(sortDirection(asc), 'asc');
+    assert.equal(sortDirection(desc), 'desc');
+    assert.equal(sortOrderFor(family, 'asc'), asc);
+    assert.equal(sortOrderFor(family, 'desc'), desc);
+    assert.equal(sortOrderFor(family, undefined), asc);
+    assert.equal(isDirectionalSort(family), true);
+    assert.equal(isDirectionalSort(asc), true);
+  }
+  for (const family of [
+    'source',
+    'manual',
+    'perceptual',
+    'perceptual-path',
+    'perceptual-flow',
+  ]) {
+    assert.equal(sortFamily(family), family);
+    assert.equal(sortDirection(family), null);
+    assert.equal(sortOrderFor(family, 'desc'), family);
+    assert.equal(isDirectionalSort(family), false);
   }
 });
 
