@@ -1085,6 +1085,29 @@ light “paper” sheet.
   transition: transform 250ms ease-out;
 }
 .peiq-drawer[data-open="true"] { transform: translateX(0); }
+/* The drawer bar is the page header's twin: same height, padding, and title scale,
+   so the two bottom borders form one line while the sheet is open. */
+.peiq-drawer__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--peiq-space-2);
+  height: var(--peiq-header-height);
+  padding: 0 var(--peiq-space-4);
+  background: var(--peiq-bg);
+  border-bottom: 1px solid var(--peiq-border-strong);
+}
+.peiq-drawer__title {
+  margin: 0;
+  color: var(--peiq-text-strong);
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
 .peiq-drawer a { color: var(--peiq-link); }
 .peiq-drawer__body {
   padding: var(--peiq-space-4);

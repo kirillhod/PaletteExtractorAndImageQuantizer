@@ -410,7 +410,9 @@
   <aside class="peiq-drawer" id="help-drawer" data-open="false" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="help-title">
     <div class="peiq-drawer__header">
       <h2 class="peiq-drawer__title" id="help-title" data-i18n="help.title">Help</h2>
-      <button class="peiq-icon-btn" id="help-close" type="button" data-i18n-aria-label="help.closeAria" aria-label="Close help">×</button>
+      <button class="peiq-icon-btn" id="help-close" type="button" data-i18n-aria-label="help.closeAria" aria-label="Close help">
+        <svg class="peiq-drawer__close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+      </button>
     </div>
     <div class="peiq-drawer__body">
       <p data-i18n="help.intro">Load an image, extract a palette or choose a fixed one, compare the result, and export an indexed PNG, palette strip, palette file, or reduced PNG. Every result is checked before download and can also be copied to the clipboard. Edit colors, locks, and order as needed; undo and redo work while editing.</p>

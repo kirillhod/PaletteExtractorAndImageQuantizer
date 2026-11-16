@@ -1116,6 +1116,9 @@ site. Learning is opt-in, contextual, and dismissible.
   1rem at 1.6 line height, and each section opens with a bold takeaway (or a bold term
   list) so the drawer reads as prose rather than a wall of small text.
   < 960 px: full-height sheet; `Esc` closes.
+- The drawer header uses the page header height (`--peiq-header-height`) and the same
+  inline padding, its title matches the brand's 18 px/800 scale, and the close button is
+  an 18 px icon. The two bottom borders line up when the drawer is open.
 - Topic list (minimum 12):
   1. `quantization-basics` — what quantization is and what it trades away.
   2. `popularity` — dominant-color selection.
@@ -2044,6 +2047,7 @@ A change is done only when:
 | 2026-11-16 | Reveal the palette editor with a height transition and redraw the canvas before paint on resize | The editor row appeared in one layout step, and the resize observer redrew on the next animation frame, so a frame painted the old bitmap stretched into the new box. The slot now animates `0fr` to `1fr`, the canvas redraws synchronously inside the observer, and Edit keeps one label so the bar cannot rewrap: opening or closing the editor is a smooth refit instead of a blink. |
 | 2026-11-16 | Add a header toggle that collapses the settings rail | On a wide screen the rail is 360 px of permanent width; users who work mostly in the canvas should be able to reclaim it. The choice persists in `peiq.rail`, `theme-init.js` applies it before paint, and the stage takes the freed column without a flash. |
 | 2026-11-16 | Keep the Edit label and report Map mode without an extraction timing | Swapping Edit for Done changed the button width, rewrapped the palette bar, and resized the canvas together with the editor; a pressed state reports the mode without moving anything. Map never extracts, so the status line no longer shows a 0 ms extraction item there, and the Map section states that extractor settings apply in Extract mode. |
+| 2026-11-16 | Match the Help drawer header to the page header | The drawer bar was 65 px tall against the page's 52 px, with a 20 px/600 title, so the two bottom borders stepped and the overlay looked like a separate app. It now uses `--peiq-header-height`, the same 24 px inline padding, the brand's 18 px/800 title scale, and an 18 px close icon; the borders line up at 52 px (48 px on touch). |
 
 ---
 

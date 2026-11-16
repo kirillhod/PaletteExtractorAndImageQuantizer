@@ -1023,7 +1023,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--peiq-space-2);
-  padding: var(--peiq-space-3) var(--peiq-space-4);
+  height: var(--peiq-header-height);
+  padding: 0 var(--peiq-space-4);
   background: var(--peiq-bg);
   border-bottom: 1px solid var(--peiq-border-strong);
 }
@@ -1031,8 +1032,19 @@
 .peiq-drawer__title {
   margin: 0;
   color: var(--peiq-text-strong);
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.peiq-drawer__close-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .peiq-drawer__body {
