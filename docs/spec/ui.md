@@ -163,9 +163,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   entry to its current slot during sorting and block removal.
   The editor keeps up to 50 snapshots of the editable state (settings, colors, order,
   locks, selection, sort, transparent index, and picked-color markers). Palette edits and
-  settings changes share one timeline: extractor, dither, alpha, and transparent-index
-  changes commit one step per gesture, and changing the extractor starts a fresh
-  extraction and drops manual edits while undo restores them. `Ctrl/Cmd+Z` and
+  settings changes share one timeline: extractor, dither, alpha, transparent-index, and
+  sort changes commit one step per gesture — picking a sort family or flipping its
+  direction — and changing the extractor starts a fresh extraction and drops manual edits
+  while undo restores them. `Ctrl/Cmd+Z` and
   `Ctrl/Cmd+Shift+Z` work outside text fields whether or not Edit is on, and the undo/redo
   icon buttons are always visible in the palette bar.
   Rename, roles, and drag reordering remain post-1.1.

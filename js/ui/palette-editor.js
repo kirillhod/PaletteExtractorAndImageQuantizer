@@ -622,7 +622,11 @@ export function createPaletteEditor(deps) {
 
   function bindEvents() {
     sortSelect?.addEventListener('change', () => {
+      // Sorting reorders the exported palette and, away from Manual, discards the
+      // hand-arranged order for good, so it is a real edit and gets its own undo step.
+      const before = paletteSnapshot();
       deps.setSortOrder(sortSelect.value || 'source');
+      if (before.sortOrder !== deps.getSortOrder()) pushPaletteHistory(before);
       renderCurrentPalette();
       deps.clearDownloadLinks();
       deps.syncUrlState();

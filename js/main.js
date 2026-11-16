@@ -1021,9 +1021,13 @@ palettePicker?.bindEvents();
 sortDirectionButton?.addEventListener('click', () => {
   const direction = sortDirection(sortOrder);
   if (!direction) return;
+  // The flip is one deliberate change, same as picking a family: record a step so
+  // Ctrl+Z returns to the previous arrangement and direction.
+  const before = paletteEditor.paletteSnapshot();
   setSortOrder(
     sortOrderFor(sortFamily(sortOrder), direction === 'asc' ? 'desc' : 'asc'),
   );
+  if (before.sortOrder !== sortOrder) paletteEditor.pushPaletteHistory(before);
   paletteEditor.renderCurrentPalette();
   clearDownloadLinks();
   sessionUrl?.syncUrlState();
