@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseHex, rgb8ToOklab } from '../js/core/color.js';
+import { deltaE00, oklabToRgb8, parseHex, rgb8ToLab, rgb8ToOklab } from '../js/core/color.js';
 import {
   addPaletteEntry,
   createPalette,
@@ -19,6 +19,38 @@ import {
 function lightness(hex) {
   const { r, g, b } = parseHex(hex);
   return rgb8ToOklab(r, g, b).L;
+}
+
+/**
+ * @param {import('../js/core/types.js').Palette} ordered
+ */
+function adjacentCost(ordered) {
+  let sum = 0;
+  for (let index = 0; index + 1 < ordered.length; index++) {
+    sum += deltaE00(
+      rgb8ToLab(
+        ordered[index].color.r,
+        ordered[index].color.g,
+        ordered[index].color.b,
+      ),
+      rgb8ToLab(
+        ordered[index + 1].color.r,
+        ordered[index + 1].color.g,
+        ordered[index + 1].color.b,
+      ),
+    );
+  }
+  return sum;
+}
+
+/**
+ * @param {number} L
+ * @param {number} C
+ * @param {number} hue hue in degrees
+ */
+function oklchColor(L, C, hue) {
+  const radians = (hue * Math.PI) / 180;
+  return oklabToRgb8(L, C * Math.cos(radians), C * Math.sin(radians));
 }
 
 const palette = createPalette([
@@ -111,11 +143,87 @@ test('hue order keeps a single-hue family in one lightness ramp', () => {
   );
 });
 
+test('hue order splits a continuous blue-purple band before sorting lightness', () => {
+  const blues = createPalette([
+    oklchColor(0.55, 0.14, 250),
+    oklchColor(0.25, 0.14, 258),
+    oklchColor(0.65, 0.14, 266),
+    oklchColor(0.35, 0.14, 274),
+    oklchColor(0.75, 0.14, 282),
+    oklchColor(0.45, 0.14, 290),
+  ]);
+  assert.deepEqual(
+    sortPalette(blues, 'hue-asc').map((entry) => entry.hex),
+    ['#001662', '#1f74bf', '#678be4', '#282d81', '#57429c', '#a0a2ff'],
+  );
+  assert.deepEqual(
+    sortPalette(blues, 'hue-perceptual-desc').map((entry) => entry.hex),
+    ['#678be4', '#1f74bf', '#001662', '#282d81', '#57429c', '#a0a2ff'],
+  );
+});
+
+test('perceptual hue order smooths a band without changing its color set', () => {
+  const blues = createPalette(
+    [
+      '#0e005c', '#152a3b', '#17374f', '#003569', '#1d3474', '#002b91',
+      '#003db2', '#0042ae', '#0041b5', '#406a98', '#445fc0', '#4c6edc',
+      '#1d7ec5', '#6273fd', '#3f86de',
+    ].map(parseHex),
+  );
+  const plain = sortPalette(blues, 'hue-asc');
+  const smooth = sortPalette(blues, 'hue-perceptual-asc');
+  assert.ok(adjacentCost(smooth) < adjacentCost(plain));
+  assert.deepEqual(
+    smooth.map((entry) => entry.hex).sort(),
+    plain.map((entry) => entry.hex).sort(),
+  );
+  assert.deepEqual(
+    smooth.map((entry) => entry.id).sort((a, b) => a - b),
+    blues.map((entry) => entry.id),
+  );
+});
+
 test('hue sorting is deterministic', () => {
-  for (const order of /** @type {const} */ (['hue-asc', 'hue-desc'])) {
+  for (const order of /** @type {const} */ ([
+    'hue-asc',
+    'hue-desc',
+    'hue-perceptual-asc',
+    'hue-perceptual-desc',
+  ])) {
     const a = sortPalette(palette, order);
     const b = sortPalette(palette, order);
     assert.deepEqual(a, b);
+  }
+});
+
+test('hue modes handle one, two, and 256 colors', () => {
+  const single = createPalette([{ r: 12, g: 34, b: 56 }]);
+  const pair = createPalette([
+    { r: 240, g: 240, b: 240 },
+    { r: 10, g: 10, b: 10 },
+  ]);
+  const many = createPalette(
+    Array.from({ length: 256 }, (_, index) => ({
+      r: (index * 37) % 256,
+      g: (index * 73) % 256,
+      b: (index * 109) % 256,
+    })),
+  );
+  for (const order of /** @type {const} */ ([
+    'hue-asc',
+    'hue-desc',
+    'hue-perceptual-asc',
+    'hue-perceptual-desc',
+  ])) {
+    assert.deepEqual(sortPalette(single, order).map((entry) => entry.id), [1]);
+    const orderedPair = sortPalette(pair, order);
+    assert.deepEqual(
+      orderedPair.map((entry) => entry.id).sort((a, b) => a - b),
+      [1, 2],
+    );
+    const orderedMany = sortPalette(many, order);
+    assert.equal(orderedMany.length, 256);
+    assert.equal(new Set(orderedMany.map((entry) => entry.id)).size, 256);
   }
 });
 
@@ -129,6 +237,23 @@ test('locked entries keep their display slot and identity while others sort', ()
     sorted.map((entry) => entry.id).sort((a, b) => a - b),
     [1, 2, 3, 4, 5, 6],
   );
+});
+
+test('perceptual hue modes keep locked slots and identity', () => {
+  const locked = setPaletteLock(palette, palette[0].id, true);
+  for (const order of /** @type {const} */ ([
+    'hue-perceptual-asc',
+    'hue-perceptual-desc',
+  ])) {
+    const sorted = sortPalette(locked, order);
+    assert.equal(sorted[0].id, palette[0].id);
+    assert.equal(sorted[0].hex, '#ff0000');
+    assert.deepEqual(sorted.map((entry) => entry.index), [0, 1, 2, 3, 4, 5]);
+    assert.deepEqual(
+      sorted.map((entry) => entry.id).sort((a, b) => a - b),
+      [1, 2, 3, 4, 5, 6],
+    );
+  }
 });
 
 test('unlocked entries fill the remaining slots in requested order', () => {

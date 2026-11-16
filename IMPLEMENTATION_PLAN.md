@@ -39,9 +39,9 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 168 passing (`node --test`), including golden hashes, dithering, palettes, hue bands, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
-| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased hue-band sort with `ALGORITHM_VERSION` 3 |
-| Next | Ship the hue-band sort with the next release; otherwise M7 — later / not planned for v1.x |
+| Tests | 172 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
+| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete; unreleased bounded hue bands and hue-perceptual modes with `ALGORITHM_VERSION` 3 |
+| Next | Ship the hue-band and hue-perceptual sort with the next release; otherwise M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -765,11 +765,15 @@ Presets set controls; they do not lock them.
   - `hue-asc` / `hue-desc`: achromatic (`C < 0.02`) first by L in the requested
     direction; chromatic entries form **circular hue bands** and each band is sorted by L
     in the requested direction, then C descending, ID. The sequence starts after the
-    largest hue gap, so reds near 0°/360° stay together. A gap of at least 15° starts a
-    new band; a palette covering less than 30° stays one band. Bands are capped at
-    `min(12, max(4, round(n / 4)))`, and a continuous hue sweep without a 15° gap uses
-    its largest gaps instead. Both hue modes use the same bands and differ only in the
-    ramp direction.
+    largest hue gap, so reds near 0°/360° stay together. A band wider than 30° is split at
+    the internal gap that best balances the two halves, with a bias toward wider gaps, so
+    a continuous blue-purple region becomes several ramps instead of one L sweep. Both
+    modes use the same bands and differ only in the ramp direction.
+  - `hue-perceptual-asc` / `hue-perceptual-desc`: the same bands, refined per band by
+    deterministic CIEDE2000 2-opt with fixed L seed endpoints. A small DP then chooses
+    each band's direction (forward/reverse) to minimize the Delta E at the joins; a band
+    may run light-to-dark even in the ascending mode when that keeps the strip continuous.
+    The descending mode uses the opposite seed and its own DP.
   - `perceptual`: start from `lightness-asc`, then 2-opt with fixed first/last entries.
     Keeps the Oklab dark-to-light flow and removes local CIEDE2000 jumps.
   - `perceptual-path`: nearest-neighbor path from the darkest to the lightest Oklab L
@@ -947,12 +951,14 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   of the preview is the result. The transparent index defaults to **None** in both modes;
   choosing one removes that entry from the preview and the indexed/strip output. A
   restored session keeps the target palette name it showed, including imported files.
-- Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
-  lightness light→dark / perceptual smooth / perceptual color path / perceptual flow;
-  swatches, HEX list, and strip export follow it. Hue modes group similar tones into
-  bands and sort each band by Oklab lightness; the two hue options share the bands and
-  differ only in ramp direction. Perceptual modes are labeled by their result, not by the
-  metric name; Oklab and CIEDE2000 belong in Help and technical docs.
+- Palette order bar: source / hue dark→light / hue light→dark / hue perceptual /
+  hue perceptual reverse / lightness dark→light / lightness light→dark / perceptual
+  smooth / perceptual color path / perceptual flow; swatches, HEX list, and strip export
+  follow it. Hue modes group similar tones into bounded bands; the plain modes sort each
+  band by Oklab lightness, and the perceptual modes refine each band with CIEDE2000 and
+  choose each band's direction so neighboring bands join at their closest ends.
+  Perceptual modes are labeled by their result, not by the metric name; Oklab and
+  CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
   adds an icon **Pick** button plus text **Apply**, text arrows **← / →**, and icon
   **Add / Remove / Lock** buttons with action labels. Add is a plus, Remove a trash can,
@@ -2092,7 +2098,8 @@ A change is done only when:
 | 2026-11-16 | Explain mapping in the Map section and Help | "Map uses this palette as-is" described the palette, not the operation. The hint and a new Help section now state that every pixel becomes the nearest target color, which preview half is the result, and when transparency appears. |
 | 2026-11-16 | Clear the palette selection from the whole card and compact the editor | The old rule only cleared from the thin strip, so most empty space did nothing. Any empty part of the palette card now clears the selection while controls and swatches keep their action. The HEX field is fixed at 7.5 rem so it no longer pushes the controls right, and Add, Remove, and Lock became icon buttons; Lock shows an open or closed padlock and its action label names the next step. |
 | 2026-11-16 | Release 1.5.0: M6.6 complete | The post-release polish ships as one minor release: Help header and wide drawer, full-bleed hero, current README captures, collapsible settings rail, Map transparency default and mapping explanation, restored palette identity, centered resize, and the compact icon editor. URL v1, session v2, palette JSON v1, filenames, and `ALGORITHM_VERSION` stay compatible; 166 tests |
-| 2026-11-16 | Group hue sorting into bands before lightness | `hue-asc`/`hue-desc` sorted by continuous hue, so lightness only broke exact hue ties and real palettes read as a rainbow instead of a ramp per family. Chromatic colors now split into circular bands at 15° gaps, a palette covering under 30° stays one band, a continuous sweep uses its largest gaps, and each band sorts by Oklab L; both modes share the bands and differ only in ramp direction. Existing hue URLs still load but their order and palette hash change, so `ALGORITHM_VERSION` becomes 3; 168 tests |
+| 2026-11-16 | Group hue sorting into bands before lightness (first pass) | `hue-asc`/`hue-desc` sorted by continuous hue, so lightness only broke exact hue ties and real palettes read as a rainbow instead of a ramp per family. Chromatic colors now split into circular bands at 15° gaps, a palette covering under 30° stays one band, a continuous sweep uses its largest gaps, and each band sorts by Oklab L; both modes share the bands and differ only in ramp direction. Existing hue URLs still load but their order and palette hash change, so `ALGORITHM_VERSION` becomes 3; 168 tests |
+| 2026-11-16 | Bound hue bands and add hue-perceptual modes | The first-pass gap rule still left a continuous blue-purple region as one huge band, so L order interleaved hue and lightness. Hue bands now split at the most balanced internal gap until every band is at most 30°, and `hue-perceptual-asc` / `hue-perceptual-desc` refine each band with deterministic CIEDE2000 2-opt seeded by L. Per-band L ramps still left an 84 Delta E jump on the extracted 72-color StoneBlock palette, so the perceptual modes also choose each band's direction to minimize the join; the plain hue modes remain strict L ramps. Old hue URLs still load; their order and palette hash change again before release, so `ALGORITHM_VERSION` stays 3 because the banded hue change is unreleased; 172 tests |
 
 ---
 

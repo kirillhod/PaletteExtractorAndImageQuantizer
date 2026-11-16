@@ -1,5 +1,11 @@
 // @ts-check
-import { formatHex, parseHex, rgb8ToOklab } from './color.js';
+import {
+  deltaE00,
+  formatHex,
+  parseHex,
+  rgb8ToLab,
+  rgb8ToOklab,
+} from './color.js';
 import { perceptualOrder } from './palette-order.js';
 import { sha256Hex, stableStringify } from './hash.js';
 
@@ -18,12 +24,12 @@ import { sha256Hex, stableStringify } from './hash.js';
  */
 
 const MAX_PALETTE_COLORS = 256;
-// A smaller hue gap is ordinary shading drift inside one family, not a new band.
-const HUE_BAND_MIN_GAP = 15;
-// Palettes that cover less than this arc are one family; splitting them would only
-// create arbitrary bands without a visible hue boundary.
-const HUE_BAND_MIN_SPAN = 30;
-const HUE_BAND_MAX = 12;
+const EPSILON = 1e-9;
+// A band wider than this is split at its most balanced internal hue gap, biased toward
+// wider gaps. Narrower palettes stay one band, and each resulting band is narrow enough
+// for a meaningful ramp.
+const HUE_BAND_MAX_SPAN = 30;
+const HUE_SPLIT_GAP_WEIGHT = 2;
 
 /**
  * Turn extraction colors into a palette with stable ids and export indices.
@@ -181,7 +187,7 @@ function assertUniqueColor(palette, color, skipPosition) {
  * - `perceptual-flow` — DCCW-style cycle cut by CIEDE2000
  *
  * @param {Palette} palette
- * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
+ * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'hue-perceptual-asc'|'hue-perceptual-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
  * @returns {Palette}
  */
 export function sortPalette(palette, order = 'source') {
@@ -202,7 +208,7 @@ export function sortPalette(palette, order = 'source') {
  * `sortPalette` assigns indices after merging with locked slots.
  *
  * @param {Palette} entries
- * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
+ * @param {'source'|'manual'|'hue-asc'|'hue-desc'|'hue-perceptual-asc'|'hue-perceptual-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} order
  * @returns {Palette}
  */
 function sortUnlockedEntries(entries, order) {
@@ -242,31 +248,35 @@ function sortUnlockedEntries(entries, order) {
         b.chroma - a.chroma ||
         a.id - b.id,
     );
-  } else {
-    const achromatic = items
-      .filter((item) => item.achromatic)
-      .sort((a, b) => lightnessDir * (a.L - b.L) || a.id - b.id);
-    const chromatic = circularHueOrder(
-      items.filter((item) => !item.achromatic),
-      lightnessDir,
-    );
-    items.length = 0;
-    items.push(...achromatic, ...chromatic);
+    return items.map((item) => item.entry);
   }
 
-  return items.map((item) => item.entry);
+  const achromatic = items
+    .filter((item) => item.achromatic)
+    .sort((a, b) => lightnessDir * (a.L - b.L) || a.id - b.id)
+    .map((item) => item.entry);
+  const chromatic = circularHueOrder(
+    items.filter((item) => !item.achromatic),
+    lightnessDir,
+    order.startsWith('hue-perceptual'),
+    achromatic[achromatic.length - 1] ?? null,
+  );
+  return [...achromatic, ...chromatic];
 }
 
 /**
  * Achromatic entries are handled by the caller. Chromatic entries are split into
- * circular hue bands and each band is sorted by lightness. The bands themselves stay in
- * hue order, so `hue-asc` and `hue-desc` differ only in the ramp direction.
+ * circular hue bands. A plain hue order sorts each band by lightness. The perceptual hue
+ * order builds a CIEDE2000 path inside each band and chooses each band's direction so the
+ * joins stay close; this avoids a large jump between two narrow L ramps.
  * @param {HueItem[]} items
  * @param {1|-1} lightnessDir
- * @returns {HueItem[]}
+ * @param {boolean} perceptual
+ * @param {PaletteEntry|null} anchor last achromatic entry before the bands
+ * @returns {PaletteEntry[]}
  */
-function circularHueOrder(items, lightnessDir) {
-  if (items.length <= 1) return items.slice();
+function circularHueOrder(items, lightnessDir, perceptual, anchor) {
+  if (items.length <= 1) return items.map((item) => item.entry);
   const sorted = items.slice().sort((a, b) => a.hue - b.hue || a.id - b.id);
   let wrapGap = -1;
   let wrapIndex = 0;
@@ -282,29 +292,110 @@ function circularHueOrder(items, lightnessDir) {
     .slice(wrapIndex + 1)
     .concat(sorted.slice(0, wrapIndex + 1));
   const bands = hueBands(circular, wrapGap);
-  /** @type {HueItem[]} */
+  if (perceptual) return perceptualBands(bands, lightnessDir, anchor);
+  /** @type {PaletteEntry[]} */
   const ordered = [];
-  for (const band of bands) {
-    const sortedBand = band
-      .slice()
-      .sort(
-        (a, b) =>
-          lightnessDir * (a.L - b.L) ||
-          b.chroma - a.chroma ||
-          a.id - b.id,
-      );
-    ordered.push(...sortedBand);
+  for (const band of bands) ordered.push(...bandSeed(band, lightnessDir));
+  return ordered;
+}
+
+/**
+ * Order each band with CIEDE2000 2-opt and choose one of its two directions. The small
+ * direction penalty only breaks exact ties; the DP still picks the smoother join when the
+ * opposite direction is closer to the previous band.
+ *
+ * @param {HueItem[][]} bands
+ * @param {1|-1} lightnessDir
+ * @param {PaletteEntry|null} anchor
+ * @returns {PaletteEntry[]}
+ */
+function perceptualBands(bands, lightnessDir, anchor) {
+  const paths = bands.map((band) => {
+    const entries = band.map((item) => item.entry);
+    return [
+      perceptualOrder(entries, 'perceptual', bandSeed(band, lightnessDir)),
+      perceptualOrder(entries, 'perceptual', bandSeed(band, -lightnessDir)),
+    ];
+  });
+  const count = paths.length;
+  /** @type {number[][]} */
+  const cost = Array.from({ length: count }, () => [Infinity, Infinity]);
+  /** @type {number[][]} */
+  const previous = Array.from({ length: count }, () => [-1, -1]);
+  for (let direction = 0; direction < 2; direction++) {
+    const start = paths[0][direction][0];
+    const join = anchor ? colorDistance(anchor, start) : 0;
+    cost[0][direction] = join + (direction === 0 ? 0 : EPSILON);
+  }
+  for (let index = 1; index < count; index++) {
+    for (let direction = 0; direction < 2; direction++) {
+      for (let prior = 0; prior < 2; prior++) {
+        const before = paths[index - 1][prior];
+        const join = colorDistance(
+          before[before.length - 1],
+          paths[index][direction][0],
+        );
+        const value =
+          cost[index - 1][prior] +
+          join +
+          (direction === 0 ? 0 : EPSILON);
+        if (value < cost[index][direction]) {
+          cost[index][direction] = value;
+          previous[index][direction] = prior;
+        }
+      }
+    }
+  }
+  let direction = cost[count - 1][0] <= cost[count - 1][1] ? 0 : 1;
+  const chosen = new Array(count);
+  chosen[count - 1] = direction;
+  for (let index = count - 1; index > 0; index--) {
+    direction = previous[index][direction];
+    chosen[index - 1] = direction;
+  }
+  /** @type {PaletteEntry[]} */
+  const ordered = [];
+  for (let index = 0; index < count; index++) {
+    ordered.push(...paths[index][chosen[index]]);
   }
   return ordered;
 }
 
 /**
+ * @param {HueItem[]} band
+ * @param {1|-1} lightnessDir
+ * @returns {PaletteEntry[]}
+ */
+function bandSeed(band, lightnessDir) {
+  return band
+    .slice()
+    .sort(
+      (a, b) =>
+        lightnessDir * (a.L - b.L) ||
+        b.chroma - a.chroma ||
+        a.id - b.id,
+    )
+    .map((item) => item.entry);
+}
+
+/**
+ * @param {PaletteEntry} a
+ * @param {PaletteEntry} b
+ * @returns {number}
+ */
+function colorDistance(a, b) {
+  return deltaE00(
+    rgb8ToLab(a.color.r, a.color.g, a.color.b),
+    rgb8ToLab(b.color.r, b.color.g, b.color.b),
+  );
+}
+
+/**
  * Split a circular hue sequence into contiguous bands. The sequence starts after the
  * largest hue gap, so that wrap gap is the outer boundary and never an internal split.
- *
- * Real family boundaries are gaps at least `HUE_BAND_MIN_GAP`. A continuous hue sweep
- * has no such gaps, so it uses its largest gaps instead, capped by a count proportional
- * to the palette size. A palette covering less than `HUE_BAND_MIN_SPAN` stays one band.
+ * A band wider than `HUE_BAND_MAX_SPAN` is split at its most balanced internal gap,
+ * biased toward wider gaps. This keeps a continuous blue-purple region from becoming one
+ * giant band that only has L order.
  *
  * @param {HueItem[]} items
  * @param {number} wrapGap
@@ -315,37 +406,71 @@ function hueBands(items, wrapGap) {
   if (count <= 1) return [items.slice()];
   // A zero wrap gap means every hue is identical; the palette covers no arc at all.
   const span = wrapGap > 0 ? 360 - wrapGap : 0;
-  if (span < HUE_BAND_MIN_SPAN) return [items.slice()];
-
-  /** @type {{ index: number, gap: number }[]} */
-  const gaps = [];
-  for (let index = 0; index + 1 < count; index++) {
-    gaps.push({
-      index,
-      gap: (items[index + 1].hue - items[index].hue + 360) % 360,
-    });
-  }
-  const maxBands = Math.min(
-    HUE_BAND_MAX,
-    Math.max(4, Math.round(count / 4)),
-  );
-  const strong = gaps.filter((gap) => gap.gap >= HUE_BAND_MIN_GAP);
-  const candidates = strong.length > 0 ? strong : gaps;
-  const selected = candidates
-    .slice()
-    .sort((a, b) => b.gap - a.gap || a.index - b.index)
-    .slice(0, maxBands - 1)
-    .sort((a, b) => a.index - b.index);
+  if (span <= HUE_BAND_MAX_SPAN) return [items.slice()];
 
   /** @type {HueItem[][]} */
-  const bands = [];
-  let start = 0;
-  for (const gap of selected) {
-    bands.push(items.slice(start, gap.index + 1));
-    start = gap.index + 1;
+  const bands = [items.slice()];
+  for (let guard = 0; guard < count; guard++) {
+    let target = -1;
+    let targetSpan = HUE_BAND_MAX_SPAN;
+    for (let index = 0; index < bands.length; index++) {
+      const bandSpan = hueSpan(bands[index]);
+      if (bandSpan > targetSpan + EPSILON) {
+        target = index;
+        targetSpan = bandSpan;
+      }
+    }
+    if (target < 0) break;
+    const band = bands[target];
+    const split = hueSplitIndex(band);
+    if (split < 0) break;
+    bands.splice(
+      target,
+      1,
+      band.slice(0, split + 1),
+      band.slice(split + 1),
+    );
   }
-  bands.push(items.slice(start));
   return bands;
+}
+
+/**
+ * Split a band near its middle. A largest-gap-only rule can peel a single color off an
+ * evenly spaced sweep or an edge gap, leaving the rest still too wide and then
+ * interleaving hue and lightness. The score balances both halves and still favors a
+ * wider gap, so a real family break wins over a mid-band zero gap.
+ *
+ * @param {HueItem[]} band
+ * @returns {number} index of the gap after `band[index]`, or -1
+ */
+function hueSplitIndex(band) {
+  const total = hueSpan(band);
+  const firstHue = band[0].hue;
+  let best = -1;
+  let bestScore = Infinity;
+  for (let index = 0; index + 1 < band.length; index++) {
+    const gap = (band[index + 1].hue - band[index].hue + 360) % 360;
+    const left = (band[index].hue - firstHue + 360) % 360;
+    const right = total - left - gap;
+    // A wider gap is a stronger family boundary, but a gap at the edge should not
+    // peel one color off and leave the rest still too wide. Balance keeps both halves
+    // usable as ramps; the weight keeps a real hue break ahead of a mid-band zero gap.
+    const score = Math.abs(left - right) - HUE_SPLIT_GAP_WEIGHT * gap;
+    if (score < bestScore - EPSILON) {
+      best = index;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/**
+ * @param {HueItem[]} band
+ * @returns {number}
+ */
+function hueSpan(band) {
+  if (band.length <= 1) return 0;
+  return (band[band.length - 1].hue - band[0].hue + 360) % 360;
 }
 
 /**

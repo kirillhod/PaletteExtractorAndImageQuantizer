@@ -80,6 +80,8 @@ test('perceptual sort modes round-trip through the URL', () => {
     'perceptual',
     'perceptual-path',
     'perceptual-flow',
+    'hue-perceptual-asc',
+    'hue-perceptual-desc',
   ])) {
     const state = { ...URL_DEFAULTS, sortOrder };
     assert.deepEqual(decodeUrlState(encodeUrlState(state)), state);

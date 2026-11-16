@@ -4,7 +4,7 @@
 /** @typedef {'popularity'|'median-cut'|'wu'|'octree'|'kmeans'} UrlMethod */
 /** @typedef {'oklab'|'srgb'} UrlSpace */
 /** @typedef {'none'|'floyd-steinberg'|'atkinson'|'stucki'|'jarvis'|'burkes'|'sierra'|'bayer2'|'bayer4'|'bayer8'|'blue-noise'} UrlDither */
-/** @typedef {'source'|'manual'|'hue-asc'|'hue-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} UrlSort */
+/** @typedef {'source'|'manual'|'hue-asc'|'hue-desc'|'hue-perceptual-asc'|'hue-perceptual-desc'|'lightness-asc'|'lightness-desc'|'perceptual'|'perceptual-path'|'perceptual-flow'} UrlSort */
 
 /**
  * @typedef {Object} UrlState
@@ -60,6 +60,8 @@ const SORTS = new Set([
   'manual',
   'hue-asc',
   'hue-desc',
+  'hue-perceptual-asc',
+  'hue-perceptual-desc',
   'lightness-asc',
   'lightness-desc',
   'perceptual',

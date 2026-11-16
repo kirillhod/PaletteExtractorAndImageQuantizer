@@ -85,6 +85,8 @@ export const EN_MESSAGES = {
   'palette.sort.manual': 'Manual order',
   'palette.sort.hueAsc': 'Hue · dark → light',
   'palette.sort.hueDesc': 'Hue · light → dark',
+  'palette.sort.huePerceptualAsc': 'Hue · perceptual',
+  'palette.sort.huePerceptualDesc': 'Hue · perceptual ↓',
   'palette.sort.lightnessAsc': 'Lightness · dark → light',
   'palette.sort.lightnessDesc': 'Lightness · light → dark',
   'palette.sort.perceptual': 'Perceptual · smooth',
@@ -289,7 +291,7 @@ export const EN_MESSAGES = {
     'A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.',
   'help.hueLead': 'Hue order',
   'help.hueP':
-    'groups similar hues into bands and sorts each band from dark to light. The light-to-dark option keeps the same bands and reverses each ramp.',
+    'groups similar hues into bands and sorts each band from dark to light. Hue · perceptual refines each band with Delta E (CIEDE2000) and may reverse a band so neighboring bands join at their closest ends; the ↓ option starts from the other end.',
   'help.perceptualLead': 'Perceptual orders',
   'help.perceptualP':
     'compare colors with Delta E (CIEDE2000). Only the order and export indices change.',
