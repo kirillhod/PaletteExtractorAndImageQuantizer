@@ -35,11 +35,11 @@ agents; it defers to this plan for *what* to build.
 | Research report | Complete; landscape refreshed 2026-11-14 |
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
-| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering |
-| UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits |
-| Tests | 143 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
-| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; perceptual ordering unreleased |
-| Next | Release the perceptual ordering change when requested; otherwise M7 is later / not planned for v1.x |
+| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
+| UI | Stage + compact collapsible rail, left export column, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
+| Tests | 146 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
+| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; M6.3 and M6.4 unreleased |
+| Next | Release the perceptual ordering and picked-marker changes when requested; otherwise M7 is later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -942,15 +942,23 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   on release at the same point. **Pick stays armed after a successful sample** so several
   swatches can be recolored without pressing the button again; the button toggles it off
   and `Esc` stops it.
+  **Picked-color anchors:** a successful pick creates a marker at the sampled point;
+  extracted and imported colors have no marker until explicitly picked. Markers are
+  visible only in Edit mode, follow pan and zoom, and can be dragged or nudged with arrow
+  keys to update the entry. A drag commits one undo step; `Esc` cancels it. A marker is
+  stored by palette ID as normalized image coordinates, so reordering and locking do not
+  move it; removing the entry or making it transparent removes it. Markers persist in the
+  session but never enter palette JSON or hashes.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Adding, removing, or
   editing a color changes the candidate set and therefore the preview and Reduced PNG.
   Locked entries keep their slot, and a move that would cross one is blocked. Locks pin an
   entry to its current slot during sorting and block removal.
-  The editor keeps up to 50 palette snapshots (colors, order, locks, selection, sort, and
-  transparent index); `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z` work outside text fields, and
-  the touch-only icon buttons expose the same history without a keyboard.
+  The editor keeps up to 50 palette snapshots (colors, order, locks, selection, sort,
+  transparent index, and picked-color markers); `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z` work
+  outside text fields, and the touch-only icon buttons expose the same history without a
+  keyboard.
   Rename, roles, and drag reordering remain post-1.1.
 
 **Dither rail section**
@@ -1256,6 +1264,7 @@ site. Learning is opt-in, contextual, and dismissible.
 | `kmeans.test.js` | seeding, empty clusters, iteration cap, determinism |
 | `palette.test.js` | IDs, ordering, locks, dedupe, hash |
 | `palette-order.test.js` | perceptual determinism, endpoints, CIEDE2000 cost, DCCW cut, locks, 256 colors |
+| `picked-markers.test.js` | marker round-trip, clamping, invalid records, clone independence |
 | `map.test.js` | exact/LUT modes, tie-break, alpha, compliance |
 | `dither-error-diffusion.test.js` | kernel sums, serpentine, strength, edge stop, compliance |
 | `dither-ordered.test.js` | Bayer generation, two-candidate probabilities, compliance |
@@ -1594,6 +1603,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
+| `js/ui/picked-markers.js` | Picked-color overlay, drag/cancel, overlap offsets, keyboard nudge focus |
 | `js/ui/export-view.js` | Export selection, validation, downloads, filenames |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
 | `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
@@ -1634,6 +1644,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/quantize/refine.js` | `refinePalette` (Lloyd refinement) | `quantize-advanced.test.js` |
 | `js/core/palette.js` | `createPalette`, `addPaletteEntry`, `updatePaletteEntry`, `removePaletteEntry`, `movePaletteEntry`, `setPaletteLock`, `sortPalette`, `paletteHexList`, `paletteHash` | `palette.test.js` |
 | `js/core/palette-order.js` | Deterministic CIEDE2000 perceptual orders (`perceptual`, `perceptual-path`, `perceptual-flow`) | `palette-order.test.js` |
+| `js/core/picked-markers.js` | Picked-color marker map serialization, validation, and cloning | `picked-markers.test.js` |
 | `js/core/map.js` | `buildMapper`, `buildExactMap`, `mapPixels`, `mapIndices`, `indicesToRgba` | `map.test.js` |
 | `js/core/dither/index.js` | `ditherPixels(image, palette, dither)` | `dither.test.js` |
 | `js/core/dither/kernels.js` | Error-diffusion tables + Bayer generation | `dither.test.js` |
@@ -1658,7 +1669,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/palettes/import.js` | Format detection + dispatch | `palettes.test.js` |
 | `js/core/metrics/index.js` | `computeQuality`: per-pixel ΔE00 stats, p95, top 20, error map | `metrics.test.js` |
 | `js/ui/session-store.js` | IndexedDB read/write/clear for the last image + session state | — |
-| `js/core/session-state.js` | Palette/history cloning and saved-record validation | `session-state.test.js` |
+| `js/core/session-state.js` | Palette/history/marker cloning and saved-record validation | `session-state.test.js` |
 | `js/core/url-state.js` | Versioned hash encode/decode for settings; no image data | `url-state.test.js` |
 | `js/core/pipeline.js` | `runPipeline(job)` stage composition | `pipeline.test.js`, `determinism.test.js` |
 | `js/core/log.js` | Optional debug logger; disabled in production | — |
@@ -1799,6 +1810,20 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** pending version bump and tag after review; `npm test` 143 passing and the
   browser pass at 1280/360 px are green.
 
+### M6.4 — picked-color anchors (implemented, unreleased)
+
+- [x] Create a marker only after an explicit eyedropper sample; extracted and imported
+      colors have no marker.
+- [x] Drag a marker to recolor its entry with the loupe; commit one undo step per drag,
+      cancel with `Esc`, and keep pan/pinch working off the marker.
+- [x] Show all picked markers in Edit mode, select by click, and remove a marker when its
+      entry is removed or becomes the transparent index.
+- [x] Persist normalized marker positions in session and history, handle nearby-marker
+      overlap, and make the selected marker focusable with arrow-key nudging.
+- [x] Keep marker positions out of palette JSON, hashes, and export.
+- **Exit:** pending version bump and tag after review; `npm test` 146 passing and the
+  browser pass at 1280/360 px are green.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
@@ -1935,6 +1960,7 @@ A change is done only when:
 | 2026-11-16 | Allow CIEDE2000 for palette ordering; keep Oklab for extraction, mapping, and dithering | These stages optimize different things: clustering needs a vector space with centroids and fast per-pixel distances, while ordering a fixed 1–256 color palette is a one-off pairwise comparison. Splitting the metric removes the apparent conflict without changing nearest-color assignment. |
 | 2026-11-16 | Add perceptual, perceptual-path, and perceptual-flow palette orders | Perceptual starts from the lightness order and refines it with 2-opt; path fixes the darkest and lightest ends; flow uses the DCCW cycle-cut idea. All three use deterministic CIEDE2000 2-opt, preserve locks, and only change order and export indices. |
 | 2026-11-16 | Keep Pick armed after a successful sample | Re-arming the eyedropper for every swatch was unnecessary friction; the button and Esc still stop the mode. |
+| 2026-11-16 | Add picked-color anchors only for explicitly sampled colors | Extracted and imported colors have no source point; user-created anchors avoid 256 handles and arbitrary positions while keeping direct manipulation where a point actually exists. Markers stay UI/session state and never enter palette JSON or hashes. |
 
 ---
 

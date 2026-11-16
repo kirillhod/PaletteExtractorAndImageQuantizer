@@ -4,10 +4,10 @@
  */
 
 /**
- * @param {{ canvas: HTMLCanvasElement, frame: HTMLElement, divider: HTMLElement }} options
+ * @param {{ canvas: HTMLCanvasElement, frame: HTMLElement, divider: HTMLElement, onRender?: () => void }} options
  */
 export function createCanvasView(options) {
-  const { canvas, frame, divider } = options;
+  const { canvas, frame, divider, onRender } = options;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas 2D is unavailable');
 
@@ -135,7 +135,10 @@ export function createCanvasView(options) {
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, width, height);
-    if (!original || !originalBuffer) return;
+    if (!original || !originalBuffer) {
+      onRender?.();
+      return;
+    }
 
     context.save();
     context.translate(offsetX, offsetY);
@@ -159,6 +162,7 @@ export function createCanvasView(options) {
       context.drawImage(reducedBuffer, 0, 0);
       context.restore();
     }
+    onRender?.();
   }
 
   /**
@@ -345,6 +349,43 @@ export function createCanvasView(options) {
     return pickSample(clientX, clientY)?.color ?? null;
   }
 
+  /**
+   * Map a normalized source point to frame-local CSS coordinates. Markers use this
+   * so they track pan, zoom, and window resizing without duplicating the transform.
+   *
+   * @param {number} u 0..1
+   * @param {number} v 0..1
+   * @returns {{ x:number, y:number }|null}
+   */
+  function imagePointToFrame(u, v) {
+    if (!original) return null;
+    return {
+      x: offsetX + u * original.width * scale,
+      y: offsetY + v * original.height * scale,
+    };
+  }
+
+  /**
+   * Sample the original image at a normalized point. Marker nudging uses this path
+   * because the anchor belongs to the source image, not to the reduced preview.
+   *
+   * @param {number} u 0..1
+   * @param {number} v 0..1
+   * @returns {{ r:number, g:number, b:number, a:number }|null}
+   */
+  function pickColorAtImagePoint(u, v) {
+    if (!original) return null;
+    const x = Math.min(original.width - 1, Math.max(0, Math.floor(u * original.width)));
+    const y = Math.min(original.height - 1, Math.max(0, Math.floor(v * original.height)));
+    const offset = (y * original.width + x) * 4;
+    return {
+      r: original.data[offset],
+      g: original.data[offset + 1],
+      b: original.data[offset + 2],
+      a: original.data[offset + 3],
+    };
+  }
+
   const narrowViewport = window.matchMedia('(max-width: 979px)');
   let lastFrameWidth = 0;
   const resizeObserver = new ResizeObserver(() => {
@@ -389,5 +430,7 @@ export function createCanvasView(options) {
     setDivider,
     pickColor,
     pickSample,
+    pickColorAtImagePoint,
+    imagePointToFrame,
   };
 }

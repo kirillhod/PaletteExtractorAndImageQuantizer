@@ -158,6 +158,7 @@
 
         <div class="peiq-canvas-frame peiq-canvas-frame--pixelated" id="canvas-frame">
           <canvas id="view-canvas" data-i18n-aria-label="canvas.aria" aria-label="Image preview. Left is the original, right is the palette result."></canvas>
+          <div class="peiq-picked-markers" id="picked-markers" hidden></div>
           <div class="peiq-divider" id="divider" role="slider" tabindex="0" data-i18n-aria-label="divider.aria" aria-label="Before and after divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
             <span class="peiq-divider__handle"></span>
           </div>
@@ -413,6 +414,7 @@
       <h2 data-i18n="help.orderTitle">Palette order and the preview</h2>
       <p data-i18n="help.orderP">The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot.</p>
       <p data-i18n="help.perceptualP">Perceptual orders compare colors with Delta E (CIEDE2000). Smooth keeps the light-to-dark flow while removing local jumps; Color path follows the closest perceptual route between the darkest and lightest colors; Flow maximizes local continuity without pinning the ends. Only the order and export indices change.</p>
+      <p data-i18n="help.markersP">Picked colors keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.</p>
       <h2 data-i18n="help.qualityTitle">Quality</h2>
       <p data-i18n="help.qualityP">The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.</p>
       <h2 data-i18n="help.urlTitle">Shareable settings</h2>

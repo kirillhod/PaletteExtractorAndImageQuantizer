@@ -1,4 +1,5 @@
 // @ts-check
+import { isValidPickedMarkerArray } from './picked-markers.js';
 
 /** @typedef {import('./types.js').Palette} Palette */
 
@@ -13,7 +14,7 @@ export function clonePalette(palette) {
 }
 
 /**
- * @param {{ palette: Palette, sortOrder: string, selectedId:number|null, transparentId:number|null }} snapshot
+ * @param {{ palette: Palette, sortOrder: string, selectedId:number|null, transparentId:number|null, markers?: {id:number,u:number,v:number}[] }} snapshot
  */
 export function clonePaletteSnapshot(snapshot) {
   return {
@@ -21,6 +22,9 @@ export function clonePaletteSnapshot(snapshot) {
     sortOrder: snapshot.sortOrder,
     selectedId: snapshot.selectedId,
     transparentId: snapshot.transparentId,
+    markers: Array.isArray(snapshot.markers)
+      ? snapshot.markers.map(({ id, u, v }) => ({ id, u, v }))
+      : [],
   };
 }
 
@@ -54,6 +58,7 @@ export function isValidSessionRecord(record) {
   if (!record.state || typeof record.state !== 'object') return false;
   if (!record.state.settings || typeof record.state.settings !== 'object') return false;
   if (!Array.isArray(record.state.palette)) return false;
+  if (!isValidPickedMarkerArray(record.state.markers)) return false;
   if (!record.state.history || !Array.isArray(record.state.history.past)) return false;
   if (!Array.isArray(record.state.history.future)) return false;
   return true;

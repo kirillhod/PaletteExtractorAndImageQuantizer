@@ -25,11 +25,19 @@ test('session palette clones do not share entry or color objects', () => {
 });
 
 test('history snapshots clone independently', () => {
-  const snapshot = { palette, sortOrder: 'source', selectedId: 1, transparentId: null };
+  const snapshot = {
+    palette,
+    sortOrder: 'source',
+    selectedId: 1,
+    transparentId: null,
+    markers: [{ id: 1, u: 0.25, v: 0.5 }],
+  };
   const history = { past: [snapshot], future: [] };
   const copy = cloneHistory(history);
   copy.past[0].palette[1].locked = true;
+  copy.past[0].markers[0].u = 0.9;
   assert.equal(palette[1].locked, false);
+  assert.equal(snapshot.markers[0].u, 0.25);
   assert.deepEqual(clonePaletteSnapshot(snapshot), snapshot);
 });
 
@@ -45,6 +53,20 @@ test('session records require a version, image bytes, palette, and history', () 
     state: { settings: {}, palette, history: { past: [], future: [] } },
   };
   assert.equal(isValidSessionRecord(valid), true);
+  assert.equal(
+    isValidSessionRecord({
+      ...valid,
+      state: { ...valid.state, markers: [{ id: 1, u: 0.2, v: 0.8 }] },
+    }),
+    true,
+  );
+  assert.equal(
+    isValidSessionRecord({
+      ...valid,
+      state: { ...valid.state, markers: [{ id: 1, u: -1, v: 0.8 }] },
+    }),
+    false,
+  );
   assert.equal(isValidSessionRecord({ ...valid, version: 999 }), false);
   assert.equal(isValidSessionRecord({ ...valid, image: { name: 'test.png' } }), false);
   assert.equal(

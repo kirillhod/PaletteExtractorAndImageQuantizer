@@ -29,6 +29,63 @@
   image-rendering: pixelated;
 }
 
+.peiq-picked-markers {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.peiq-picked-marker {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.peiq-picked-marker::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 2px solid var(--peiq-bg);
+  border-radius: 50%;
+  background: var(--marker-color);
+  box-shadow:
+    0 0 0 1px var(--peiq-text-strong),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.peiq-picked-marker.is-selected::before {
+  border-color: var(--peiq-accent);
+  box-shadow:
+    0 0 0 2px var(--peiq-accent),
+    0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.peiq-picked-marker.is-locked::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed var(--peiq-text-strong);
+  border-radius: 50%;
+}
+
+.peiq-picked-marker.is-dragging {
+  cursor: grabbing;
+}
+
+.peiq-picked-marker:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
 .peiq-canvas__empty {
   position: absolute;
   inset: 0;
@@ -37,8 +94,7 @@
   padding: var(--peiq-space-4);
   background: rgba(0, 0, 0, 0.45);
   color: var(--peiq-text-strong);
-  font-size: 0.875rem;
-  text-align: center;
+  font-size: 0.875rem;  text-align: center;
 }
 
 .peiq-divider {

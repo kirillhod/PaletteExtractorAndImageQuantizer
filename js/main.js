@@ -20,11 +20,16 @@ import {
   sortPalette,
   updatePaletteEntry,
 } from './core/palette.js';
+import {
+  pickedMarkersFromArray,
+  pickedMarkersToArray,
+} from './core/picked-markers.js';
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
 import { copyText, debounce, el } from './ui/dom.js';
 import { createCanvasView } from './ui/canvas-view.js';
+import { createPickedMarkers } from './ui/picked-markers.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
 import {
@@ -65,6 +70,7 @@ const hero = document.getElementById('hero');
 const workspace = document.getElementById('workspace');
 const frame = /** @type {HTMLElement} */ (document.getElementById('canvas-frame'));
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('view-canvas'));
+const pickedMarkersHost = document.getElementById('picked-markers');
 const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
 const paletteStrip = document.getElementById('palette-strip');
 const paletteCount = document.getElementById('palette-count');
@@ -125,7 +131,12 @@ const toggleOriginal = /** @type {HTMLButtonElement} */ (document.getElementById
 const header = document.getElementById('header');
 
 initI18n();
-const canvasView = createCanvasView({ canvas, frame, divider });
+const canvasView = createCanvasView({
+  canvas,
+  frame,
+  divider,
+  onRender: () => renderPickedMarkers(),
+});
 const theme = initTheme();
 const learn = initLearn();
 
@@ -157,6 +168,14 @@ let selectedPaletteId = null;
 let pickingColor = false;
 /** @type {number|null} */
 let pickPointerId = null;
+/** @type {Map<number, {u:number,v:number}>} */
+let pickedMarkers = new Map();
+/** @type {{u:number,v:number}|null} */
+let pendingPickPoint = null;
+/** @type {{ id:number, before: ReturnType<typeof paletteSnapshot>, moved:boolean }|null} */
+let markerDrag = null;
+/** @type {ReturnType<typeof createPickedMarkers>|null} */
+let pickedMarkersView = null;
 const paletteHistory = { past: [], future: [], limit: 50 };
 /** @type {any|null} */
 let qaResult = null;
@@ -186,6 +205,19 @@ let fixedName = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let importedColors = [];
 let importedName = '';
+
+if (pickedMarkersHost) {
+  pickedMarkersView = createPickedMarkers({
+    host: pickedMarkersHost,
+    toFramePoint: (u, v) => canvasView.imagePointToFrame(u, v),
+    onSelect: selectPickedMarker,
+    onDragStart: startPickedMarkerDrag,
+    onDragMove: movePickedMarkerDrag,
+    onDragEnd: endPickedMarkerDrag,
+    onDragCancel: cancelPickedMarkerDrag,
+    onNudge: nudgePickedMarker,
+  });
+}
 
 function createWorker() {
   const instance = new Worker(new URL('./workers/pipeline.worker.js', import.meta.url), {
@@ -482,6 +514,7 @@ function beginExport(labelKey) {
   app.exportRequestId = id;
   app.exportBusy = true;
   setExportEnabled(false);
+  pickedMarkersView?.cancelDrag();
   stopPickMode();
   updatePaletteEditor();
   clearDownloadLinks();
@@ -502,15 +535,7 @@ function cancelExport() {
   finishExport();
 }
 
-function renderCurrentPalette() {
-  app.palette = sortPalette(app.palette, sortOrder);
-  if (
-    selectedPaletteId !== null &&
-    !app.palette.some((entry) => entry.id === selectedPaletteId)
-  ) {
-    selectedPaletteId = null;
-    if (paletteHex) paletteHex.value = '';
-  }
+function renderPaletteStrip() {
   renderPalette(app.palette, paletteStrip, {
     editMode: paletteEditMode,
     selectedId: selectedPaletteId,
@@ -520,16 +545,56 @@ function renderCurrentPalette() {
     paletteCount.textContent = countLabel('count.colors', app.palette.length);
   }
   if (sortSelect) sortSelect.disabled = app.palette.length === 0;
+}
+
+/**
+ * Update one entry without sorting the palette. Marker drag uses this on every
+ * pointer move; the full sort and history commit happen once on release.
+ *
+ * @param {number} id
+ * @param {{ r:number,g:number,b:number,a:number }} color
+ */
+function setPaletteEntryColorLive(id, color) {
+  const hex = formatHex(color);
+  const entry = app.palette.find((candidate) => candidate.id === id);
+  if (!entry || entry.hex === hex) return;
+  app.palette = app.palette.map((candidate) =>
+    candidate.id === id
+      ? { ...candidate, color: { ...color }, hex }
+      : candidate,
+  );
+  if (selectedPaletteId === id && paletteHex) paletteHex.value = hex;
+  markPaletteEdited();
+  renderPaletteStrip();
+  renderPickedMarkers();
+}
+
+function renderCurrentPalette() {
+  app.palette = sortPalette(app.palette, sortOrder);
+  if (
+    selectedPaletteId !== null &&
+    !app.palette.some((entry) => entry.id === selectedPaletteId)
+  ) {
+    selectedPaletteId = null;
+    if (paletteHex) paletteHex.value = '';
+  }
+  const selected = selectedPaletteEntry();
+  if (selected && paletteHex && document.activeElement !== paletteHex) {
+    paletteHex.value = selected.hex;
+  }
+  renderPaletteStrip();
   updatePaletteEditor();
 
   const current = Number(transparentIndex?.value ?? -1);
   populateTransparentIndex(app.palette, current);
+  renderPickedMarkers();
   if (app.hasResult && lastFile) scheduleSessionSave();
 }
 
 /** @param {{ id:number, hex:string }} entry */
 function selectPaletteEntry(entry) {
   selectedPaletteId = entry.id;
+  pendingPickPoint = null;
   if (paletteHex) paletteHex.value = entry.hex;
   renderCurrentPalette();
 }
@@ -589,8 +654,10 @@ function updatePaletteEditor() {
 function setPaletteEditMode(active) {
   paletteEditMode = active;
   if (!active) {
+    pickedMarkersView?.cancelDrag();
     stopPickMode();
     selectedPaletteId = null;
+    pendingPickPoint = null;
     if (paletteHex) paletteHex.value = '';
   }
   renderCurrentPalette();
@@ -757,6 +824,176 @@ function updatePickFeedback(event) {
   }
 }
 
+/**
+ * @param {{ source: { width:number, height:number }, x:number, y:number }} sample
+ * @returns {{ u:number, v:number }}
+ */
+function normalizePickPoint(sample) {
+  return {
+    u: Math.min(1, Math.max(0, (sample.x + 0.5) / sample.source.width)),
+    v: Math.min(1, Math.max(0, (sample.y + 0.5) / sample.source.height)),
+  };
+}
+
+/**
+ * @param {number} id
+ * @param {{ r:number,g:number,b:number,a:number }} color
+ * @returns {boolean}
+ */
+function hasDuplicatePaletteColor(id, color) {
+  return app.palette.some(
+    (entry) =>
+      entry.id !== id &&
+      entry.color.r === color.r &&
+      entry.color.g === color.g &&
+      entry.color.b === color.b &&
+      entry.color.a === color.a,
+  );
+}
+
+/** Remove markers for entries that no longer exist or became transparent. */
+function prunePickedMarkers() {
+  const ids = new Set(app.palette.map((entry) => entry.id));
+  for (const id of pickedMarkers.keys()) {
+    if (!ids.has(id)) pickedMarkers.delete(id);
+  }
+  const transparent = currentTransparentId();
+  if (transparent !== null) pickedMarkers.delete(transparent);
+  if (pendingPickPoint && app.palette.length === 0) pendingPickPoint = null;
+}
+
+function renderPickedMarkers() {
+  if (!pickedMarkersView) return;
+  prunePickedMarkers();
+  pickedMarkersView.render({
+    entries: app.palette,
+    markers: pickedMarkers,
+    selectedId: selectedPaletteId,
+    active: paletteEditMode && app.hasResult && !app.exportBusy,
+  });
+}
+
+/** @param {number} id */
+function selectPickedMarker(id) {
+  const entry = app.palette.find((candidate) => candidate.id === id);
+  if (!entry) return;
+  selectedPaletteId = id;
+  pendingPickPoint = null;
+  if (paletteHex) paletteHex.value = entry.hex;
+  renderCurrentPalette();
+}
+
+/**
+ * @param {number} id
+ * @param {PointerEvent} event
+ */
+function startPickedMarkerDrag(id, event) {
+  if (!paletteEditMode || app.exportBusy) return;
+  const entry = app.palette.find((candidate) => candidate.id === id);
+  if (!entry) return;
+  markerDrag = { id, before: paletteSnapshot(), moved: false };
+  pendingPickPoint = null;
+  hidePickPreview();
+  updatePickLoupe(event);
+}
+
+/**
+ * @param {number} id
+ * @param {PointerEvent} event
+ */
+function movePickedMarkerDrag(id, event) {
+  if (!markerDrag || markerDrag.id !== id) return;
+  const sample = canvasView.pickSample(event.clientX, event.clientY);
+  if (!sample || sample.color.a === 0) {
+    hidePickLoupe();
+    return;
+  }
+  markerDrag.moved = true;
+  pickedMarkers.set(id, normalizePickPoint(sample));
+  setPaletteEntryColorLive(id, sample.color);
+  updatePickLoupe(event);
+  scheduleProcess();
+}
+
+/**
+ * @param {number} id
+ * @param {PointerEvent} event
+ * @param {boolean} moved
+ */
+function endPickedMarkerDrag(id, event, moved) {
+  if (!markerDrag || markerDrag.id !== id) return;
+  const transaction = markerDrag;
+  markerDrag = null;
+  hidePickLoupe();
+  if (!moved) {
+    renderCurrentPalette();
+    return;
+  }
+  const sample = canvasView.pickSample(event.clientX, event.clientY);
+  if (!sample || sample.color.a === 0) {
+    restorePaletteSnapshot(transaction.before);
+    toastKey(
+      sample ? 'toast.pickTransparent' : 'toast.pickOutside',
+      {},
+      'error',
+    );
+    return;
+  }
+  if (hasDuplicatePaletteColor(id, sample.color)) {
+    restorePaletteSnapshot(transaction.before);
+    toastKey('error.duplicateColor', {}, 'error');
+    return;
+  }
+  pickedMarkers.set(id, normalizePickPoint(sample));
+  setPaletteEntryColorLive(id, sample.color);
+  renderCurrentPalette();
+  processPreview();
+  pushPaletteHistory(transaction.before);
+  toastKey('toast.colorUpdated', {}, 'success');
+}
+
+/** @param {number} id */
+function cancelPickedMarkerDrag(id) {
+  if (!markerDrag || markerDrag.id !== id) return;
+  const transaction = markerDrag;
+  markerDrag = null;
+  hidePickLoupe();
+  restorePaletteSnapshot(transaction.before);
+}
+
+/**
+ * @param {number} id
+ * @param {string} key
+ * @param {number} step
+ */
+function nudgePickedMarker(id, key, step) {
+  if (!paletteEditMode || app.exportBusy) return;
+  const point = pickedMarkers.get(id);
+  if (!point) return;
+  const dx = key === 'ArrowLeft' ? -step : key === 'ArrowRight' ? step : 0;
+  const dy = key === 'ArrowUp' ? -step : key === 'ArrowDown' ? step : 0;
+  if (dx === 0 && dy === 0) return;
+  const nextPoint = {
+    u: Math.min(1, Math.max(0, point.u + dx)),
+    v: Math.min(1, Math.max(0, point.v + dy)),
+  };
+  const color = canvasView.pickColorAtImagePoint(nextPoint.u, nextPoint.v);
+  if (!color || color.a === 0) return;
+  const before = paletteSnapshot();
+  try {
+    app.palette = updatePaletteEntry(app.palette, id, formatHex(color));
+    pickedMarkers.set(id, nextPoint);
+    selectedPaletteId = id;
+    if (paletteHex) paletteHex.value = formatHex(color);
+    markPaletteEdited();
+    renderCurrentPalette();
+    processPreview();
+    pushPaletteHistory(before);
+  } catch (error) {
+    toast(localizeError(error), 'error');
+  }
+}
+
 function currentTransparentId() {
   const position = Number(transparentIndex?.value ?? -1);
   return position >= 0 ? app.palette[position]?.id ?? null : null;
@@ -768,6 +1005,7 @@ function paletteSnapshot() {
     sortOrder,
     selectedId: selectedPaletteId,
     transparentId: currentTransparentId(),
+    markers: pickedMarkersToArray(pickedMarkers),
   };
 }
 
@@ -788,6 +1026,8 @@ function restorePaletteSnapshot(snapshot) {
   sortOrder = snapshot.sortOrder;
   if (sortSelect) sortSelect.value = sortOrder;
   selectedPaletteId = snapshot.selectedId;
+  pickedMarkers = pickedMarkersFromArray(snapshot.markers);
+  pendingPickPoint = null;
   markPaletteEdited();
   renderCurrentPalette();
   const selected = selectedPaletteEntry();
@@ -839,24 +1079,26 @@ function handlePickEnd(event) {
   if (canvas.hasPointerCapture(event.pointerId)) {
     canvas.releasePointerCapture(event.pointerId);
   }
-  const color = canvasView.pickColor(event.clientX, event.clientY);
+  const sample = canvasView.pickSample(event.clientX, event.clientY);
   hidePickPreview();
   hidePickLoupe();
-  if (!color) {
+  if (!sample) {
     toastKey('toast.pickOutside', {}, 'error');
     return;
   }
-  if (color.a === 0) {
+  if (sample.color.a === 0) {
     toastKey('toast.pickTransparent', {}, 'error');
     return;
   }
+  const color = sample.color;
   // Keep Pick armed after a successful sample so several swatches can be
   // recolored without pressing the button again. Pick toggles off, and Esc
   // still stops the mode.
   if (paletteHex) paletteHex.value = formatHex(color);
   if (selectedPaletteEntry()) {
-    applyPaletteHex();
+    applyPaletteHex(normalizePickPoint(sample));
   } else {
+    pendingPickPoint = normalizePickPoint(sample);
     toastKey('toast.picked', { hex: formatHex(color) }, 'success');
   }
 }
@@ -877,7 +1119,11 @@ function markPaletteEdited() {
 }
 
 function resetPaletteEdits() {
+  pickedMarkersView?.cancelDrag();
   stopPickMode();
+  pickedMarkers.clear();
+  pendingPickPoint = null;
+  markerDrag = null;
   paletteHistory.past.length = 0;
   paletteHistory.future.length = 0;
   app.paletteEdited = false;
@@ -892,7 +1138,10 @@ function paletteHexValue() {
   return paletteHex?.value.trim() ?? '';
 }
 
-function applyPaletteHex() {
+/**
+ * @param {{ u:number, v:number }|null} [sample]
+ */
+function applyPaletteHex(sample = null) {
   const selected = selectedPaletteEntry();
   if (!selected) return;
   const value = paletteHexValue();
@@ -904,6 +1153,10 @@ function applyPaletteHex() {
     const next = updatePaletteEntry(app.palette, selected.id, value);
     const before = paletteSnapshot();
     app.palette = next;
+    if (sample) {
+      if (selected.id === currentTransparentId()) pickedMarkers.delete(selected.id);
+      else pickedMarkers.set(selected.id, sample);
+    }
     const updated = app.palette.find((entry) => entry.id === selected.id);
     if (paletteHex && updated) paletteHex.value = updated.hex;
     markPaletteEdited();
@@ -928,6 +1181,10 @@ function addPaletteColor() {
     const before = paletteSnapshot();
     app.palette = next;
     selectedPaletteId = entry.id;
+    if (pendingPickPoint && entry.id !== currentTransparentId()) {
+      pickedMarkers.set(entry.id, pendingPickPoint);
+    }
+    pendingPickPoint = null;
     if (paletteHex) paletteHex.value = entry.hex;
     markPaletteEdited();
     renderCurrentPalette();
@@ -946,6 +1203,7 @@ function removePaletteColor() {
     const next = removePaletteEntry(app.palette, selected.id);
     const before = paletteSnapshot();
     app.palette = next;
+    pickedMarkers.delete(selected.id);
     selectedPaletteId = null;
     if (paletteHex) paletteHex.value = '';
     markPaletteEdited();
@@ -1194,6 +1452,7 @@ function buildSessionRecord() {
       sortOrder,
       selectedId: selectedPaletteId,
       transparentId: currentTransparentId(),
+      markers: pickedMarkersToArray(pickedMarkers),
       editing: paletteEditMode,
       history: cloneHistory(paletteHistory),
     },
@@ -1429,6 +1688,8 @@ async function loadFile(file, restore = null) {
       paletteHistory.future = history.future;
       selectedPaletteId = restore.selectedId ?? null;
       paletteEditMode = Boolean(restore.editing);
+      pickedMarkers = pickedMarkersFromArray(restore.markers);
+      pendingPickPoint = null;
       if (mode === 'map') {
         fixedColors = app.palette.map((entry) => ({ ...entry.color }));
       }
@@ -1932,6 +2193,11 @@ frame.addEventListener('pointerleave', () => {
   }
 });
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && markerDrag) {
+    event.preventDefault();
+    pickedMarkersView?.cancelDrag();
+    return;
+  }
   if (event.key === 'Escape' && pickingColor) {
     event.preventDefault();
     stopPickMode();
@@ -1942,6 +2208,9 @@ paletteHex?.addEventListener('keydown', (event) => {
   event.preventDefault();
   if (selectedPaletteEntry()) applyPaletteHex();
   else addPaletteColor();
+});
+paletteHex?.addEventListener('input', () => {
+  pendingPickPoint = null;
 });
 
 const scheduleProcess = debounce(processPreview, 150);
@@ -2101,6 +2370,7 @@ alphaThreshold?.addEventListener('input', () => {
   syncUrlStateDebounced();
 });
 transparentIndex?.addEventListener('change', () => {
+  renderPickedMarkers();
   scheduleProcess();
   syncUrlState();
 });

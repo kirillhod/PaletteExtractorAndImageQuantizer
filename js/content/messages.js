@@ -113,6 +113,7 @@ const en = {
     'Pick stays active: tap or drag on the image for each swatch; release applies the color. Tap Pick again or press Esc to stop.',
   'palette.swatchCopy': 'Copy {hex}',
   'palette.swatchEdit': 'Edit {hex}',
+  'palette.markerAria': 'Color {hex} sample marker. Drag or use arrow keys to adjust.',
   'palette.lockedSuffix': ' (locked)',
   'palette.status': '{name} · {countLabel}',
   'palette.statusInitial': 'PICO-8 · 16 colors',
@@ -277,6 +278,8 @@ const en = {
     'The preview and Reduced PNG use the available colors. Moving a swatch changes export order and indices, not the color set, so the image looks the same unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot.',
   'help.perceptualP':
     'Perceptual orders compare colors with Delta E (CIEDE2000). Smooth keeps the light-to-dark flow while removing local jumps; Color path follows the closest perceptual route between the darkest and lightest colors; Flow maximizes local continuity without pinning the ends. Only the order and export indices change.',
+  'help.markersP':
+    'Picked colors keep a marker on the image while Edit is on. Drag a marker to recolor its swatch, or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors have no marker until you pick them. Markers are saved with the session and never enter exports.',
   'help.qualityTitle': 'Quality',
   'help.qualityP':
     'The Quality section compares the preview with the source using CIEDE2000. Mean, p95, and max summarize the error; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Fully transparent pixels are skipped; contrast checks are not included.',
@@ -552,6 +555,8 @@ const ru = {
     'Пипетка остаётся включённой: коснитесь изображения или ведите палец для каждого свотча; отпускание применяет цвет. Нажмите «Пипетка» ещё раз или Esc, чтобы выключить.',
   'palette.swatchCopy': 'Скопировать {hex}',
   'palette.swatchEdit': 'Изменить {hex}',
+  'palette.markerAria':
+    'Маркер цвета {hex}. Перетащите или используйте стрелки, чтобы изменить.',
   'palette.lockedSuffix': ' (заблокирован)',
   'palette.status': '{name} · {countLabel}',
   'palette.statusInitial': 'PICO-8 · 16 цветов',
@@ -721,6 +726,8 @@ const ru = {
     'Предпросмотр и уменьшенный PNG используют цвета палитры. Перемещение цвета меняет порядок экспорта и индексы, но не набор цветов, поэтому изображение выглядит так же, кроме случая, когда для пикселя два цвета одинаково близки: тогда выбирается меньший индекс. Добавление, удаление или изменение цвета меняет сопоставление. В индексированном PNG видимые цвета после перемещения сохраняются (кроме случаев, когда два цвета одинаково близки), но порядок PLTE и индексная карта меняются; прозрачный индекс следует за своим цветом, а не за позицией.',
   'help.perceptualP':
     'Перцептивные порядки сравнивают цвета по Delta E (CIEDE2000). «Плавно» сохраняет переход от тёмного к светлому и убирает локальные скачки; «Цветовой путь» идёт по ближайшим цветам от самого тёмного к самому светлому; «Поток» максимизирует локальную плавность без фиксации концов. Меняются только порядок и индексы экспорта.',
+  'help.markersP':
+    'У цветов, выбранных пипеткой, появляется маркер на изображении, пока включён режим редактирования. Перетащите маркер, чтобы изменить цвет свотча, или сфокусируйте его и используйте стрелки; Esc отменяет перетаскивание. У извлечённых и импортированных цветов маркера нет, пока вы не возьмёте цвет пипеткой. Маркеры сохраняются в сессии и не попадают в экспорт.',
   'help.qualityTitle': 'Качество',
   'help.qualityP':
     'Раздел «Качество» сравнивает предпросмотр с исходником по CIEDE2000. Среднее, p95 и максимум показывают ошибку; карта идёт от тёмно-синего при 0 до красного при 20+, а список худших пикселей даёт координаты. Полностью прозрачные пиксели пропускаются; проверка контраста не входит.',
