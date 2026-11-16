@@ -1608,7 +1608,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 
 | Path | Responsibility |
 |---|---|
-| `js/main.js` | Bootstrap, worker wiring, preview/render, palette editor, picking, QA, session and URL state |
+| `js/main.js` | Bootstrap, worker wiring, preview/render, control and mode wiring |
 | `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` and `peiq.locale` before paint, set theme and language attributes |
 | `js/ui/dom.js` | `el()`, `$`, `$$`, `debounce()`, `copyText()`; no framework |
 | `js/ui/theme.js` | 3-state toggle, matchMedia listener, persistence, meta theme-color |
@@ -1617,9 +1617,13 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
+| `js/ui/palette-editor.js` | Strip and editor controls, selection, undo/redo history, transparent index, status |
 | `js/ui/picked-markers.js` | Picked-color overlay, drag/cancel, overlap offsets, keyboard nudge focus |
+| `js/ui/palette-picker.js` | Pick mode, loupe, preview tooltip, marker drag, canvas pointer routing |
 | `js/ui/export-view.js` | Validated Save/Copy rows, object URLs, image and text clipboard helpers |
 | `js/ui/export-controller.js` | Export request ids, progress, worker jobs, palette-file validation, stale-result handling |
+| `js/ui/quality-panel.js` | QA request lifecycle, stats, error map, worst pixels, locale refresh |
+| `js/ui/session-url.js` | URL hash settings, IndexedDB session record, restore, clear, session status |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
 | `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
 | `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |

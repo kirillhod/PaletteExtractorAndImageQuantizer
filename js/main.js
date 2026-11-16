@@ -1,21 +1,8 @@
 // @ts-check
-import { formatHex, parseHex } from './core/color.js';
-import { decodeUrlState, encodeUrlState } from './core/url-state.js';
-import {
-  SESSION_VERSION,
-  cloneHistory,
-  clonePalette,
-  isValidSessionRecord,
-} from './core/session-state.js';
-import {
-  createPalette,
-  sortPalette,
-  updatePaletteEntry,
-} from './core/palette.js';
-import {
-  pickedMarkersFromArray,
-  pickedMarkersToArray,
-} from './core/picked-markers.js';
+import { parseHex } from './core/color.js';
+import { cloneHistory, clonePalette } from './core/session-state.js';
+import { createPalette, sortPalette } from './core/palette.js';
+import { pickedMarkersFromArray } from './core/picked-markers.js';
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
@@ -23,7 +10,7 @@ import { debounce } from './ui/dom.js';
 import { createExportController } from './ui/export-controller.js';
 import { createQualityPanel } from './ui/quality-panel.js';
 import { createCanvasView } from './ui/canvas-view.js';
-import { createPickedMarkers } from './ui/picked-markers.js';
+import { createPalettePicker } from './ui/palette-picker.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
 import {
@@ -41,18 +28,15 @@ import {
 } from './ui/i18n.js';
 import { initLearn } from './ui/learn-view.js';
 import { createPaletteEditor } from './ui/palette-editor.js';
+import { createSessionUrl } from './ui/session-url.js';
 import { initShortcuts } from './ui/shortcuts.js';
 import { refreshStatus, setStatus, setStatusMessage, toast, toastKey, getLastStatus } from './ui/status.js';
 import { initTheme } from './ui/theme.js';
 import { initTooltips } from './ui/tooltips.js';
-import { clearSession, loadSession, saveSession } from './ui/session-store.js';
+import { clearSession } from './ui/session-store.js';
 
 const MAX_PIXELS = 16_777_216;
 const PREVIEW_EDGE = 1024;
-const PICK_LOUPE_SIZE = 108;
-const PICK_LOUPE_CELLS = 9;
-const PICK_LOUPE_CELL = PICK_LOUPE_SIZE / PICK_LOUPE_CELLS;
-const PICK_LOUPE_RADIUS = (PICK_LOUPE_CELLS - 1) / 2;
 
 const versionLabel = document.getElementById('app-version');
 if (versionLabel) versionLabel.textContent = `· v${APP_VERSION}`;
@@ -61,19 +45,8 @@ const hero = document.getElementById('hero');
 const workspace = document.getElementById('workspace');
 const frame = /** @type {HTMLElement} */ (document.getElementById('canvas-frame'));
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('view-canvas'));
-const pickedMarkersHost = document.getElementById('picked-markers');
 const divider = /** @type {HTMLElement} */ (document.getElementById('divider'));
 const sortSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-sort'));
-const sessionClear = /** @type {HTMLButtonElement|null} */ (document.getElementById('session-clear'));
-const sessionStatus = document.getElementById('session-status');
-const pickPreview = document.getElementById('palette-pick-preview');
-const pickPreviewSwatch = document.getElementById('palette-pick-swatch');
-const pickPreviewHex = document.getElementById('palette-pick-hex');
-const pickLoupe = document.getElementById('palette-pick-loupe');
-const pickLoupeCanvas = /** @type {HTMLCanvasElement|null} */ (
-  document.getElementById('palette-pick-canvas')
-);
-const pickLoupeHex = document.getElementById('palette-pick-loupe-hex');
 const modeExtract = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-extract'));
 const modeMap = /** @type {HTMLButtonElement|null} */ (document.getElementById('mode-map'));
 const extractControls = document.getElementById('extract-controls');
@@ -99,7 +72,7 @@ const canvasView = createCanvasView({
   canvas,
   frame,
   divider,
-  onRender: () => renderPickedMarkers(),
+  onRender: () => palettePicker?.renderMarkers(),
 });
 const theme = initTheme();
 const learn = initLearn();
@@ -126,8 +99,10 @@ let worker = createWorker();
 let sortOrder = 'source';
 /** @type {'extract'|'map'} */
 let mode = 'extract';
-/** @type {ReturnType<typeof createPickedMarkers>|null} */
-let pickedMarkersView = null;
+/** @type {ReturnType<typeof createPalettePicker>|null} */
+let palettePicker = null;
+/** @type {ReturnType<typeof createSessionUrl>|null} */
+let sessionUrl = null;
 const paletteState = {
   editMode: false,
   /** @type {number|null} */
@@ -152,14 +127,16 @@ const pickState = {
   /** @type {{ id:number, before: any, moved:boolean }|null} */
   drag: null,
 };
-let applyingUrlState = false;
 /** @type {File|Blob|null} */
 let lastFile = null;
 let loadRequestId = 0;
-let restoringSession = false;
-let sessionPersistence = true;
-let sessionSaveWarned = false;
-let sessionStatusKey = '';
+const sessionState = {
+  applyingUrlState: false,
+  restoringSession: false,
+  persistence: true,
+  saveWarned: false,
+  statusKey: '',
+};
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
@@ -185,12 +162,47 @@ const paletteEditor = createPaletteEditor({
   },
   requestPreview: () => processPreview(),
   scheduleSessionSave: () => scheduleSessionSave(),
-  syncUrlState: () => syncUrlState(),
+  syncUrlState: () => sessionUrl?.syncUrlState(),
   clearDownloadLinks,
-  renderPickedMarkers: () => renderPickedMarkers(),
-  stopPickMode: () => stopPickMode(),
-  startPickMode: () => startPickMode(),
-  cancelMarkerDrag: () => pickedMarkersView?.cancelDrag(),
+  renderPickedMarkers: () => palettePicker?.renderMarkers(),
+  stopPickMode: () => palettePicker?.stop(),
+  startPickMode: () => palettePicker?.start(),
+  cancelMarkerDrag: () => palettePicker?.cancelDrag(),
+});
+
+palettePicker = createPalettePicker({
+  app,
+  state: paletteState,
+  pickState,
+  canvasView,
+  paletteEditor,
+  host: document.getElementById('picked-markers'),
+  requestPreview: () => processPreview(),
+  scheduleProcess: () => scheduleProcess(),
+});
+
+sessionUrl = createSessionUrl({
+  app,
+  session: sessionState,
+  paletteState,
+  pickState,
+  paletteEditor,
+  getMode: () => mode,
+  getSortOrder: () => sortOrder,
+  setSortOrder,
+  getLastFile: () => lastFile,
+  setLastFile: (file) => {
+    lastFile = file;
+  },
+  getLoadRequestId: () => loadRequestId,
+  getFixedName: () => fixedName,
+  getImportedName: () => importedName,
+  getControlsParams: () => controls.getParams(),
+  setMode: (next) => setMode(next),
+  loadFile: (file, restore) => loadFile(file, restore),
+  updateDitherLabels: () => updateDitherLabels(),
+  updateDitherControls: () => updateDitherControls(),
+  scheduleSessionSave: () => scheduleSessionSave(),
 });
 
 const qualityPanel = createQualityPanel({
@@ -210,24 +222,11 @@ const exportController = createExportController({
   decodeFullImage,
   refreshExportState: updateExportState,
   prepareForExport: () => {
-    pickedMarkersView?.cancelDrag();
-    stopPickMode();
+    palettePicker?.cancelDrag();
+    palettePicker?.stop();
     paletteEditor.updatePaletteEditor();
   },
 });
-
-if (pickedMarkersHost) {
-  pickedMarkersView = createPickedMarkers({
-    host: pickedMarkersHost,
-    toFramePoint: (u, v) => canvasView.imagePointToFrame(u, v),
-    onSelect: selectPickedMarker,
-    onDragStart: startPickedMarkerDrag,
-    onDragMove: movePickedMarkerDrag,
-    onDragEnd: endPickedMarkerDrag,
-    onDragCancel: cancelPickedMarkerDrag,
-    onNudge: nudgePickedMarker,
-  });
-}
 
 function createWorker() {
   const instance = new Worker(new URL('./workers/pipeline.worker.js', import.meta.url), {
@@ -308,8 +307,8 @@ function onWorkerMessage(event) {
       processPreview();
       return;
     }
-    if (restoringSession) {
-      restoringSession = false;
+    if (sessionState.restoringSession) {
+      sessionState.restoringSession = false;
       scheduleSessionSave();
     }
     return;
@@ -341,7 +340,7 @@ function onWorkerMessage(event) {
     } else if (qualityPanel.matches(message.requestId)) {
       qualityPanel.fail();
     } else {
-      if (restoringSession) restoringSession = false;
+      if (sessionState.restoringSession) sessionState.restoringSession = false;
       updateExportState();
     }
   }
@@ -351,390 +350,6 @@ function updateExportState() {
   setExportEnabled(app.hasResult && app.palette.length > 0 && !app.exportBusy);
   paletteEditor.updatePaletteEditor();
   qualityPanel.updateAvailability();
-}
-
-function startPickMode() {
-  if (!paletteState.editMode || !app.hasResult || app.exportBusy) return;
-  pickState.active = true;
-  paletteEditor.setPickPressed(true);
-  frame.classList.add('is-picking');
-  paletteEditor.refreshHint();
-  hidePickPreview();
-  hidePickLoupe();
-  paletteEditor.updatePaletteEditor();
-}
-
-function stopPickMode() {
-  if (!pickState.active) return;
-  pickState.active = false;
-  paletteEditor.setPickPressed(false);
-  frame.classList.remove('is-picking');
-  if (pickState.pointerId !== null) {
-    if (canvas.hasPointerCapture(pickState.pointerId)) {
-      canvas.releasePointerCapture(pickState.pointerId);
-    }
-    pickState.pointerId = null;
-  }
-  hidePickPreview();
-  hidePickLoupe();
-  paletteEditor.refreshHint();
-  paletteEditor.updatePaletteEditor();
-}
-
-function hidePickPreview() {
-  if (pickPreview) pickPreview.hidden = true;
-}
-
-function hidePickLoupe() {
-  if (pickLoupe) pickLoupe.hidden = true;
-}
-
-/**
- * Draw a magnified crop around the sampled pixel. The extra context makes touch
- * picking possible: the finger no longer covers the only visible sample.
- * @param {{ color: { r:number,g:number,b:number,a:number }, source: { data: Uint8ClampedArray, width:number, height:number }, x:number, y:number }} sample
- */
-function drawPickLoupe(sample) {
-  if (!pickLoupeCanvas) return;
-  const ctx = pickLoupeCanvas.getContext('2d');
-  if (!ctx) return;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const pixels = Math.round(PICK_LOUPE_SIZE * dpr);
-  if (pickLoupeCanvas.width !== pixels || pickLoupeCanvas.height !== pixels) {
-    pickLoupeCanvas.width = pixels;
-    pickLoupeCanvas.height = pixels;
-  }
-  ctx.setTransform(pixels / PICK_LOUPE_SIZE, 0, 0, pixels / PICK_LOUPE_SIZE, 0, 0);
-  ctx.clearRect(0, 0, PICK_LOUPE_SIZE, PICK_LOUPE_SIZE);
-
-  const { source, x, y } = sample;
-  for (let dy = -PICK_LOUPE_RADIUS; dy <= PICK_LOUPE_RADIUS; dy++) {
-    for (let dx = -PICK_LOUPE_RADIUS; dx <= PICK_LOUPE_RADIUS; dx++) {
-      const sourceX = x + dx;
-      const sourceY = y + dy;
-      if (sourceX < 0 || sourceY < 0 || sourceX >= source.width || sourceY >= source.height) {
-        continue;
-      }
-      const offset = (sourceY * source.width + sourceX) * 4;
-      const alpha = source.data[offset + 3];
-      if (alpha === 0) continue;
-      ctx.fillStyle = `rgba(${source.data[offset]}, ${source.data[offset + 1]}, ${source.data[offset + 2]}, ${alpha / 255})`;
-      ctx.fillRect(
-        (dx + PICK_LOUPE_RADIUS) * PICK_LOUPE_CELL,
-        (dy + PICK_LOUPE_RADIUS) * PICK_LOUPE_CELL,
-        PICK_LOUPE_CELL,
-        PICK_LOUPE_CELL,
-      );
-    }
-  }
-
-  const styles = getComputedStyle(document.documentElement);
-  const accent = styles.getPropertyValue('--peiq-accent').trim();
-  if (accent) ctx.strokeStyle = accent;
-  ctx.lineWidth = 2;
-  const center = PICK_LOUPE_RADIUS * PICK_LOUPE_CELL;
-  ctx.strokeRect(center + 1, center + 1, PICK_LOUPE_CELL - 2, PICK_LOUPE_CELL - 2);
-  const mid = PICK_LOUPE_SIZE / 2;
-  ctx.beginPath();
-  ctx.moveTo(mid, 0);
-  ctx.lineTo(mid, center - 3);
-  ctx.moveTo(mid, center + PICK_LOUPE_CELL + 3);
-  ctx.lineTo(mid, PICK_LOUPE_SIZE);
-  ctx.moveTo(0, mid);
-  ctx.lineTo(center - 3, mid);
-  ctx.moveTo(center + PICK_LOUPE_CELL + 3, mid);
-  ctx.lineTo(PICK_LOUPE_SIZE, mid);
-  ctx.stroke();
-}
-
-/** @param {number} clientX @param {number} clientY */
-function positionPickLoupe(clientX, clientY) {
-  if (!pickLoupe) return;
-  const rect = pickLoupe.getBoundingClientRect();
-  const gap = 18;
-  const margin = 8;
-  let left = clientX - rect.width / 2;
-  let top = clientY - rect.height - gap;
-  if (top < margin) top = clientY + gap;
-  left = Math.min(Math.max(margin, left), window.innerWidth - rect.width - margin);
-  top = Math.min(Math.max(margin, top), window.innerHeight - rect.height - margin);
-  pickLoupe.style.left = `${Math.round(left)}px`;
-  pickLoupe.style.top = `${Math.round(top)}px`;
-}
-
-/** @param {PointerEvent} event */
-function updatePickLoupe(event) {
-  if (!pickLoupe) return;
-  const sample = canvasView.pickSample(event.clientX, event.clientY);
-  if (!sample || sample.color.a === 0) {
-    hidePickLoupe();
-    return;
-  }
-  drawPickLoupe(sample);
-  if (pickLoupeHex) pickLoupeHex.textContent = formatHex(sample.color);
-  pickLoupe.hidden = false;
-  positionPickLoupe(event.clientX, event.clientY);
-}
-
-/** @param {PointerEvent} event */
-function updatePickPreview(event) {
-  if (!pickState.active) return;
-  const color = canvasView.pickColor(event.clientX, event.clientY);
-  if (!color || color.a === 0) {
-    hidePickPreview();
-    return;
-  }
-  const hex = formatHex(color);
-  if (pickPreviewSwatch) pickPreviewSwatch.style.setProperty('--pick-color', hex);
-  if (pickPreviewHex) pickPreviewHex.textContent = hex;
-  if (!pickPreview) return;
-
-  pickPreview.hidden = false;
-  const gap = 14;
-  const rect = pickPreview.getBoundingClientRect();
-  let left = event.clientX + gap;
-  let top = event.clientY + gap;
-  if (left + rect.width > window.innerWidth - 8) {
-    left = event.clientX - rect.width - gap;
-  }
-  if (top + rect.height > window.innerHeight - 8) {
-    top = event.clientY - rect.height - gap;
-  }
-  pickPreview.style.left = `${Math.max(8, Math.round(left))}px`;
-  pickPreview.style.top = `${Math.max(8, Math.round(top))}px`;
-}
-
-/** @param {PointerEvent} event */
-function updatePickFeedback(event) {
-  if (!pickState.active) return;
-  if (pickState.pointerId !== null) {
-    updatePickLoupe(event);
-    hidePickPreview();
-  } else {
-    updatePickPreview(event);
-    hidePickLoupe();
-  }
-}
-
-/**
- * @param {{ source: { width:number, height:number }, x:number, y:number }} sample
- * @returns {{ u:number, v:number }}
- */
-function normalizePickPoint(sample) {
-  return {
-    u: Math.min(1, Math.max(0, (sample.x + 0.5) / sample.source.width)),
-    v: Math.min(1, Math.max(0, (sample.y + 0.5) / sample.source.height)),
-  };
-}
-
-/**
- * @param {number} id
- * @param {{ r:number,g:number,b:number,a:number }} color
- * @returns {boolean}
- */
-function hasDuplicatePaletteColor(id, color) {
-  return app.palette.some(
-    (entry) =>
-      entry.id !== id &&
-      entry.color.r === color.r &&
-      entry.color.g === color.g &&
-      entry.color.b === color.b &&
-      entry.color.a === color.a,
-  );
-}
-
-/** Remove markers for entries that no longer exist or became transparent. */
-function prunePickedMarkers() {
-  const ids = new Set(app.palette.map((entry) => entry.id));
-  for (const id of pickState.markers.keys()) {
-    if (!ids.has(id)) pickState.markers.delete(id);
-  }
-  const transparent = paletteEditor.currentTransparentId();
-  if (transparent !== null) pickState.markers.delete(transparent);
-  if (pickState.pendingPoint && app.palette.length === 0) pickState.pendingPoint = null;
-}
-
-function renderPickedMarkers() {
-  if (!pickedMarkersView) return;
-  prunePickedMarkers();
-  pickedMarkersView.render({
-    entries: app.palette,
-    markers: pickState.markers,
-    selectedId: paletteState.selectedId,
-    active: paletteState.editMode && app.hasResult && !app.exportBusy,
-  });
-}
-
-/** @param {number} id */
-function selectPickedMarker(id) {
-  const entry = app.palette.find((candidate) => candidate.id === id);
-  if (!entry) return;
-  paletteState.selectedId = id;
-  pickState.pendingPoint = null;
-  paletteEditor.setHexInput(entry.hex);
-  paletteEditor.renderCurrentPalette();
-}
-
-/**
- * @param {number} id
- * @param {PointerEvent} event
- */
-function startPickedMarkerDrag(id, event) {
-  if (!paletteState.editMode || app.exportBusy) return;
-  const entry = app.palette.find((candidate) => candidate.id === id);
-  if (!entry) return;
-  pickState.drag = { id, before: paletteEditor.paletteSnapshot(), moved: false };
-  pickState.pendingPoint = null;
-  hidePickPreview();
-  updatePickLoupe(event);
-}
-
-/**
- * @param {number} id
- * @param {PointerEvent} event
- */
-function movePickedMarkerDrag(id, event) {
-  if (!pickState.drag || pickState.drag.id !== id) return;
-  const sample = canvasView.pickSample(event.clientX, event.clientY);
-  if (!sample || sample.color.a === 0) {
-    hidePickLoupe();
-    return;
-  }
-  pickState.drag.moved = true;
-  pickState.markers.set(id, normalizePickPoint(sample));
-  paletteEditor.setPaletteEntryColorLive(id, sample.color);
-  updatePickLoupe(event);
-  scheduleProcess();
-}
-
-/**
- * @param {number} id
- * @param {PointerEvent} event
- * @param {boolean} moved
- */
-function endPickedMarkerDrag(id, event, moved) {
-  if (!pickState.drag || pickState.drag.id !== id) return;
-  const transaction = pickState.drag;
-  pickState.drag = null;
-  hidePickLoupe();
-  if (!moved) {
-    paletteEditor.renderCurrentPalette();
-    return;
-  }
-  const sample = canvasView.pickSample(event.clientX, event.clientY);
-  if (!sample || sample.color.a === 0) {
-    paletteEditor.restorePaletteSnapshot(transaction.before);
-    toastKey(
-      sample ? 'toast.pickTransparent' : 'toast.pickOutside',
-      {},
-      'error',
-    );
-    return;
-  }
-  if (hasDuplicatePaletteColor(id, sample.color)) {
-    paletteEditor.restorePaletteSnapshot(transaction.before);
-    toastKey('error.duplicateColor', {}, 'error');
-    return;
-  }
-  pickState.markers.set(id, normalizePickPoint(sample));
-  paletteEditor.setPaletteEntryColorLive(id, sample.color);
-  paletteEditor.renderCurrentPalette();
-  processPreview();
-  paletteEditor.pushPaletteHistory(transaction.before);
-  toastKey('toast.colorUpdated', {}, 'success');
-}
-
-/** @param {number} id */
-function cancelPickedMarkerDrag(id) {
-  if (!pickState.drag || pickState.drag.id !== id) return;
-  const transaction = pickState.drag;
-  pickState.drag = null;
-  hidePickLoupe();
-  paletteEditor.restorePaletteSnapshot(transaction.before);
-}
-
-/**
- * @param {number} id
- * @param {string} key
- * @param {number} step
- */
-function nudgePickedMarker(id, key, step) {
-  if (!paletteState.editMode || app.exportBusy) return;
-  const point = pickState.markers.get(id);
-  if (!point) return;
-  const dx = key === 'ArrowLeft' ? -step : key === 'ArrowRight' ? step : 0;
-  const dy = key === 'ArrowUp' ? -step : key === 'ArrowDown' ? step : 0;
-  if (dx === 0 && dy === 0) return;
-  const nextPoint = {
-    u: Math.min(1, Math.max(0, point.u + dx)),
-    v: Math.min(1, Math.max(0, point.v + dy)),
-  };
-  const color = canvasView.pickColorAtImagePoint(nextPoint.u, nextPoint.v);
-  if (!color || color.a === 0) return;
-  const before = paletteEditor.paletteSnapshot();
-  try {
-    app.palette = updatePaletteEntry(app.palette, id, formatHex(color));
-    pickState.markers.set(id, nextPoint);
-    paletteState.selectedId = id;
-    paletteEditor.setHexInput(formatHex(color));
-    paletteEditor.markPaletteEdited();
-    paletteEditor.renderCurrentPalette();
-    processPreview();
-    paletteEditor.pushPaletteHistory(before);
-  } catch (error) {
-    toast(localizeError(error), 'error');
-  }
-}
-
-function handleCanvasPick(event) {
-  if (!pickState.active || pickState.pointerId !== null) return;
-  if (event.pointerType === 'mouse' && event.button !== 0) return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  pickState.pointerId = event.pointerId;
-  canvas.setPointerCapture(event.pointerId);
-  updatePickFeedback(event);
-}
-
-/** @param {PointerEvent} event */
-function handlePickEnd(event) {
-  if (!pickState.active || pickState.pointerId !== event.pointerId) return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  pickState.pointerId = null;
-  if (canvas.hasPointerCapture(event.pointerId)) {
-    canvas.releasePointerCapture(event.pointerId);
-  }
-  const sample = canvasView.pickSample(event.clientX, event.clientY);
-  hidePickPreview();
-  hidePickLoupe();
-  if (!sample) {
-    toastKey('toast.pickOutside', {}, 'error');
-    return;
-  }
-  if (sample.color.a === 0) {
-    toastKey('toast.pickTransparent', {}, 'error');
-    return;
-  }
-  const color = sample.color;
-  // Keep Pick armed after a successful sample so several swatches can be
-  // recolored without pressing the button again. Pick toggles off, and Esc
-  // still stops the mode.
-  paletteEditor.setHexInput(formatHex(color));
-  if (paletteEditor.selectedPaletteEntry()) {
-    paletteEditor.applyPaletteHex(normalizePickPoint(sample));
-  } else {
-    pickState.pendingPoint = normalizePickPoint(sample);
-    toastKey('toast.picked', { hex: formatHex(color) }, 'success');
-  }
-}
-
-/** @param {PointerEvent} event */
-function handlePickCancel(event) {
-  if (pickState.pointerId !== event.pointerId) return;
-  pickState.pointerId = null;
-  hidePickPreview();
-  hidePickLoupe();
 }
 
 function getParams() {
@@ -763,153 +378,6 @@ function getProcessParams() {
   };
 }
 
-function buildUrlState() {
-  const params = controls.getParams();
-  const selectedPalette = paletteSelect?.value ?? 'pico-8';
-  const palette = BUILTIN_PALETTES.some((entry) => entry.id === selectedPalette)
-    ? selectedPalette
-    : 'pico-8';
-  return {
-    mode,
-    method: params.method,
-    colors: params.colors,
-    space: params.space,
-    palette,
-    dither: ditherMethod?.value || 'none',
-    strength: Number(ditherStrength?.value ?? 80),
-    serpentine: ditherSerpentine?.checked ?? true,
-    edgeStop: Number(edgeStop?.value ?? 50),
-    alphaThreshold: Number(alphaThreshold?.value ?? 128),
-    transparentIndex: Number(transparentIndex?.value ?? -1),
-    sortOrder,
-  };
-}
-
-function syncUrlState() {
-  if (applyingUrlState) return;
-  const hash = encodeUrlState(buildUrlState());
-  const next = `${location.pathname}${location.search}#${hash}`;
-  if (`${location.pathname}${location.search}${location.hash}` !== next) {
-    window.history.replaceState(null, '', next);
-  }
-  scheduleSessionSave();
-}
-
-function applyUrlState(state) {
-  applyingUrlState = true;
-  try {
-    const method = /** @type {HTMLSelectElement|null} */ (document.getElementById('method'));
-    const colors = /** @type {HTMLInputElement|null} */ (document.getElementById('colors'));
-    const colorsNumber = /** @type {HTMLInputElement|null} */ (
-      document.getElementById('colors-number')
-    );
-    const space = /** @type {HTMLSelectElement|null} */ (document.getElementById('space'));
-    if (method) method.value = state.method;
-    if (colors) colors.value = String(state.colors);
-    if (colorsNumber) colorsNumber.value = String(state.colors);
-    if (space) space.value = state.space;
-    if (ditherMethod) ditherMethod.value = state.dither;
-    if (ditherStrength) ditherStrength.value = String(state.strength);
-    if (ditherSerpentine) ditherSerpentine.checked = state.serpentine;
-    if (edgeStop) edgeStop.value = String(state.edgeStop);
-    if (alphaThreshold) alphaThreshold.value = String(state.alphaThreshold);
-    if (sortSelect) sortSelect.value = state.sortOrder;
-    sortOrder = state.sortOrder;
-    if (paletteSelect) paletteSelect.value = state.palette;
-
-    setMode(state.mode);
-    paletteState.pendingTransparentIndex =
-      state.mode === 'map' || state.transparentIndex >= 0 ? state.transparentIndex : null;
-    paletteEditor.renderCurrentPalette();
-    updateDitherLabels();
-    updateDitherControls();
-  } finally {
-    applyingUrlState = false;
-  }
-}
-
-function buildSessionRecord() {
-  if (!lastFile) return null;
-  return {
-    version: SESSION_VERSION,
-    image: {
-      name: lastFile instanceof File ? lastFile.name : 'image',
-      type: lastFile.type || 'application/octet-stream',
-      size: lastFile.size,
-    },
-    state: {
-      settings: buildUrlState(),
-      paletteValue: paletteSelect?.value ?? 'pico-8',
-      paletteName: fixedName || importedName || '',
-      palette: clonePalette(app.palette),
-      paletteEdited: app.paletteEdited,
-      sortOrder,
-      selectedId: paletteState.selectedId,
-      transparentId: paletteEditor.currentTransparentId(),
-      markers: pickedMarkersToArray(pickState.markers),
-      editing: paletteState.editMode,
-      history: cloneHistory(paletteState.history),
-    },
-  };
-}
-
-async function saveCurrentSession() {
-  if (restoringSession || !sessionPersistence || !lastFile || !app.hasResult) return;
-  const file = lastFile;
-  try {
-    // Store bytes, not a File or Blob. Mobile browsers may not preserve a picked
-    // file's backing data across a reload even when IndexedDB returns a Blob.
-    const bytes = await file.arrayBuffer();
-    if (lastFile !== file || !sessionPersistence) return;
-    if (bytes.byteLength === 0 || (file.size > 0 && bytes.byteLength !== file.size)) {
-      throw new Error('saved image bytes are incomplete');
-    }
-    const record = buildSessionRecord();
-    if (!record) return;
-    record.image.bytes = bytes;
-    record.image.size = bytes.byteLength;
-    await saveSession(record);
-    sessionStatusKey = 'session.saved';
-    renderSessionStatus();
-  } catch (error) {
-    if (!sessionSaveWarned) {
-      sessionSaveWarned = true;
-      toastKey(
-        'toast.sessionSaveFailed',
-        { detail: localizeError(error) },
-        'error',
-      );
-    }
-    sessionPersistence = false;
-  }
-}
-
-function renderSessionStatus() {
-  if (sessionStatus && sessionStatusKey) {
-    sessionStatus.textContent = t(sessionStatusKey);
-  }
-}
-
-async function forgetSavedSession() {
-  try {
-    await clearSession();
-    lastFile = null;
-    sessionPersistence = false;
-    sessionStatusKey = 'session.cleared';
-    renderSessionStatus();
-    toastKey('toast.sessionCleared', {}, 'success');
-  } catch (error) {
-    toastKey(
-      'toast.sessionClearFailed',
-      { detail: localizeError(error) },
-      'error',
-    );
-  }
-}
-
-/**
- * @param {'extract'|'map'} next
- */
 function setMode(next) {
   if (next !== 'extract' && next !== 'map') return;
   paletteEditor.resetPaletteEdits();
@@ -933,7 +401,7 @@ function setMode(next) {
     transparentIndex.value = '0';
   }
   if (app.preview) processPreview();
-  syncUrlState();
+  sessionUrl?.syncUrlState();
 }
 
 /**
@@ -1027,7 +495,7 @@ function processPreview() {
 async function loadFile(file, restore = null) {
   const requestId = ++loadRequestId;
   try {
-    if (!restore) sessionPersistence = true;
+    if (!restore) sessionState.persistence = true;
     exportController.cancelExport();
     setStatusMessage('status.decoding');
     const bitmap = await decodeBitmap(file);
@@ -1141,8 +609,8 @@ async function loadFile(file, restore = null) {
   } catch (error) {
     if (requestId !== loadRequestId) return;
     if (restore) {
-      restoringSession = false;
-      sessionPersistence = false;
+      sessionState.restoringSession = false;
+      sessionState.persistence = false;
       clearSession().catch(() => {
         setStatusMessage('status.savedSessionCouldNotClear');
       });
@@ -1278,7 +746,7 @@ function refreshDynamicUi() {
   paletteEditor.updatePaletteEditor();
   paletteEditor.renderPaletteStatus();
   paletteEditor.renderCustomPaletteOption();
-  renderSessionStatus();
+  sessionUrl?.renderStatus();
   renderOriginalLabels();
   if (canvasEmpty) canvasEmpty.textContent = t('canvas.processing');
   paletteEditor.refreshHint();
@@ -1294,7 +762,7 @@ const controls = initControls({
   onChange: () => {
     if (mode === 'extract') paletteEditor.resetPaletteEdits();
     processPreview();
-    syncUrlState();
+    sessionUrl?.syncUrlState();
   },
 });
 initTooltips();
@@ -1318,109 +786,21 @@ document.getElementById('fit-view')?.addEventListener('click', () => canvasView.
 document.getElementById('zoom-100')?.addEventListener('click', () => canvasView.zoom100());
 document.getElementById('zoom-in')?.addEventListener('click', () => canvasView.zoomIn());
 paletteEditor.bindEvents();
-canvas.addEventListener('pointerdown', handleCanvasPick, { capture: true });
-canvas.addEventListener('pointerup', handlePickEnd, { capture: true });
-canvas.addEventListener('pointercancel', handlePickCancel, { capture: true });
-canvas.addEventListener('lostpointercapture', handlePickCancel);
-frame.addEventListener('pointermove', updatePickFeedback);
-frame.addEventListener('pointerleave', () => {
-  if (pickState.pointerId === null) {
-    hidePickPreview();
-    hidePickLoupe();
-  }
-});
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && pickState.drag) {
-    event.preventDefault();
-    pickedMarkersView?.cancelDrag();
-    return;
-  }
-  if (event.key === 'Escape' && pickState.active) {
-    event.preventDefault();
-    stopPickMode();
-  }
-});
+palettePicker?.bindEvents();
 
 const scheduleProcess = debounce(processPreview, 150);
-const syncUrlStateDebounced = debounce(syncUrlState, 150);
-const scheduleSessionSave = debounce(saveCurrentSession, 500);
+const syncUrlStateDebounced = debounce(() => sessionUrl?.syncUrlState(), 150);
+const scheduleSessionSave = debounce(
+  () => sessionUrl?.saveCurrentSession(),
+  500,
+);
 
 populateBuiltinPalettes();
 updateDitherLabels();
 updateDitherControls();
 paletteEditor.updatePaletteEditor();
 
-async function initializeSessionAndUrl() {
-  const restoreGuard = loadRequestId;
-  const hashState = decodeUrlState(location.hash);
-  let record = null;
-  try {
-    record = await loadSession();
-  } catch (error) {
-    if (loadRequestId !== restoreGuard) return;
-    sessionPersistence = false;
-    toastKey(
-      'toast.sessionUnavailable',
-      { detail: localizeError(error) },
-      'error',
-    );
-  }
-  // Dropping an image while the session is being read is a newer user action.
-  // Do not apply saved settings or start a restore that would replace it.
-  if (loadRequestId !== restoreGuard) return;
-  if (!record) {
-    applyUrlState(hashState);
-    return;
-  }
-  if (!isValidSessionRecord(record)) {
-    clearSession().catch((error) => {
-      toastKey(
-        'toast.sessionResetFailed',
-        { detail: localizeError(error) },
-        'error',
-      );
-    });
-    applyUrlState(hashState);
-    return;
-  }
-
-  const sessionSettings = record.state.settings;
-  const hashMatches =
-    !location.hash || encodeUrlState(hashState) === encodeUrlState(sessionSettings);
-  applyUrlState(hashMatches ? sessionSettings : hashState);
-  restoringSession = true;
-  let bytes = null;
-  if (record.version === SESSION_VERSION) {
-    bytes = record.image.bytes;
-  } else if (record.image.blob instanceof Blob) {
-    try {
-      bytes = await record.image.blob.arrayBuffer();
-    } catch {
-      bytes = null;
-    }
-  }
-  if (!(bytes instanceof ArrayBuffer) || bytes.byteLength === 0) {
-    restoringSession = false;
-    sessionPersistence = false;
-    clearSession().catch((error) => {
-      toastKey('toast.sessionResetFailed', { detail: localizeError(error) }, 'error');
-    });
-    toastKey('toast.sessionRestoreFailed', {}, 'error');
-    setStatusMessage('status.sessionRestoreFailed');
-    return;
-  }
-  const file = new File([bytes], record.image.name, {
-    type: record.image.type || 'application/octet-stream',
-  });
-  await loadFile(file, hashMatches ? record.state : null);
-}
-
-initializeSessionAndUrl();
-sessionClear?.addEventListener('click', forgetSavedSession);
-window.addEventListener('hashchange', () => {
-  if (applyingUrlState) return;
-  applyUrlState(decodeUrlState(location.hash));
-});
+sessionUrl?.bindEvents();
 
 modeExtract?.addEventListener('click', () => setMode('extract'));
 modeMap?.addEventListener('click', () => setMode('map'));
@@ -1428,7 +808,7 @@ modeMap?.addEventListener('click', () => setMode('map'));
 paletteSelect?.addEventListener('change', () => {
   if (!loadTargetPalette(paletteSelect.value)) return;
   if (mode === 'map' && app.preview) processPreview();
-  syncUrlState();
+  sessionUrl?.syncUrlState();
 });
 
 importPalette?.addEventListener('click', () => paletteInput?.click());
@@ -1476,7 +856,7 @@ paletteInput?.addEventListener('change', async () => {
 ditherMethod?.addEventListener('change', () => {
   updateDitherControls();
   scheduleProcess();
-  syncUrlState();
+  sessionUrl?.syncUrlState();
 });
 ditherStrength?.addEventListener('input', () => {
   updateDitherLabels();
@@ -1485,7 +865,7 @@ ditherStrength?.addEventListener('input', () => {
 });
 ditherSerpentine?.addEventListener('change', () => {
   scheduleProcess();
-  syncUrlState();
+  sessionUrl?.syncUrlState();
 });
 edgeStop?.addEventListener('input', () => {
   updateDitherLabels();
@@ -1498,9 +878,9 @@ alphaThreshold?.addEventListener('input', () => {
   syncUrlStateDebounced();
 });
 transparentIndex?.addEventListener('change', () => {
-  renderPickedMarkers();
+  palettePicker?.renderMarkers();
   scheduleProcess();
-  syncUrlState();
+  sessionUrl?.syncUrlState();
 });
 
 function updateDitherLabels() {
