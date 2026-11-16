@@ -642,7 +642,13 @@ reachable when Edit is off. Edit is a pressed-toggle button with a fixed label; 
 its label to Done rewrapped the bar and resized the canvas. Its editor row lives in a
 0fr/1fr grid slot that opens over 150 ms, so the canvas refits in step instead of jumping.
 The editor uses an icon-only Pick button; when Pick is armed, both Pick and Edit switch to
-the accent background and an inset accent ring instead of relying on the hint alone.
+the accent background and an inset accent ring instead of relying on the hint alone. Add,
+Remove, and Lock are icon-only buttons with action labels: Add is a plus, Remove a trash
+can, and Lock shows an open or closed padlock. Lock uses the same accent pressed state while
+the selected entry is locked. The HEX field has a fixed 7.5 rem width so the controls stay
+grouped on the left instead of stretching across the card. Clicking any empty part of the
+palette card, not only the strip, clears the selection; controls and swatches keep their
+own action.
 
 ```css
 .peiq-palette-panel {
@@ -672,11 +678,28 @@ the accent background and an inset accent ring instead of relying on the hint al
   font-size: 0.75rem;
 }
 .peiq-palette-pick[aria-pressed="true"],
-.peiq-palette-edit[aria-pressed="true"] {
+.peiq-palette-edit[aria-pressed="true"],
+.peiq-palette-lock[aria-pressed="true"] {
   background: var(--peiq-accent-bg-hover);
   color: var(--peiq-accent);
   box-shadow: inset 0 0 0 1px var(--peiq-accent);
 }
+.peiq-palette-editor .peiq-input {
+  flex: 0 0 7.5rem;
+  width: 7.5rem;
+  max-width: 100%;
+}
+.peiq-palette-tool__icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.peiq-palette-lock[aria-pressed="false"] .peiq-palette-lock__closed,
+.peiq-palette-lock[aria-pressed="true"] .peiq-palette-lock__open { display: none; }
 .peiq-palette-editor-slot {
   display: grid;
   grid-template-rows: 0fr;

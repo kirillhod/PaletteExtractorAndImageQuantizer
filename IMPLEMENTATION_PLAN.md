@@ -948,11 +948,14 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   swatches, HEX list, and strip export follow it. Perceptual modes are labeled by their
   result, not by the metric name; Oklab and CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds an icon **Pick** button plus **Apply / Add / ← / → / Remove / Lock**. The palette
-  bar carries compact undo/redo icon buttons next to Edit. Edit is a toggle button with a
-  visible pressed state; its label does not change, so the bar never rewraps. The editor
-  row reveals with a 150 ms height transition and the canvas refits each frame, so opening
-  or closing it never blinks or jumps. **Pick** is an icon button with
+  adds an icon **Pick** button plus text **Apply**, text arrows **← / →**, and icon
+  **Add / Remove / Lock** buttons with action labels. Add is a plus, Remove a trash can,
+  and Lock shows an open or closed padlock with the same accent pressed state while the
+  entry is locked. The HEX field is fixed at 7.5 rem so the controls stay grouped on the
+  left. The palette bar carries compact undo/redo icon buttons next to Edit. Edit is a
+  toggle button with a visible pressed state; its label does not change, so the bar never
+  rewraps. The editor row reveals with a 150 ms height transition and the canvas refits
+  each frame, so opening or closing it never blinks or jumps. **Pick** is an icon button with
   a visible pressed state; it arms a canvas eyedropper with a floating color/HEX
   preview under the pointer: press and drag to sample the visible preview (the reduced
   side when the point is right of the divider), watch the magnified loupe, and release to
@@ -967,8 +970,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   stored by palette ID as normalized image coordinates, so reordering and locking do not
   move it; removing the entry or making it transparent removes it. Markers persist in the
   session but never enter palette JSON or hashes.
-  **Clearing the selection:** clicking empty space in the palette strip, or pressing
-  `Esc` while the palette has focus, clears the edited entry and HEX field. With no entry
+  **Clearing the selection:** clicking any empty part of the palette card (bar, strip
+  gaps, or editor row), or pressing `Esc` while the palette has focus, clears the edited
+  entry and HEX field. Controls and swatches keep their own action. With no entry
   selected, Pick fills the HEX field for **Add** instead of overwriting an existing color.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
@@ -2055,6 +2059,7 @@ A change is done only when:
 | 2026-11-16 | Preserve a restored palette's own name and target through reloads | Session saves used the startup fixed-palette name, so a restored import was renamed PICO-8 on the next reload and its colors were unavailable when switching back to Imported. The record now keeps the name the UI shows and restores the imported colors; Map also loads the palette named by the select, including a URL hash. |
 | 2026-11-16 | Keep the image centered when the frame resizes without a refit | After zoom or pan, collapsing or opening the rail and the palette editor changed the frame width and height while the offsets stayed put, pushing the image off-center. The resize observer now shifts the offsets by half the size delta; fit mode still refits normally. |
 | 2026-11-16 | Explain mapping in the Map section and Help | "Map uses this palette as-is" described the palette, not the operation. The hint and a new Help section now state that every pixel becomes the nearest target color, which preview half is the result, and when transparency appears. |
+| 2026-11-16 | Clear the palette selection from the whole card and compact the editor | The old rule only cleared from the thin strip, so most empty space did nothing. Any empty part of the palette card now clears the selection while controls and swatches keep their action. The HEX field is fixed at 7.5 rem so it no longer pushes the controls right, and Add, Remove, and Lock became icon buttons; Lock shows an open or closed padlock and its action label names the next step. |
 
 ---
 

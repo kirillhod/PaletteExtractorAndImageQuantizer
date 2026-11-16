@@ -242,8 +242,13 @@ export function createPaletteEditor(deps) {
     }
     if (paletteLock) {
       paletteLock.disabled = !selected || app.exportBusy;
-      paletteLock.setAttribute('aria-pressed', String(Boolean(selected?.locked)));
-      paletteLock.textContent = selected?.locked ? t('palette.unlock') : t('palette.lock');
+      const locked = Boolean(selected?.locked);
+      const actionKey = locked ? 'palette.unlock' : 'palette.lock';
+      paletteLock.setAttribute('aria-pressed', String(locked));
+      paletteLock.setAttribute('data-i18n-aria-label', actionKey);
+      paletteLock.setAttribute('data-i18n-title', actionKey);
+      paletteLock.setAttribute('aria-label', t(actionKey));
+      paletteLock.setAttribute('title', t(actionKey));
     }
     if (paletteUndo) {
       paletteUndo.disabled =
@@ -621,10 +626,12 @@ export function createPaletteEditor(deps) {
     });
 
     paletteEdit?.addEventListener('click', () => setPaletteEditMode(!state.editMode));
-    paletteStrip?.addEventListener('click', (event) => {
+    palettePanel?.addEventListener('click', (event) => {
       if (!state.editMode) return;
       const target = /** @type {Element|null} */ (event.target);
-      if (target?.closest('.peiq-swatch')) return;
+      // Any empty part of the palette card clears the selection, including the bar,
+      // the strip gaps, and the editor row. Controls and swatches keep their action.
+      if (target?.closest('button, input, select, textarea, label, a, .peiq-swatch')) return;
       clearPaletteSelection();
     });
     palettePanel?.addEventListener('keydown', (event) => {

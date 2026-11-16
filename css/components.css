@@ -159,6 +159,17 @@
   outline-offset: 2px;
 }
 
+.peiq-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.peiq-icon-btn:disabled:hover {
+  background: transparent;
+  color: var(--peiq-text-secondary);
+}
+
 .peiq-icon-btn {
   font-size: 0.75rem;
   font-weight: 600;
@@ -537,8 +548,9 @@
 }
 
 .peiq-palette-editor .peiq-input {
-  flex: 1 1 120px;
-  width: auto;
+  flex: 0 0 7.5rem;
+  width: 7.5rem;
+  max-width: 100%;
   min-height: 32px;
   padding: 0.25rem 0.5rem;
   font-size: 0.8125rem;
@@ -569,14 +581,16 @@
 }
 
 .peiq-palette-pick[aria-pressed="true"],
-.peiq-palette-edit[aria-pressed="true"] {
+.peiq-palette-edit[aria-pressed="true"],
+.peiq-palette-lock[aria-pressed="true"] {
   background: var(--peiq-accent-bg-hover);
   color: var(--peiq-accent);
   box-shadow: inset 0 0 0 1px var(--peiq-accent);
 }
 
 .peiq-palette-pick[aria-pressed="true"]:hover,
-.peiq-palette-edit[aria-pressed="true"]:hover {
+.peiq-palette-edit[aria-pressed="true"]:hover,
+.peiq-palette-lock[aria-pressed="true"]:hover {
   background: var(--peiq-accent-bg-hover);
   color: var(--peiq-accent-hover);
 }
@@ -589,6 +603,25 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.peiq-palette-tool {
+  flex: 0 0 auto;
+}
+
+.peiq-palette-tool__icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.peiq-palette-lock[aria-pressed="false"] .peiq-palette-lock__closed,
+.peiq-palette-lock[aria-pressed="true"] .peiq-palette-lock__open {
+  display: none;
 }
 
 .peiq-qa-stats {
