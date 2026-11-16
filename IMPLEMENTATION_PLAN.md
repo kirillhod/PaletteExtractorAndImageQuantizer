@@ -939,7 +939,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   preview under the pointer: press and drag to sample the visible preview (the reduced
   side when the point is right of the divider), watch the magnified loupe, and release to
   apply it to the selected entry or fill the HEX field for **Add**. A mouse click applies
-  on release at the same point. `Esc` cancels.
+  on release at the same point. **Pick stays armed after a successful sample** so several
+  swatches can be recolored without pressing the button again; the button toggles it off
+  and `Esc` stops it.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Adding, removing, or
@@ -1792,6 +1794,8 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
       orient dark-to-light; DCCW single-palette sorting with 2-opt instead of LKH.
 - [x] Keep locks, URL/session round-trip, IDs, and export indices deterministic; add
       Help copy and EN/RU labels without exposing metric names in the control.
+- [x] Keep Pick armed after a successful sample so several swatches can be recolored
+      without pressing the button again.
 - **Exit:** pending version bump and tag after review; `npm test` 143 passing and the
   browser pass at 1280/360 px are green.
 
@@ -1930,6 +1934,7 @@ A change is done only when:
 | 2026-11-15 | Release 1.3.1: M6.2 complete | Saved-image byte storage, v1 migration, and the decode fallback verified with repeated reloads and a corrupt record; 135 tests |
 | 2026-11-16 | Allow CIEDE2000 for palette ordering; keep Oklab for extraction, mapping, and dithering | These stages optimize different things: clustering needs a vector space with centroids and fast per-pixel distances, while ordering a fixed 1–256 color palette is a one-off pairwise comparison. Splitting the metric removes the apparent conflict without changing nearest-color assignment. |
 | 2026-11-16 | Add perceptual, perceptual-path, and perceptual-flow palette orders | Perceptual starts from the lightness order and refines it with 2-opt; path fixes the darkest and lightest ends; flow uses the DCCW cycle-cut idea. All three use deterministic CIEDE2000 2-opt, preserve locks, and only change order and export indices. |
+| 2026-11-16 | Keep Pick armed after a successful sample | Re-arming the eyedropper for every swatch was unnecessary friction; the button and Esc still stop the mode. |
 
 ---
 

@@ -110,7 +110,7 @@ const en = {
   'palette.editHint':
     'Select a swatch. Pick samples the canvas; Esc cancels. ← / → change export order only; add, remove, or edit changes the preview.',
   'palette.pickHint':
-    'Tap or drag on the image to pick a color. Release to apply; tap Pick again or press Esc to cancel.',
+    'Pick stays active: tap or drag on the image for each swatch; release applies the color. Tap Pick again or press Esc to stop.',
   'palette.swatchCopy': 'Copy {hex}',
   'palette.swatchEdit': 'Edit {hex}',
   'palette.lockedSuffix': ' (locked)',
@@ -549,7 +549,7 @@ const ru = {
   'palette.editHint':
     'Выберите цвет. Пипетка берёт цвет с изображения; Esc отменяет. ← / → меняют только порядок экспорта; добавление, удаление или изменение влияют на предпросмотр.',
   'palette.pickHint':
-    'Коснитесь изображения или ведите палец, чтобы выбрать цвет. Отпустите, чтобы применить; нажмите «Пипетка» ещё раз или Esc, чтобы отменить.',
+    'Пипетка остаётся включённой: коснитесь изображения или ведите палец для каждого свотча; отпускание применяет цвет. Нажмите «Пипетка» ещё раз или Esc, чтобы выключить.',
   'palette.swatchCopy': 'Скопировать {hex}',
   'palette.swatchEdit': 'Изменить {hex}',
   'palette.lockedSuffix': ' (заблокирован)',

@@ -850,7 +850,9 @@ function handlePickEnd(event) {
     toastKey('toast.pickTransparent', {}, 'error');
     return;
   }
-  stopPickMode();
+  // Keep Pick armed after a successful sample so several swatches can be
+  // recolored without pressing the button again. Pick toggles off, and Esc
+  // still stops the mode.
   if (paletteHex) paletteHex.value = formatHex(color);
   if (selectedPaletteEntry()) {
     applyPaletteHex();

@@ -272,9 +272,9 @@ and the change is committed locally with a descriptive body (plan §16).
 - Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
   ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
   `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, loupe-based canvas
-  picking, add/remove, locks, ←/→ manual order, and touch undo/redo icons, perceptual
-  palette ordering (smooth, color path, flow), CIEDE2000 quality stats/error map/worst
-  pixels, versioned URL settings,
+  picking, add/remove, locks, ←/→ manual order, and touch undo/redo icons, sticky
+  eyedropper picking, perceptual palette ordering (smooth, color path, flow), CIEDE2000
+  quality stats/error map/worst pixels, versioned URL settings,
   IndexedDB session restore (image, palette, locks, undo/redo),
   English/Russian UI with auto-detection and a header language toggle, canonical and
   social SEO metadata, JSON-LD, themes, fixed desktop frame with a scrollable rail,
