@@ -64,6 +64,7 @@ layout values, motion, and responsive rules.
 /assets/             blue-noise-64.bin, Inter (OFL) + license, own artwork
 /test/               node --test suites and fixture helpers
 /tools/              dev-server.mjs, gen-blue-noise.mjs
+/.opencode/skills/   agent procedures: context map, browser check, release
 /.github/workflows/  ci.yml, pages.yml
 ```
 
@@ -190,7 +191,8 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - Every export needs an encode → decode → compare round-trip test.
 - Golden hashes change only intentionally, with a decision-log entry.
 - UI changes need a manual browser pass at 1280 px and 360 px, keyboard-only, plus the
-  relevant items from plan §10.6.
+  relevant items from plan §10.6. Use skill `peiq-browser-check` (headless Chrome + CDP)
+  instead of writing a new driver.
 - Theme changes need `test/theme.test.js` parity plus a manual auto → light → dark →
   reload check in both themes.
 - Report the command and its result. “Should work” is not verification.
@@ -235,15 +237,10 @@ and the change is committed locally with a descriptive body (plan §16).
 - Release commits that bump the version get an annotated local tag
   (`git tag -a v1.0.0 -m "PaletteExtractorAndImageQuantizer 1.0.0"`). The tag,
   `package.json`, and `APP_VERSION` must match. Never move, delete, or reuse a tag.
-- **Version bump checklist.** The tagged commit must contain both `package.json` and
-  `js/core/version.js` with matching versions; a bump updates both in that commit. Then
-  run `npm test`, commit, and tag that exact commit:
-  ```bash
-  git tag -a v0.1.0 -m "PaletteExtractorAndImageQuantizer 0.1.0"
-  git show v0.1.0:package.json
-  git show v0.1.0:js/core/version.js
-  ```
+- **Version bump.** The tagged commit must contain both `package.json` and
+  `js/core/version.js` with matching versions; a bump updates both in that commit.
   Never tag a commit that lacks either update. Tags stay local; do not push them.
+  The full checklist is skill `peiq-release`.
 - Do not rewrite history. Check `git status` before committing; never commit generated
   files (except the blue-noise asset), logs, OS junk, or secrets.
 - One coherent change per commit; keep refactors separate from behavior changes.
@@ -262,30 +259,23 @@ and the change is committed locally with a descriptive body (plan §16).
 8. Do not add dependencies, services, or telemetry to work around a problem.
 9. Do not refactor unrelated code or “improve” contracts opportunistically.
 10. Leave the repository green; fix flakiness instead of skipping silently.
+11. Keep context small. Load skill `peiq-context-map` to locate files and specs, grep
+    before reading, read large files in slices, and never read
+    `IMPLEMENTATION_PLAN.md`, `DESIGN.md`, `RESEARCH_REPORT.md`, `js/main.js`, or
+    `js/content/messages.js` end to end. Send “where/how” questions to the `explore`
+    subagent and keep the main context for edits.
 
 ## 12. Current state and next task
 
-- Plan: 1.3.1 complete; `DESIGN.md` complete (dark + light themes, auto + 3-state toggle);
-  M0 complete to `v0.1.0`; M1 to `v0.2.2`; M2 to `v0.3.0`; M3 to `v0.4.0`; M4 to `v1.0.0`;
-  M5 to `v1.1.0`; M6 to `v1.2.0`; M6.1 to `v1.3.0`; M6.2 to `v1.3.1` (148 tests).
-  Perceptual palette ordering, picked-color anchors, the compact desktop frame, validated
-  clipboard copy, and palette-selection clearing are implemented but not yet released.
-- Working: five extractors (Wu default), fixed palettes + import, exact/LUT mapping,
-  ED/Bayer/blue-noise dithering, indexed PNG with `tRNS`, strip/reduced and
-  `.hex`/`.gpl`/`.json` exports, palette editor with HEX editing, loupe-based canvas
-  picking, add/remove, locks, ←/→ manual order, clear selection by empty-strip click or
-  palette-scoped Esc, touch undo/redo icons, sticky
-  eyedropper picking, picked-color markers with drag and arrow-key nudging, perceptual
-  palette ordering (smooth, color path, flow), CIEDE2000 quality stats/error map/worst
-  pixels, versioned URL settings,
-  IndexedDB session restore (image, palette, locks, undo/redo),
-  English/Russian UI with auto-detection and a header language toggle, canonical and
-  social SEO metadata, JSON-LD, themes, compact desktop frame with a scrollable rail,
-  left export column with Save and Copy on every validated result, contextual tooltips,
-  Help drawer with references and credits, LAN dev-server URLs.
-- Next: release the perceptual ordering, picked-marker, compact-frame, validated-copy, and
-  selection-clearing changes when requested; otherwise M7 — later / not planned for v1.x.
-- Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker exist.
+- Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
+  plan §18. Do not duplicate feature lists here.
+- Released `v1.3.1`; 148 tests. Perceptual palette ordering, picked-color anchors, the
+  compact desktop frame, validated Copy on every export, and palette-selection clearing
+  are implemented but unreleased.
+- Next: release those changes when requested; otherwise M7 — later / not planned for
+  v1.x.
+- Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker
+  exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
 
 ## 13. Useful commands
