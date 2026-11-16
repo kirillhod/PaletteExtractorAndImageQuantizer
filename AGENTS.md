@@ -51,7 +51,7 @@ layout values, motion, and responsive rules.
 
 ```text
 /                    index.html, .nojekyll, package.json, LICENSE, README.md,
-                     plan/design/research/agent docs
+                     plan/design/research docs
 /css/                tokens, base, layout, components, canvas, learn, responsive
 /js/main.js          bootstrap, feature detection, worker wiring
 /js/theme-init.js    classic head script: resolve theme before paint
@@ -63,8 +63,9 @@ layout values, motion, and responsive rules.
                      palettes, pipeline
 /assets/             blue-noise-64.bin, Inter (OFL) + license, own artwork
 /test/               node --test suites and fixture helpers
-/tools/              dev-server.mjs, gen-blue-noise.mjs
-/.opencode/skills/   agent procedures: context map, browser check, release
+/tools/              dev-server.mjs, gen-blue-noise.mjs, cdp.mjs
+/docs/agent/         agent procedures: context map, browser check, release
+/.opencode/skills/   thin adapters that register docs/agent procedures as skills
 /.github/workflows/  ci.yml, pages.yml
 ```
 
@@ -191,8 +192,8 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - Every export needs an encode → decode → compare round-trip test.
 - Golden hashes change only intentionally, with a decision-log entry.
 - UI changes need a manual browser pass at 1280 px and 360 px, keyboard-only, plus the
-  relevant items from plan §10.6. Use skill `peiq-browser-check` (headless Chrome + CDP)
-  instead of writing a new driver.
+  relevant items from plan §10.6. Follow [`docs/agent/browser-check.md`](docs/agent/browser-check.md)
+  (skill `peiq-browser-check`) instead of writing a new driver.
 - Theme changes need `test/theme.test.js` parity plus a manual auto → light → dark →
   reload check in both themes.
 - Report the command and its result. “Should work” is not verification.
@@ -240,7 +241,7 @@ and the change is committed locally with a descriptive body (plan §16).
 - **Version bump.** The tagged commit must contain both `package.json` and
   `js/core/version.js` with matching versions; a bump updates both in that commit.
   Never tag a commit that lacks either update. Tags stay local; do not push them.
-  The full checklist is skill `peiq-release`.
+  The full checklist is [`docs/agent/release.md`](docs/agent/release.md) (skill `peiq-release`).
 - Do not rewrite history. Check `git status` before committing; never commit generated
   files (except the blue-noise asset), logs, OS junk, or secrets.
 - One coherent change per commit; keep refactors separate from behavior changes.
@@ -259,7 +260,8 @@ and the change is committed locally with a descriptive body (plan §16).
 8. Do not add dependencies, services, or telemetry to work around a problem.
 9. Do not refactor unrelated code or “improve” contracts opportunistically.
 10. Leave the repository green; fix flakiness instead of skipping silently.
-11. Keep context small. Load skill `peiq-context-map` to locate files and specs, use
+11. Keep context small. Load skill `peiq-context-map` or read
+    [`docs/agent/context-map.md`](docs/agent/context-map.md) to locate files and specs, use
     `node tools/spec.mjs <plan|design|research> <section>` instead of reading a whole
     document, grep before reading, and read large files in slices. Never read
     `IMPLEMENTATION_PLAN.md`, `DESIGN.md`, `RESEARCH_REPORT.md`, `js/main.js`, or a

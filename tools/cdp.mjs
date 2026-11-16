@@ -7,9 +7,9 @@
  *   chrome --headless=new --remote-debugging-port=9229 --user-data-dir=<temp>
  *
  * Usage:
- *   node cdp.mjs eval <script.js> [--width=360] [--height=800] [--dpr=3] [--port=9229]
- *   node cdp.mjs call <Domain.method> [json|@params.json] [--port=9229]
- *   node cdp.mjs shot <out.png> [--width=1280] [--height=900] [--dpr=1]
+ *   node tools/cdp.mjs eval <script.js> [--width=360] [--height=800] [--dpr=3] [--port=9229]
+ *   node tools/cdp.mjs call <Domain.method> [json|@params.json] [--port=9229]
+ *   node tools/cdp.mjs shot <out.png> [--width=1280] [--height=900] [--dpr=1]
  *
  * `eval` runs the file as one expression with top-level await support:
  *   (async () => ({ title: document.title }))()
