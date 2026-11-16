@@ -39,9 +39,9 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 156 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
+| Tests | 157 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
 | Version | `js/core/version.js`; `v1.4.0` tagged; M6.3–M6.5 complete |
-| Next | M7 — later / not planned for v1.x |
+| Next | Ship the Help version fix with the next release; otherwise M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
