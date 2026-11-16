@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.4.0
-**Product version at completion:** 1.4.0
+**Plan version:** 1.5.0
+**Product version at completion:** 1.5.0
 **Status:** Approved for implementation
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -40,8 +40,8 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
 | Tests | 166 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references |
-| Version | `js/core/version.js`; `v1.4.0` tagged; M6.3–M6.5 complete |
-| Next | Ship the Help version fix and post-release polish with the next release; otherwise M7 — later / not planned for v1.x |
+| Version | `js/core/version.js`; `v1.5.0` tagged; M6.3–M6.6 complete |
+| Next | M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -1893,6 +1893,20 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** `1.4.0` tagged; `npm test` 156 passing and the browser pass at 1280/360 px
   are green.
 
+### M6.6 — v1.5.0: post-release UI polish (complete)
+
+- [x] Align the Help drawer header with the page header and widen the desktop drawer.
+- [x] Make the hero background full-bleed and refresh the README screenshots from the
+      current UI.
+- [x] Stabilize the palette editor reveal, add the collapsible settings rail, and keep
+      palette and settings changes on one undo timeline.
+- [x] Default the transparent index to None in Map, preserve a restored imported palette's
+      name and colors, and keep the image centered when the frame resizes.
+- [x] Explain palette mapping in the Map hint and Help; compact the HEX field and use icon
+      Add, Remove, and Lock buttons.
+- **Exit:** `1.5.0` tagged; `npm test` 166 passing and the browser pass at 1280/360 px
+  are green.
+
 ### M7 — Later / not planned for v1.x
 
 Palette roles, contrast matrix, presets, palette swap, manifest/QA JSON, `.pal`/`.css`/
@@ -1953,6 +1967,17 @@ A change is done only when:
       filenames, and `ALGORITHM_VERSION` stay compatible; 1.3.1 URLs and sessions load.
 - [x] `APP_VERSION` and `package.json` = `1.4.0`.
 - [x] Annotated tag `v1.4.0` on the version-bump commit.
+
+### v1.5.0
+
+- [x] `npm test` 166 passing.
+- [x] Browser pass at 1280 px and 360 px: Help header, settings rail and canvas centering,
+      Map defaults and mapping copy, imported session restore, palette editor icons, both
+      themes, keyboard.
+- [x] URL `v=1`, session record v2, palette JSON v1, export filenames, and
+      `ALGORITHM_VERSION` stay compatible; 1.4.0 URLs and sessions load.
+- [x] `APP_VERSION` and `package.json` = `1.5.0`.
+- [x] Annotated tag `v1.5.0` on the version-bump commit.
 
 ---
 
@@ -2060,6 +2085,7 @@ A change is done only when:
 | 2026-11-16 | Keep the image centered when the frame resizes without a refit | After zoom or pan, collapsing or opening the rail and the palette editor changed the frame width and height while the offsets stayed put, pushing the image off-center. The resize observer now shifts the offsets by half the size delta; fit mode still refits normally. |
 | 2026-11-16 | Explain mapping in the Map section and Help | "Map uses this palette as-is" described the palette, not the operation. The hint and a new Help section now state that every pixel becomes the nearest target color, which preview half is the result, and when transparency appears. |
 | 2026-11-16 | Clear the palette selection from the whole card and compact the editor | The old rule only cleared from the thin strip, so most empty space did nothing. Any empty part of the palette card now clears the selection while controls and swatches keep their action. The HEX field is fixed at 7.5 rem so it no longer pushes the controls right, and Add, Remove, and Lock became icon buttons; Lock shows an open or closed padlock and its action label names the next step. |
+| 2026-11-16 | Release 1.5.0: M6.6 complete | The post-release polish ships as one minor release: Help header and wide drawer, full-bleed hero, current README captures, collapsible settings rail, Map transparency default and mapping explanation, restored palette identity, centered resize, and the compact icon editor. URL v1, session v2, palette JSON v1, filenames, and `ALGORITHM_VERSION` stay compatible; 166 tests |
 
 ---
 
