@@ -75,6 +75,7 @@ export function createPaletteEditor(deps) {
     document.getElementById('palette-edit')
   );
   const paletteEditor = document.getElementById('palette-editor');
+  const paletteEditorSlot = document.getElementById('palette-editor-slot');
   const paletteHex = /** @type {HTMLInputElement|null} */ (
     document.getElementById('palette-hex')
   );
@@ -198,11 +199,18 @@ export function createPaletteEditor(deps) {
     const selected = selectedPaletteEntry();
     const active = state.editMode && app.hasResult && app.palette.length > 0;
     if (paletteEdit) {
-      paletteEdit.textContent = state.editMode ? t('palette.done') : t('palette.edit');
+      // The pressed state, not the label, reports the mode. Swapping Edit for Done
+      // changed the button width and rewrapped the palette bar, which resized the
+      // canvas together with the editor.
+      paletteEdit.textContent = t('palette.edit');
       paletteEdit.setAttribute('aria-pressed', String(state.editMode));
       paletteEdit.disabled = !app.hasResult || app.palette.length === 0 || app.exportBusy;
     }
-    if (paletteEditor) paletteEditor.hidden = !active;
+    if (paletteEditorSlot) paletteEditorSlot.classList.toggle('is-open', active);
+    if (paletteEditor) {
+      paletteEditor.inert = !active;
+      paletteEditor.setAttribute('aria-hidden', String(!active));
+    }
     if (paletteHintPanel) paletteHintPanel.hidden = !active;
     if (paletteHex) paletteHex.disabled = app.exportBusy;
     if (palettePick) palettePick.disabled = !active || app.exportBusy;

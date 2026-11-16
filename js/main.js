@@ -28,6 +28,7 @@ import {
 } from './ui/i18n.js';
 import { initLearn } from './ui/learn-view.js';
 import { createPaletteEditor } from './ui/palette-editor.js';
+import { initRail } from './ui/rail.js';
 import { createSessionUrl } from './ui/session-url.js';
 import { initShortcuts } from './ui/shortcuts.js';
 import { refreshStatus, setStatus, setStatusMessage, toast, toastKey, getLastStatus } from './ui/status.js';
@@ -77,6 +78,7 @@ const canvasView = createCanvasView({
   onRender: () => palettePicker?.renderMarkers(),
 });
 const theme = initTheme();
+const rail = initRail();
 const learn = initLearn();
 
 const app = {
@@ -288,21 +290,25 @@ function onWorkerMessage(event) {
     paletteEditor.renderCurrentPalette();
     updateExportState();
     if (canvasEmpty) canvasEmpty.hidden = true;
-    setStatus([
+    // Map mode never extracts, so an "extract 0 ms" item would suggest otherwise.
+    const statusItems = [
       { value: `${app.width}×${app.height}`, labelKey: 'status.source' },
       { value: formatN(message.uniqueColors, 0), labelKey: 'status.unique' },
       { value: app.palette.length, labelKey: 'unit.colors', count: app.palette.length },
-      {
+    ];
+    if (mode === 'extract') {
+      statusItems.push({
         valueKey: 'status.ms',
         params: { value: formatN(message.timings.extractMs, 0) },
         labelKey: 'status.extract',
-      },
-      {
-        valueKey: 'status.ms',
-        params: { value: formatN(message.timings.mapMs, 0) },
-        labelKey: 'status.map',
-      },
-    ]);
+      });
+    }
+    statusItems.push({
+      valueKey: 'status.ms',
+      params: { value: formatN(message.timings.mapMs, 0) },
+      labelKey: 'status.map',
+    });
+    setStatus(statusItems);
     if (app.palette.length === 0) {
       // An indexed PNG needs at least one PLTE entry, so a fully transparent image has
       // nothing to export. Say why instead of leaving the disabled buttons unexplained.
@@ -682,6 +688,7 @@ async function loadFile(file, restore = null) {
 
     if (hero) hero.hidden = true;
     if (workspace) workspace.hidden = false;
+    rail.setAvailable(true);
     canvasView.setOriginal(preview);
     paletteEditor.renderCurrentPalette();
     if (restore && restore.transparentId !== null && restore.transparentId !== undefined) {

@@ -61,6 +61,20 @@ export function createCanvasView(options) {
     });
   }
 
+  /**
+   * ResizeObserver callbacks run after the frame callbacks but before paint. Drawing
+   * here keeps the bitmap and its CSS box in sync for the frame that shows the new
+   * layout; deferring to requestAnimationFrame leaves one frame with a stretched
+   * bitmap, which reads as a flicker when a panel opens or closes.
+   */
+  function renderNow() {
+    if (raf) {
+      window.cancelAnimationFrame(raf);
+      raf = 0;
+    }
+    render();
+  }
+
   function fit() {
     if (!original) return;
     const width = frame.clientWidth;
@@ -395,7 +409,7 @@ export function createCanvasView(options) {
     // re-fit the image for height-only changes there; keep the scale stable and redraw.
     const widthChanged = Math.abs(width - lastFrameWidth) > 1;
     if (autoFit && (!narrowViewport.matches || widthChanged)) fit();
-    else scheduleRender();
+    renderNow();
     lastFrameWidth = width;
   });
   resizeObserver.observe(frame);

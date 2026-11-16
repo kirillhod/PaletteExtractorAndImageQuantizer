@@ -93,7 +93,6 @@ export const EN_MESSAGES = {
   'palette.countZero': '0 colors',
   'palette.count': '{countLabel}',
   'palette.edit': 'Edit',
-  'palette.done': 'Done',
   'palette.currentAria': 'Current palette',
   'palette.pick': 'Pick',
   'palette.apply': 'Apply',
@@ -125,6 +124,10 @@ export const EN_MESSAGES = {
   'rail.palette': 'Palette',
   'rail.dither': 'Dither',
   'rail.quality': 'Quality',
+  'rail.hide': 'Hide settings',
+  'rail.show': 'Show settings',
+  'rail.announce.shown': 'Settings shown',
+  'rail.announce.hidden': 'Settings hidden',
   'rail.previewHint': 'Preview uses a downscaled copy. Export always uses the full image.',
 
   'mode.label': 'Mode',
@@ -132,6 +135,8 @@ export const EN_MESSAGES = {
   'mode.aria': 'Palette mode',
   'mode.extract': 'Extract',
   'mode.map': 'Map',
+  'mode.mapHint':
+    'Map uses this palette as-is. Extractor settings apply in Extract mode.',
 
   'method.label': 'Method',
   'method.tooltip':
@@ -267,7 +272,8 @@ export const EN_MESSAGES = {
     'includes the palette editor with locks and undo, perceptual ordering, picked-color anchors, quality metrics, shareable URL settings, and a saved local session.',
   'help.howTitle': 'How it works',
   'help.how1': 'Build a 5-bit, alpha-weighted color histogram.',
-  'help.how2': 'Extract a palette or load a fixed one; edit colors, locks, and order.',
+  'help.how2':
+    'Extract a palette or load a fixed one; Map uses the fixed palette as-is. Edit colors, locks, and order.',
   'help.how3':
     'Map pixels exactly up to 65,536 distinct colors, otherwise with a 6-bit LUT.',
   'help.how4':

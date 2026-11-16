@@ -8,6 +8,8 @@
     var root = document.documentElement;
     root.setAttribute('data-theme', theme);
     root.setAttribute('data-theme-mode', mode);
+    var storedRail = window.localStorage.getItem('peiq.rail');
+    root.setAttribute('data-rail', storedRail === 'closed' ? 'closed' : 'open');
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f5f5' : '#1c1e22');
 
@@ -39,6 +41,7 @@
   } catch (error) {
     document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.setAttribute('data-theme-mode', 'auto');
+    document.documentElement.setAttribute('data-rail', 'open');
     document.documentElement.setAttribute('lang', 'en');
     document.documentElement.setAttribute('data-locale', 'en');
     document.documentElement.setAttribute('data-locale-mode', 'auto');

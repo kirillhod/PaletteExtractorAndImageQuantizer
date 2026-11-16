@@ -86,6 +86,7 @@ test('every literal message key used by the UI has both translations', () => {
   const files = [
     'js/main.js',
     'js/ui/i18n.js',
+    'js/ui/rail.js',
     'js/ui/theme.js',
     'js/ui/learn-view.js',
     'js/ui/palette-view.js',

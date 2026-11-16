@@ -175,6 +175,21 @@
   align-content: start;
 }
 
+/* The header toggle collapses the settings rail so the stage gets the width. */
+html[data-rail="closed"] .peiq-rail {
+  display: none;
+}
+
+html[data-rail="closed"] .peiq-workspace {
+  grid-template-areas:
+    "export"
+    "toolbar"
+    "canvas"
+    "palette"
+    "hint"
+    "status";
+}
+
 .peiq-footer {
   display: flex;
   flex-wrap: wrap;
@@ -253,6 +268,15 @@
     gap: var(--peiq-space-2);
     align-items: stretch;
     padding-block: var(--peiq-space-2);
+  }
+
+  html[data-rail="closed"] .peiq-workspace {
+    grid-template-columns: clamp(180px, 14vw, 220px) minmax(0, 1fr);
+    grid-template-areas:
+      "toolbar toolbar"
+      "export canvas"
+      "export palette"
+      ". status";
   }
 
   .peiq-export-panel {

@@ -39,6 +39,8 @@ Constrain artwork to the palette your engine or hardware expects.
 
 - Built-in palettes: **PICO-8**, **Game Boy DMG**, **Commodore 64**, **ZX Spectrum**, and
   **EGA**.
+- Map mode uses the target palette as-is; it does not run an extractor. Extractor method,
+  color count, and working space apply in Extract mode.
 - Import `.hex`, `.gpl`, `.pal`, `.json`, or a PNG palette strip (`N×1` or `1×N`).
 - Choose a transparent index for sprites. That palette entry disappears from the preview
   and from indexed/strip output; choose None to keep every color opaque.
@@ -84,6 +86,8 @@ Save link appears. A mismatch blocks the download.
 - Before/after divider, fit, 100% zoom, `+`/`−` buttons, pinch-to-zoom on touch, and
   original toggle.
 - Helpful tooltips and a Help drawer with a reference list.
+- The settings rail collapses from the header so the canvas can take the full width; the
+  choice is remembered between visits.
 - Keyboard shortcuts: `F` fit, `1` 100%, `O` original, `E` error map, `T` theme, `?` Help,
   and `Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z` / `Ctrl/Cmd+Y` for undo and redo.
 - Settings live in the URL hash: a reload restores the mode, extractor, colors, working

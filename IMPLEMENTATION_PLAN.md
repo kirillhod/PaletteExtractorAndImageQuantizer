@@ -38,8 +38,8 @@ agents; it defers to this plan for *what* to build.
 | Plan | This document, v1.0.0 (scope reset 2026-11-14) |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 158 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
+| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
+| Tests | 161 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, SEO, references |
 | Version | `js/core/version.js`; `v1.4.0` tagged; M6.3–M6.5 complete |
 | Next | Ship the Help version fix and post-release polish with the next release; otherwise M7 — later / not planned for v1.x |
 
@@ -867,9 +867,10 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
 └──────────────────┴─────────────────────────┴───────────────────┘
 ```
 
-- **Header:** 52 px (48 px below 980 px); brand on the left; language toggle, theme toggle,
-  and Help on the right. No mode tabs, nav links, download buttons, account controls, or
-  secondary subbar.
+- **Header:** 52 px (48 px below 980 px); brand on the left; a settings-rail toggle,
+  language toggle, theme toggle, and Help on the right. No mode tabs, nav links, download
+  buttons, account controls, or secondary subbar. The rail toggle only appears once an
+  image is loaded.
 - **Empty state:** full-width hero; no rail. After an image loads, the hero collapses into
   the stage and the rail appears.
 - **≥ 1220 px:** export `clamp(180–220 px)` + stage `1fr` + rail **360 px**.
@@ -884,6 +885,8 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
   in the same left column.
 - **Rail:** a stack of collapsible settings sections — Palette (with the Extract/Map
   switch) and Dither. Export is not in the rail; the Quality section is collapsed by default.
+  The header toggle collapses the whole rail and gives its 360/340 px to the stage; the
+  choice persists in `peiq.rail` and is restored before paint.
 - **Palette strip:** directly under the canvas; swatches wrap and scroll. A compact bar
   above it shows the palette count and a sort select: source, hue dark→light, hue
   light→dark, lightness dark→light, lightness light→dark, perceptual smooth, perceptual
@@ -934,15 +937,20 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   Wu, K=16, Oklab.**
 - Map: built-in target palette (PICO-8, Game Boy, C64, ZX Spectrum, EGA), "Load palette
   file…" for `.hex`, `.gpl`, `.pal`, `.json`, and 1×N/N×1 PNG strips, transparent index,
-  alpha threshold. A transparent index removes that entry from the preview and the
-  indexed/strip output; choose None to keep every color opaque.
+  alpha threshold. Map does not extract colors: the target palette is used as-is and the
+  extractor settings apply only in Extract mode, which a one-line hint in the Map section
+  states. A transparent index removes that entry from the preview and the indexed/strip
+  output; choose None to keep every color opaque.
 - Palette order bar: source / hue dark→light / hue light→dark / lightness dark→light /
   lightness light→dark / perceptual smooth / perceptual color path / perceptual flow;
   swatches, HEX list, and strip export follow it. Perceptual modes are labeled by their
   result, not by the metric name; Oklab and CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
   adds an icon **Pick** button plus **Apply / Add / ← / → / Remove / Lock**. The palette
-  bar carries compact undo/redo icon buttons next to Edit. **Pick** is an icon button with
+  bar carries compact undo/redo icon buttons next to Edit. Edit is a toggle button with a
+  visible pressed state; its label does not change, so the bar never rewraps. The editor
+  row reveals with a 150 ms height transition and the canvas refits each frame, so opening
+  or closing it never blinks or jumps. **Pick** is an icon button with
   a visible pressed state; it arms a canvas eyedropper with a floating color/HEX
   preview under the pointer: press and drag to sample the visible preview (the reduced
   side when the point is right of the divider), watch the magnified loupe, and release to
@@ -1301,7 +1309,8 @@ site. Learning is opt-in, contextual, and dismissible.
 | `pipeline.test.js` | stage composition, preview vs final params |
 | `pipeline-m2.test.js` | indexed export, transparent index, alpha compliance |
 | `golden.test.js` | synthetic fixture → reviewed hashes |
-| `theme.test.js` | dark/light token parity, auto resolution, 3-state cycle, invalid storage |
+| `theme.test.js` | dark/light token parity, auto resolution, 3-state cycle, invalid storage, rail restore |
+| `rail-state.test.js` | rail state normalization and toggle |
 | `controls.test.js` | extractor select normalization |
 | `i18n.test.js` | locale detection, message formatting, plurals |
 | `messages.test.js` | EN/RU key parity, placeholders, referenced keys |
@@ -1620,9 +1629,10 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | Path | Responsibility |
 |---|---|
 | `js/main.js` | Bootstrap, worker wiring, preview/render, control and mode wiring |
-| `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` and `peiq.locale` before paint, set theme and language attributes |
+| `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme`, `peiq.rail`, and `peiq.locale` before paint, set theme, rail, and language attributes |
 | `js/ui/dom.js` | `el()`, `$`, `$$`, `debounce()`, `copyText()`; no framework |
 | `js/ui/theme.js` | 3-state toggle, matchMedia listener, persistence, meta theme-color |
+| `js/ui/rail.js` | Settings-rail collapse toggle, persistence, announcement, locale refresh |
 | `js/ui/i18n.js` | Locale resolution, static `data-i18n` application, change events, error/detail localization |
 | `js/ui/dropzone.js` | File picker/drag/paste; decode + downscale preview |
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
@@ -1666,6 +1676,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/hash.js` | `sha256Hex`, `fnv1a64Hex`, `stableStringify` | `hash.test.js` |
 | `js/core/i18n.js` | Locale detection, interpolation, plural selection, number formatting; no DOM | `i18n.test.js` |
 | `js/core/theme-mode.js` | `normalizeThemeMode`, `nextThemeMode`, `resolveTheme`; no DOM | `theme.test.js` |
+| `js/core/rail-state.js` | `normalizeRailState`, `nextRailState`; no DOM | `rail-state.test.js` |
 | `js/core/histogram.js` | `buildHistogram(pixels, opts)` | `histogram.test.js` |
 | `js/core/quantize/index.js` | `extractPalette(hist, params)`, dispatch, refinement | `quantize.test.js`, `quantize-advanced.test.js` |
 | `js/core/quantize/popularity.js` | `extractPopularity` | `quantize.test.js` |
@@ -2030,6 +2041,9 @@ A change is done only when:
 | 2026-11-16 | Make the empty-state hero background full-bleed and name the indexed PNG in its subtitle | Inside the 1600 px shell the blue radial was clipped at the shell edge, leaving a visible vertical seam on wide monitors; extending the hero to the viewport with `calc(50% - 50vw)` margins keeps the content in the shell and lets the glow fade naturally. The old subtitle offered only a strip or reduced PNG, omitting the indexed PNG and palette file that the tool is built around. |
 | 2026-11-16 | Put palette and settings changes on one undo timeline and move the undo/redo buttons into the palette bar | Settings changes used to clear the palette history and exit Edit, so an accidental dither or extractor change was unrecoverable. Snapshots now carry the settings and `paletteEdited` flag; each settings gesture commits one step, undo restores settings and palette together, and the extractor path starts a fresh extraction. The bar is always visible, so desktop users no longer depend on a hidden touch-only control. |
 | 2026-11-16 | Show Pick as an icon button with a pressed state and use a single ring for the selected swatch | The text button competed with Apply/Add for width and gave no visual confirmation beyond the hint. An eyedropper icon with an accent background and inset ring when armed matches the toolbar, and the 2 px gap plus accent ring read as a double border on every selected swatch, so the gap was removed. |
+| 2026-11-16 | Reveal the palette editor with a height transition and redraw the canvas before paint on resize | The editor row appeared in one layout step, and the resize observer redrew on the next animation frame, so a frame painted the old bitmap stretched into the new box. The slot now animates `0fr` to `1fr`, the canvas redraws synchronously inside the observer, and Edit keeps one label so the bar cannot rewrap: opening or closing the editor is a smooth refit instead of a blink. |
+| 2026-11-16 | Add a header toggle that collapses the settings rail | On a wide screen the rail is 360 px of permanent width; users who work mostly in the canvas should be able to reclaim it. The choice persists in `peiq.rail`, `theme-init.js` applies it before paint, and the stage takes the freed column without a flash. |
+| 2026-11-16 | Keep the Edit label and report Map mode without an extraction timing | Swapping Edit for Done changed the button width, rewrapped the palette bar, and resized the canvas together with the editor; a pressed state reports the mode without moving anything. Map never extracts, so the status line no longer shows a 0 ms extraction item there, and the Map section states that extractor settings apply in Extract mode. |
 
 ---
 

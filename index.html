@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark" data-theme-mode="auto" data-locale="en" data-locale-mode="auto">
+<html lang="en" data-theme="dark" data-theme-mode="auto" data-rail="open" data-locale="en" data-locale-mode="auto">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -74,6 +74,9 @@
       <span class="peiq-header__name-short" aria-hidden="true">PEIQ</span>
     </a>
     <div class="peiq-header__actions">
+      <button class="peiq-icon-btn peiq-rail-toggle" id="rail-toggle" type="button" aria-controls="settings-rail" aria-expanded="true" aria-label="Hide settings" title="Hide settings" hidden>
+        <svg class="peiq-rail-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>
+      </button>
       <button class="peiq-locale-toggle" id="locale-toggle" type="button" data-mode="auto" aria-label="Language: automatic (English). Activate for English mode." title="Language: automatic (English). Activate for English mode.">AUTO</button>
       <button class="peiq-theme-toggle" id="theme-toggle" type="button" data-mode="auto" aria-label="Theme: automatic (follows system). Activate for light theme.">
         <svg class="peiq-theme-toggle__icon peiq-icon-auto" viewBox="0 0 24 24" aria-hidden="true">
@@ -198,27 +201,29 @@
             <button class="peiq-icon-btn peiq-palette-history" id="palette-redo" type="button" data-i18n-aria-label="palette.redo" data-i18n-title="palette.redo" aria-label="Redo last change" title="Redo last change" disabled>
               <svg class="peiq-palette-history__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a6 6 0 0 0 0 12h3"/></svg>
             </button>
-            <button class="peiq-btn peiq-btn--small" id="palette-edit" type="button" aria-pressed="false" data-i18n="palette.edit" disabled>Edit</button>
+            <button class="peiq-btn peiq-btn--small peiq-palette-edit" id="palette-edit" type="button" aria-pressed="false" data-i18n="palette.edit" disabled>Edit</button>
           </div>
           <div class="peiq-palette-strip" id="palette-strip" data-i18n-aria-label="palette.currentAria" aria-label="Current palette"></div>
-          <div class="peiq-palette-editor" id="palette-editor" hidden>
-            <label class="peiq-label" for="palette-hex">HEX</label>
-            <input class="peiq-input" id="palette-hex" type="text" autocomplete="off" spellcheck="false" placeholder="#rrggbb" aria-describedby="palette-edit-hint">
-            <button class="peiq-icon-btn peiq-palette-pick" id="palette-pick" type="button" aria-pressed="false" data-i18n-aria-label="palette.pick" data-i18n-title="palette.pick" aria-label="Pick" title="Pick" disabled>
-              <svg class="peiq-palette-pick__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 22l1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>
-            </button>
-            <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" data-i18n="palette.apply" disabled>Apply</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" data-i18n="palette.add" disabled>Add</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-move-left" type="button" data-i18n-aria-label="palette.moveLeft" data-i18n-title="palette.moveLeft" aria-label="Move color left" title="Move color left" disabled>←</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" data-i18n-aria-label="palette.moveRight" data-i18n-title="palette.moveRight" aria-label="Move color right" title="Move color right" disabled>→</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" data-i18n="palette.remove" disabled>Remove</button>
-            <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" data-i18n="palette.lock" disabled>Lock</button>
+          <div class="peiq-palette-editor-slot" id="palette-editor-slot">
+            <div class="peiq-palette-editor" id="palette-editor" inert aria-hidden="true">
+              <label class="peiq-label" for="palette-hex">HEX</label>
+              <input class="peiq-input" id="palette-hex" type="text" autocomplete="off" spellcheck="false" placeholder="#rrggbb" aria-describedby="palette-edit-hint">
+              <button class="peiq-icon-btn peiq-palette-pick" id="palette-pick" type="button" aria-pressed="false" data-i18n-aria-label="palette.pick" data-i18n-title="palette.pick" aria-label="Pick" title="Pick" disabled>
+                <svg class="peiq-palette-pick__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 22l1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>
+              </button>
+              <button class="peiq-btn peiq-btn--small" id="palette-apply" type="button" data-i18n="palette.apply" disabled>Apply</button>
+              <button class="peiq-btn peiq-btn--small" id="palette-add" type="button" data-i18n="palette.add" disabled>Add</button>
+              <button class="peiq-btn peiq-btn--small" id="palette-move-left" type="button" data-i18n-aria-label="palette.moveLeft" data-i18n-title="palette.moveLeft" aria-label="Move color left" title="Move color left" disabled>←</button>
+              <button class="peiq-btn peiq-btn--small" id="palette-move-right" type="button" data-i18n-aria-label="palette.moveRight" data-i18n-title="palette.moveRight" aria-label="Move color right" title="Move color right" disabled>→</button>
+              <button class="peiq-btn peiq-btn--small" id="palette-remove" type="button" data-i18n="palette.remove" disabled>Remove</button>
+              <button class="peiq-btn peiq-btn--small" id="palette-lock" type="button" aria-pressed="false" data-i18n="palette.lock" disabled>Lock</button>
+            </div>
           </div>
         </div>
 
         <div class="peiq-statusbar" id="statusbar"></div>
 
-      <aside class="peiq-rail" data-i18n-aria-label="rail.aria" aria-label="Controls">
+      <aside class="peiq-rail" id="settings-rail" data-i18n-aria-label="rail.aria" aria-label="Controls">
         <details class="peiq-rail-section" open>
           <summary data-i18n="rail.palette">Palette</summary>
           <div class="peiq-rail-section__body">
@@ -283,6 +288,7 @@
                 <input id="palette-input" type="file" accept=".hex,.gpl,.pal,.json,.png,image/png" hidden>
                 <span class="peiq-hint" id="palette-status" data-i18n="palette.statusInitial">PICO-8 · 16 colors</span>
               </div>
+              <p class="peiq-hint" data-i18n="mode.mapHint">Map uses this palette as-is. Extractor settings apply in Extract mode.</p>
             </div>
 
             <div class="peiq-field">

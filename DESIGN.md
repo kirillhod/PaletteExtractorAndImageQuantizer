@@ -508,6 +508,9 @@ subtle shadow, no border.
 The right rail is a stack of `<details>` sections styled as the site’s boxes. Each section
 has a 12 px radius and a surface step — no border. Sections are independently
 collapsible; **Palette** starts open, and users may open **Dither** at the same time.
+The whole rail can be collapsed from the header toggle, which remembers the choice and
+gives the 360/340 px column to the stage; the toggle’s `aria-expanded` and label follow
+the state.
 Export is not part of this settings rail; it has a dedicated left column. QA is not part
 of v1.0.
 The rail scrolls only when the combined bodies exceed the viewport, so no section blocks
@@ -635,9 +638,11 @@ Save.
 The palette card contains a compact bar and the swatches. The sort select controls the
 swatch order, the HEX list, and the exported strip. The bar also carries the undo/redo
 icon buttons: the history covers palette edits and settings changes, so the controls stay
-reachable when Edit is off. The editor uses an icon-only Pick button; when Pick is armed,
-the button switches to the accent background and an inset accent ring instead of relying
-on the hint alone.
+reachable when Edit is off. Edit is a pressed-toggle button with a fixed label; switching
+its label to Done rewrapped the bar and resized the canvas. Its editor row lives in a
+0fr/1fr grid slot that opens over 150 ms, so the canvas refits in step instead of jumping.
+The editor uses an icon-only Pick button; when Pick is armed, both Pick and Edit switch to
+the accent background and an inset accent ring instead of relying on the hint alone.
 
 ```css
 .peiq-palette-panel {
@@ -666,11 +671,19 @@ on the hint alone.
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
 }
-.peiq-palette-pick[aria-pressed="true"] {
+.peiq-palette-pick[aria-pressed="true"],
+.peiq-palette-edit[aria-pressed="true"] {
   background: var(--peiq-accent-bg-hover);
   color: var(--peiq-accent);
   box-shadow: inset 0 0 0 1px var(--peiq-accent);
 }
+.peiq-palette-editor-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows var(--peiq-dur) var(--peiq-ease);
+}
+.peiq-palette-editor-slot.is-open { grid-template-rows: 1fr; }
 .peiq-palette-strip {
   display: flex;
   flex-wrap: wrap;
@@ -753,9 +766,11 @@ background: use a canvas-generated palette mosaic or the CSS gradients below.
 
 ### Header
 
-Minimal by design: brand on the left; only the language toggle, theme toggle, and Help on
-the right. No nav links, mode tabs, download buttons, account controls, or secondary
-subbar. Mode and export live in the right rail; image actions live in the stage toolbar.
+Minimal by design: brand on the left; only the settings-rail toggle, language toggle, theme
+toggle, and Help on the right. No nav links, mode tabs, download buttons, account controls,
+or secondary subbar. Mode and export live in the right rail; image actions live in the
+stage toolbar. The rail toggle appears once an image is loaded and collapses the settings
+column, handing its width to the stage.
 
 ```css
 .peiq-header {

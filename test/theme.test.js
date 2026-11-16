@@ -123,9 +123,9 @@ test('invalid stored values fall back to auto', () => {
 /**
  * Run the classic pre-paint script against a fake browser.
  *
- * @param {{ stored?: string|null, prefersLight?: boolean, failStorage?: boolean }} options
+ * @param {{ stored?: string|null, rail?: string|null, prefersLight?: boolean, failStorage?: boolean }} options
  */
-function runThemeInit({ stored = null, prefersLight = false, failStorage = false }) {
+function runThemeInit({ stored = null, rail = null, prefersLight = false, failStorage = false }) {
   /** @type {Record<string, string>} */
   const root = {};
   /** @type {Record<string, string>} */
@@ -149,7 +149,9 @@ function runThemeInit({ stored = null, prefersLight = false, failStorage = false
     localStorage: {
       getItem(/** @type {string} */ key) {
         if (failStorage) throw new Error('storage blocked');
-        return key === 'peiq.theme' ? stored : null;
+        if (key === 'peiq.theme') return stored;
+        if (key === 'peiq.rail') return rail;
+        return null;
       },
     },
     matchMedia() {
@@ -183,4 +185,12 @@ test('theme-init treats a corrupt or blocked store as auto', () => {
 test('theme-init updates the theme-color meta tag', () => {
   assert.equal(runThemeInit({ stored: 'dark' }).meta.content, '#1c1e22');
   assert.equal(runThemeInit({ stored: 'light' }).meta.content, '#f5f5f5');
+});
+
+test('theme-init restores the collapsed settings rail before paint', () => {
+  assert.equal(runThemeInit({ rail: 'closed' }).root['data-rail'], 'closed');
+  assert.equal(runThemeInit({ rail: 'open' }).root['data-rail'], 'open');
+  assert.equal(runThemeInit({}).root['data-rail'], 'open');
+  assert.equal(runThemeInit({ rail: 'folded' }).root['data-rail'], 'open');
+  assert.equal(runThemeInit({ failStorage: true }).root['data-rail'], 'open');
 });
