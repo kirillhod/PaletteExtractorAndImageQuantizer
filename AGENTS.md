@@ -272,11 +272,8 @@ and the change is committed locally with a descriptive body (plan §16).
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.3.1`; 156 tests. Perceptual palette ordering, picked-color anchors, the
-  compact desktop frame, validated Copy on every export, and palette-selection clearing
-  are implemented but unreleased.
-- Next: release those changes when requested; otherwise M7 — later / not planned for
-  v1.x.
+- Released `v1.4.0`; 156 tests. M6.3–M6.5 are complete.
+- Next: M7 — later / not planned for v1.x.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker
   exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.

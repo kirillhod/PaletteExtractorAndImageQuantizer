@@ -22,10 +22,12 @@ Choose the colors that define your image.
 - From **2 to 256 colors**, with a slider or an exact number.
 - Work in **Oklab** for perceptual results or **sRGB** for legacy pipelines.
 - Median cut and Wu get a Lloyd refinement pass for cleaner clusters.
-- Sort the result by source order, hue, or lightness — both directions.
+- Sort the result by source order, hue, or lightness — both directions — or use one of
+  three perceptual orders that keep neighboring colors close.
 - Edit the result: change a HEX value, add or remove colors, lock entries so they keep
   their place when sorting, move colors left/right in Manual order, pick colors straight
-  from the canvas, and undo or redo edits with `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, or
+  from the canvas (each sampled color gets a draggable anchor), and undo or redo edits
+  with `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, or
   `Ctrl/Cmd+Y` while editing.
   Reordering changes the exported index order; the preview and Reduced PNG stay the same
   because the color set is unchanged, apart from exact ties. Adding, removing, or editing
@@ -71,6 +73,8 @@ looks right.*
 - **Reduced RGBA PNG** for quick previews and sharing.
 - **Palette files** in `.hex`, `.gpl`, or `.json`.
 - **HEX list** copied to the clipboard.
+- **Save** and **Copy** on every validated result: PNGs copy as images, palette files as
+  text.
 
 Indexed PNGs, strips, and palette files are parsed/decoded again and checked before the
 Save link appears. A mismatch blocks the download.

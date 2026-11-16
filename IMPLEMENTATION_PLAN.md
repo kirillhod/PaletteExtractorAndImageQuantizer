@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.3.1
-**Product version at completion:** 1.3.1
+**Plan version:** 1.4.0
+**Product version at completion:** 1.4.0
 **Status:** Approved for implementation
 **Date:** 2026-11-13
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -40,8 +40,8 @@ agents; it defers to this plan for *what* to build.
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
 | Tests | 156 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
-| Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; M6.3–M6.5 unreleased |
-| Next | Release the perceptual ordering, picked-marker, compact-frame, and validated-copy changes when requested; otherwise M7 is later / not planned for v1.x |
+| Version | `js/core/version.js`; `v1.4.0` tagged; M6.3–M6.5 complete |
+| Next | M7 — later / not planned for v1.x |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows
@@ -1819,7 +1819,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - **Exit:** `1.3.1` tagged; repeated reloads restore the image, legacy records migrate,
   and a corrupt record falls back without blocking the next load.
 
-### M6.3 — v1.4: perceptual palette ordering (implemented, unreleased)
+### M6.3 — v1.4.0: perceptual palette ordering (complete)
 
 - [x] Add `perceptual`: start from `lightness-asc`, then CIEDE2000 2-opt with fixed
       first/last entries.
@@ -1831,10 +1831,10 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
       Help copy and EN/RU labels without exposing metric names in the control.
 - [x] Keep Pick armed after a successful sample so several swatches can be recolored
       without pressing the button again.
-- **Exit:** pending version bump and tag after review; `npm test` 143 passing and the
-  browser pass at 1280/360 px are green.
+- **Exit:** `1.4.0` tagged; `npm test` 156 passing and the browser pass at 1280/360 px
+  are green.
 
-### M6.4 — picked-color anchors (implemented, unreleased)
+### M6.4 — picked-color anchors (complete)
 
 - [x] Create a marker only after an explicit eyedropper sample; extracted and imported
       colors have no marker.
@@ -1845,10 +1845,10 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Persist normalized marker positions in session and history, handle nearby-marker
       overlap, and make the selected marker focusable with arrow-key nudging.
 - [x] Keep marker positions out of palette JSON, hashes, and export.
-- **Exit:** pending version bump and tag after review; `npm test` 146 passing and the
-  browser pass at 1280/360 px are green.
+- **Exit:** `1.4.0` tagged; `npm test` 156 passing and the browser pass at 1280/360 px
+  are green.
 
-### M6.5 — compact desktop frame and validated clipboard copy (implemented, unreleased)
+### M6.5 — compact desktop frame and validated clipboard copy (complete)
 
 - [x] Reduce the desktop header to 52 px, the stage toolbar to 28 px, and the status line
       to 24 px without shrinking touch targets below 600 px.
@@ -1860,8 +1860,8 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Clear the palette selection by clicking empty strip space or pressing Esc while the
       palette has focus, so Pick can fill the HEX field for Add.
 - [x] Add helper tests for image clipboard support and PNG blob creation.
-- **Exit:** pending version bump and tag after review; `npm test` 156 passing and the
-  browser pass at 1280/360 px is green.
+- **Exit:** `1.4.0` tagged; `npm test` 156 passing and the browser pass at 1280/360 px
+  are green.
 
 ### M7 — Later / not planned for v1.x
 
@@ -1913,6 +1913,16 @@ A change is done only when:
 - [x] Pages workflow verified; the live 0.4.0 deployment was smoke-tested at the project
       URL. The 1.0.0 deployment starts when this release commit is pushed.
 - [x] Annotated tag `v1.0.0` on the version-bump commit.
+
+### v1.4.0
+
+- [x] `npm test` 156 passing.
+- [x] Browser pass at 1280 px and 360 px: preview stability, palette edits, pick and
+      markers, all four exports, session restore and clear, keyboard.
+- [x] URL `v=1`, session record v2 with optional markers, palette JSON v1, export
+      filenames, and `ALGORITHM_VERSION` stay compatible; 1.3.1 URLs and sessions load.
+- [x] `APP_VERSION` and `package.json` = `1.4.0`.
+- [x] Annotated tag `v1.4.0` on the version-bump commit.
 
 ---
 
@@ -2006,6 +2016,7 @@ A change is done only when:
 | 2026-11-16 | Clear the palette selection on empty-strip click or palette-scoped Esc | With an entry always selected, the eyedropper could only recolor an existing color; clearing the selection lets Pick fill HEX for Add. Scoping Esc to the palette avoids clearing the editor while closing Help or a tooltip. |
 | 2026-11-16 | Keep the previous status line and export controls while a preview runs; place the status line under the palette | Replacing the image stats with a processing message and disabling every export button on each preview made both areas blink during slider edits. The last validated stats and controls now stay in place, and a click during the short preview window reports processing rather than exporting a stale palette. The desktop grid gives the status line the stage column, matching the layout and keeping it under the palette instead of stretching from the left edge. |
 | 2026-11-16 | Report 0 ms extraction when a palette is overridden, restored, or comes from Map mode | The stage did not run: palette edits pass a fixed color list to the worker, Map mode starts from a chosen palette, and a restored session brings its own. Keeping the last real extraction time would go stale after a settings change and would still be 0 after restore, so 0 is the honest value. |
+| 2026-11-16 | Release 1.4.0: M6.3–M6.5 complete | Perceptual ordering, picked-color anchors, the compact desktop frame, validated Copy, palette-selection clearing, and preview/status stability ship as one minor release. URL v1, session v2, palette JSON v1, filenames, and `ALGORITHM_VERSION` stay compatible, so no major bump is warranted; 156 tests |
 
 ---
 
