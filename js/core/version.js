@@ -13,4 +13,4 @@ export const APP_VERSION = '1.5.0';
  * quantizer behavior). It is recorded in manifests and reports.
  * @type {number}
  */
-export const ALGORITHM_VERSION = 2;
+export const ALGORITHM_VERSION = 3;

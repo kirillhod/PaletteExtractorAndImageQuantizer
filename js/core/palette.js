@@ -7,7 +7,23 @@ import { sha256Hex, stableStringify } from './hash.js';
 /** @typedef {import('./types.js').Palette} Palette */
 /** @typedef {import('./types.js').PaletteEntry} PaletteEntry */
 
+/**
+ * @typedef {Object} HueItem
+ * @property {PaletteEntry} entry
+ * @property {number} id
+ * @property {number} L
+ * @property {number} chroma
+ * @property {number} hue
+ * @property {boolean} achromatic
+ */
+
 const MAX_PALETTE_COLORS = 256;
+// A smaller hue gap is ordinary shading drift inside one family, not a new band.
+const HUE_BAND_MIN_GAP = 15;
+// Palettes that cover less than this arc are one family; splitting them would only
+// create arbitrary bands without a visible hue boundary.
+const HUE_BAND_MIN_SPAN = 30;
+const HUE_BAND_MAX = 12;
 
 /**
  * Turn extraction colors into a palette with stable ids and export indices.
@@ -230,10 +246,8 @@ function sortUnlockedEntries(entries, order) {
     const achromatic = items
       .filter((item) => item.achromatic)
       .sort((a, b) => lightnessDir * (a.L - b.L) || a.id - b.id);
-    const hueDir = descending ? -1 : 1;
     const chromatic = circularHueOrder(
       items.filter((item) => !item.achromatic),
-      hueDir,
       lightnessDir,
     );
     items.length = 0;
@@ -244,41 +258,94 @@ function sortUnlockedEntries(entries, order) {
 }
 
 /**
- * Achromatic first, then chromatic sorted by circular hue. The largest hue gap
- * becomes the boundary so reds near 0° and 360° stay adjacent. Within a hue group,
- * lightness follows the requested direction.
- * @param {{ entry: any, id:number, L:number, chroma:number, hue:number }[]} items
- * @param {1|-1} hueDir
+ * Achromatic entries are handled by the caller. Chromatic entries are split into
+ * circular hue bands and each band is sorted by lightness. The bands themselves stay in
+ * hue order, so `hue-asc` and `hue-desc` differ only in the ramp direction.
+ * @param {HueItem[]} items
  * @param {1|-1} lightnessDir
+ * @returns {HueItem[]}
  */
-function circularHueOrder(items, hueDir, lightnessDir) {
+function circularHueOrder(items, lightnessDir) {
   if (items.length <= 1) return items.slice();
   const sorted = items.slice().sort((a, b) => a.hue - b.hue || a.id - b.id);
-  let bestGap = -1;
-  let bestIndex = 0;
-  for (let i = 0; i < sorted.length; i++) {
-    const next = sorted[(i + 1) % sorted.length];
-    const gap = (next.hue - sorted[i].hue + 360) % 360;
-    if (gap > bestGap) {
-      bestGap = gap;
-      bestIndex = i;
+  let wrapGap = -1;
+  let wrapIndex = 0;
+  for (let index = 0; index < sorted.length; index++) {
+    const next = sorted[(index + 1) % sorted.length];
+    const gap = (next.hue - sorted[index].hue + 360) % 360;
+    if (gap > wrapGap) {
+      wrapGap = gap;
+      wrapIndex = index;
     }
   }
-  const startHue = sorted[(bestIndex + 1) % sorted.length].hue;
-  return sorted
-    .map((item) => ({
-      ...item,
-      key: hueDir === 1
-        ? (item.hue - startHue + 360) % 360
-        : (startHue - item.hue + 360) % 360,
-    }))
-    .sort(
-      (a, b) =>
-        a.key - b.key ||
-        lightnessDir * (a.L - b.L) ||
-        b.chroma - a.chroma ||
-        a.id - b.id,
-    );
+  const circular = sorted
+    .slice(wrapIndex + 1)
+    .concat(sorted.slice(0, wrapIndex + 1));
+  const bands = hueBands(circular, wrapGap);
+  /** @type {HueItem[]} */
+  const ordered = [];
+  for (const band of bands) {
+    const sortedBand = band
+      .slice()
+      .sort(
+        (a, b) =>
+          lightnessDir * (a.L - b.L) ||
+          b.chroma - a.chroma ||
+          a.id - b.id,
+      );
+    ordered.push(...sortedBand);
+  }
+  return ordered;
+}
+
+/**
+ * Split a circular hue sequence into contiguous bands. The sequence starts after the
+ * largest hue gap, so that wrap gap is the outer boundary and never an internal split.
+ *
+ * Real family boundaries are gaps at least `HUE_BAND_MIN_GAP`. A continuous hue sweep
+ * has no such gaps, so it uses its largest gaps instead, capped by a count proportional
+ * to the palette size. A palette covering less than `HUE_BAND_MIN_SPAN` stays one band.
+ *
+ * @param {HueItem[]} items
+ * @param {number} wrapGap
+ * @returns {HueItem[][]}
+ */
+function hueBands(items, wrapGap) {
+  const count = items.length;
+  if (count <= 1) return [items.slice()];
+  // A zero wrap gap means every hue is identical; the palette covers no arc at all.
+  const span = wrapGap > 0 ? 360 - wrapGap : 0;
+  if (span < HUE_BAND_MIN_SPAN) return [items.slice()];
+
+  /** @type {{ index: number, gap: number }[]} */
+  const gaps = [];
+  for (let index = 0; index + 1 < count; index++) {
+    gaps.push({
+      index,
+      gap: (items[index + 1].hue - items[index].hue + 360) % 360,
+    });
+  }
+  const maxBands = Math.min(
+    HUE_BAND_MAX,
+    Math.max(4, Math.round(count / 4)),
+  );
+  const strong = gaps.filter((gap) => gap.gap >= HUE_BAND_MIN_GAP);
+  const candidates = strong.length > 0 ? strong : gaps;
+  const selected = candidates
+    .slice()
+    .sort((a, b) => b.gap - a.gap || a.index - b.index)
+    .slice(0, maxBands - 1)
+    .sort((a, b) => a.index - b.index);
+
+  /** @type {HueItem[][]} */
+  const bands = [];
+  let start = 0;
+  for (const gap of selected) {
+    bands.push(items.slice(start, gap.index + 1));
+    start = gap.index + 1;
+  }
+  bands.push(items.slice(start));
+  return bands;
 }
 
 /**

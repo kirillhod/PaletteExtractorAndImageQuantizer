@@ -287,6 +287,9 @@ export const EN_MESSAGES = {
   'help.orderLead': 'Export order changes, the color set does not.',
   'help.orderP':
     'A move rewrites export indices and the HEX list. The preview and Reduced PNG keep the same look unless two colors tie exactly; ties go to the lowest index. Adding, removing, or editing a color changes the mapping. An indexed PNG keeps the same visible colors after a move (apart from ties), but its PLTE order and index map change; the transparent index follows its color, not the slot. Click empty space in the palette or press Esc while the palette has focus to clear the selection; with no selection, Pick fills the HEX field for Add.',
+  'help.hueLead': 'Hue order',
+  'help.hueP':
+    'groups similar hues into bands and sorts each band from dark to light. The light-to-dark option keeps the same bands and reverses each ramp.',
   'help.perceptualLead': 'Perceptual orders',
   'help.perceptualP':
     'compare colors with Delta E (CIEDE2000). Only the order and export indices change.',

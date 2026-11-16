@@ -61,10 +61,62 @@ test('hue order groups similar hues together and keeps ids', () => {
   );
 });
 
+test('hue order bands families and ramps lightness inside each band', () => {
+  const family = createPalette([
+    { r: 32, g: 32, b: 32 },
+    { r: 224, g: 224, b: 224 },
+    { r: 128, g: 0, b: 0 },
+    { r: 255, g: 0, b: 0 },
+    { r: 0, g: 100, b: 0 },
+    { r: 0, g: 200, b: 0 },
+    { r: 0, g: 255, b: 0 },
+    { r: 0, g: 0, b: 128 },
+    { r: 0, g: 0, b: 255 },
+  ]);
+  const ascending = [
+    '#202020', '#e0e0e0',
+    '#800000', '#ff0000',
+    '#006400', '#00c800', '#00ff00',
+    '#000080', '#0000ff',
+  ];
+  assert.deepEqual(
+    sortPalette(family, 'hue-asc').map((entry) => entry.hex),
+    ascending,
+  );
+  assert.deepEqual(
+    sortPalette(family, 'hue-desc').map((entry) => entry.hex),
+    [
+      '#e0e0e0', '#202020',
+      '#ff0000', '#800000',
+      '#00ff00', '#00c800', '#006400',
+      '#0000ff', '#000080',
+    ],
+  );
+});
+
+test('hue order keeps a single-hue family in one lightness ramp', () => {
+  const reds = createPalette([
+    { r: 200, g: 0, b: 0 },
+    { r: 80, g: 0, b: 0 },
+    { r: 255, g: 0, b: 0 },
+    { r: 140, g: 0, b: 0 },
+  ]);
+  assert.deepEqual(
+    sortPalette(reds, 'hue-asc').map((entry) => entry.hex),
+    ['#500000', '#8c0000', '#c80000', '#ff0000'],
+  );
+  assert.deepEqual(
+    sortPalette(reds, 'hue-desc').map((entry) => entry.hex),
+    ['#ff0000', '#c80000', '#8c0000', '#500000'],
+  );
+});
+
 test('hue sorting is deterministic', () => {
-  const a = sortPalette(palette, 'hue-asc');
-  const b = sortPalette(palette, 'hue-asc');
-  assert.deepEqual(a, b);
+  for (const order of /** @type {const} */ (['hue-asc', 'hue-desc'])) {
+    const a = sortPalette(palette, order);
+    const b = sortPalette(palette, order);
+    assert.deepEqual(a, b);
+  }
 });
 
 test('locked entries keep their display slot and identity while others sort', () => {
