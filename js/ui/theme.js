@@ -1,40 +1,23 @@
 // @ts-check
+import { normalizeThemeMode, resolveTheme, nextThemeMode } from '../core/theme-mode.js';
 import { t } from './i18n.js';
 
 const STORAGE_KEY = 'peiq.theme';
-/** @type {const} */
-const MODES = ['auto', 'light', 'dark'];
-
-/**
- * @param {string|null|undefined} value
- * @returns {'auto'|'light'|'dark'}
- */
-function normalizeMode(value) {
-  return value === 'light' || value === 'dark' ? value : 'auto';
-}
-
-/**
- * @returns {'auto'|'light'|'dark'}
- */
-function readMode() {
-  return normalizeMode(document.documentElement.getAttribute('data-theme-mode'));
-}
 
 /**
  * @param {'auto'|'light'|'dark'} mode
  * @returns {'light'|'dark'}
  */
 function effectiveTheme(mode) {
-  if (mode !== 'auto') return mode;
-  return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
+  const prefersDark = Boolean(window.matchMedia?.('(prefers-color-scheme: dark)')?.matches);
+  return resolveTheme(mode, prefersDark);
 }
 
 /**
- * @param {'auto'|'light'|'dark'} mode
  * @returns {'auto'|'light'|'dark'}
  */
-function nextMode(mode) {
-  return MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+function readMode() {
+  return normalizeThemeMode(document.documentElement.getAttribute('data-theme-mode'));
 }
 
 /**
@@ -94,7 +77,7 @@ export function initTheme() {
   applyMode(readMode(), { persist: false, announce: false });
 
   button?.addEventListener('click', () => {
-    applyMode(nextMode(readMode()));
+    applyMode(nextThemeMode(readMode()));
   });
 
   const media = window.matchMedia?.('(prefers-color-scheme: dark)');
@@ -108,7 +91,7 @@ export function initTheme() {
 
   return {
     cycle() {
-      applyMode(nextMode(readMode()));
+      applyMode(nextThemeMode(readMode()));
     },
     getMode: readMode,
   };

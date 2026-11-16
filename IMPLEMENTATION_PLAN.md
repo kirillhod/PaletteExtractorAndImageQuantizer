@@ -22,10 +22,12 @@ This is the single source of truth for product scope, architecture, algorithms, 
 contracts, testing, and release criteria. `AGENTS.md` contains the operating rules for
 agents; it defers to this plan for *what* to build.
 
-- Read §1–§3 before touching code.
-- Read §4–§7 for any algorithm, color, dithering, or export work.
+- Read §1–§4 before touching code.
+- Read §5–§7 for any algorithm, color, dithering, or export work.
 - Read §8 before UI work.
 - Read §10–§12 for tests and contracts.
+- Read one section at a time with `node tools/spec.mjs plan <section>`; appendices and the
+  research report are reference only.
 - Keep the §18 decision log current; never silently diverge from a frozen contract.
 
 ### Current state (2026-11-16)
@@ -37,7 +39,7 @@ agents; it defers to this plan for *what* to build.
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
 | Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
 | UI | Stage + compact collapsible rail, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, Help with references and credits, picked-color markers |
-| Tests | 148 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, SEO, references |
+| Tests | 156 passing (`node --test`), including golden hashes, dithering, palettes, perceptual ordering, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, SEO, references |
 | Version | `js/core/version.js`; `v1.3.1` tagged; M6.2 complete; M6.3–M6.5 unreleased |
 | Next | Release the perceptual ordering, picked-marker, compact-frame, and validated-copy changes when requested; otherwise M7 is later / not planned for v1.x |
 
@@ -242,7 +244,8 @@ same network can open the tool; `--host=localhost` keeps it loopback-only.
 
 ```
 ┌───────────────────────────── UI (DOM, canvas) ─────────────────────────────┐
-│ main.js · ui/controls · canvas-view · palette-view · export-view · tooltips │
+│ main.js · controls · canvas-view · palette-view · export-view · tooltips    │
+│ export-controller · picked-markers · session-store · theme · i18n           │
 └───────────────────────────────────┬────────────────────────────────────────┘
                                     │ postMessage (transferables)
 ┌───────────────────────────────────▼────────────────────────────────────────┐
@@ -267,8 +270,8 @@ and canvas; core receives an `ImageDataLite`. The **own PNG decoder** lives in c
 - The worker MAY import `core/**` and nothing from `ui/**` or `content/**`.
 - `content/**` is static data only: no fetch, no DOM access, no side effects, no imports
   from `core/**` or `ui/**`. UI modules render it.
-- Theme resolution/persistence lives in `js/theme-init.js` and `js/ui/theme.js`; core has
-  no theme knowledge.
+- Theme resolution/persistence lives in `js/theme-init.js` and `js/ui/theme.js`; the pure
+  mode helpers live in `js/core/theme-mode.js`, which has no DOM knowledge.
 - All color conversions and distance computations go through `core/color.js`.
 - All randomness goes through `core/rng.js`; `Math.random` is forbidden.
 - All sorting with ties uses explicit comparators; no reliance on hash-map order.
@@ -778,7 +781,7 @@ Presets set controls; they do not lock them.
 - `paletteHash` covers canonical `{order, space, entries:[{index,rgb,alpha}]}`.
 - Locked entries cannot be removed; removing an entry renumbers indices deterministically.
 
-### 6.8 Indexing (`core/index-image.js`)
+### 6.8 Indexing (`core/map.js`, `core/png/encode.js`)
 
 - Bit depth: `K ≤ 2 → 1`, `K ≤ 4 → 2`, `K ≤ 16 → 4`, `K ≤ 256 → 8`.
 - Indices are packed MSB-first within each byte, per the PNG specification.
@@ -1162,7 +1165,8 @@ site. Learning is opt-in, contextual, and dismissible.
 
 - The site UI is fully available in English and Russian. Repository documentation stays
   English; only the rendered site switches.
-- `js/content/messages.js` holds flat `en`/`ru` catalogs with matching key sets.
+- `js/content/messages.en.js` and `js/content/messages.ru.js` hold flat catalogs with
+  matching key sets; `js/content/messages.js` combines them for `MESSAGES`.
   `js/core/i18n.js` owns locale detection, interpolation, and `Intl.PluralRules` plural
   formatting; `js/ui/i18n.js` applies the catalog to the DOM and dispatches locale changes.
 - `peiq.locale` stores `auto | en | ru`. In `auto`, the first `ru`/`en` prefix in
@@ -1271,31 +1275,29 @@ site. Learning is opt-in, contextual, and dismissible.
 | `rng.test.js` | splitmix64 sequence, seed determinism |
 | `hash.test.js` | SHA-256/FNV fallback, canonical JSON |
 | `histogram.test.js` | binning, alpha weights, representatives |
-| `median-cut.test.js` | K colors, determinism, K > unique, degenerate images |
-| `wu.test.js` | K colors, MSE ≤ median cut on fixtures, determinism |
-| `octree.test.js` | K colors, merge order, determinism |
-| `kmeans.test.js` | seeding, empty clusters, iteration cap, determinism |
+| `quantize.test.js` | popularity, median cut, Wu, octree, K-means++ basics |
+| `quantize-advanced.test.js` | refinement, degenerate inputs, determinism |
 | `palette.test.js` | IDs, ordering, locks, dedupe, hash |
 | `palette-order.test.js` | perceptual determinism, endpoints, CIEDE2000 cost, DCCW cut, locks, 256 colors |
 | `picked-markers.test.js` | marker round-trip, clamping, invalid records, clone independence |
 | `clipboard-image.test.js` | image clipboard feature detection, PNG blob type and bytes |
 | `map.test.js` | exact/LUT modes, tie-break, alpha, compliance |
-| `dither-error-diffusion.test.js` | kernel sums, serpentine, strength, edge stop, compliance |
-| `dither-ordered.test.js` | Bayer generation, two-candidate probabilities, compliance |
-| `dither-blue-noise.test.js` | mask tiling, determinism, compliance |
-| `png-crc.test.js` | CRC32 known answer, chunk layout |
-| `png-encode.test.js` | RGBA/indexed, bit depths, tRNS, decode round-trip |
-| `png-decode.test.js` | filters 0–4, indexed/RGB/RGBA, rejects 16-bit/interlaced |
-| `index-image.test.js` | packing, bit depth rule, transparent index |
-| `formats.test.js` | .hex/.gpl/.pal/.json/.css/.tokens round-trips |
-| `ase.test.js` | writer layout, reader round-trip |
+| `dither.test.js` | kernels, serpentine, strength, edge stop, Bayer, blue noise, compliance |
+| `png.test.js` | encode/decode, filters 0–4, bit depths, tRNS, packing, round-trip |
+| `formats.test.js` | .hex/.gpl/.pal/.json round-trips |
 | `palettes.test.js` | built-in counts/values, import parsers |
 | `metrics.test.js` | ΔE stats, p95, worst pixels, compliance |
 | `pipeline.test.js` | stage composition, preview vs final params |
-| `determinism.test.js` | two runs → identical palette/index-map hashes |
+| `pipeline-m2.test.js` | indexed export, transparent index, alpha compliance |
 | `golden.test.js` | synthetic fixture → reviewed hashes |
-| `learn.test.js` | unique topic/reference IDs, required fields, https links, every referenced ID exists |
 | `theme.test.js` | dark/light token parity, auto resolution, 3-state cycle, invalid storage |
+| `controls.test.js` | extractor select normalization |
+| `i18n.test.js` | locale detection, message formatting, plurals |
+| `messages.test.js` | EN/RU key parity, placeholders, referenced keys |
+| `references.test.js` | reference and credit records |
+| `seo.test.js` | title, description, canonical, JSON-LD |
+| `session-state.test.js` | session clone, validation, picked markers |
+| `url-state.test.js` | versioned URL settings round-trip |
 
 ### 10.3 Required known-answer tests
 
@@ -1606,19 +1608,18 @@ Legend: **S** = signatures/notes, **T** = required tests.
 
 | Path | Responsibility |
 |---|---|
-| `js/main.js` | Bootstrap, feature detection, worker creation, wiring, palette editor and QA panel state |
+| `js/main.js` | Bootstrap, worker wiring, preview/render, palette editor, picking, QA, session and URL state |
 | `js/theme-init.js` | Classic `<head>` script: resolve `peiq.theme` and `peiq.locale` before paint, set theme and language attributes |
-| `js/ui/dom.js` | `el()`, `on()`, `raf()`, `debounce()`; no framework |
-| `js/ui/state.js` | Store: `getState`, `setState`, `subscribe`; single mutation point |
+| `js/ui/dom.js` | `el()`, `$`, `$$`, `debounce()`, `copyText()`; no framework |
 | `js/ui/theme.js` | 3-state toggle, matchMedia listener, persistence, meta theme-color |
 | `js/ui/i18n.js` | Locale resolution, static `data-i18n` application, change events, error/detail localization |
-| `js/ui/strings.js` | User-facing strings and error templates |
 | `js/ui/dropzone.js` | File picker/drag/paste; decode + downscale preview |
 | `js/ui/controls.js` | Extract/Map/Dither/Order controls; presets |
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
 | `js/ui/picked-markers.js` | Picked-color overlay, drag/cancel, overlap offsets, keyboard nudge focus |
-| `js/ui/export-view.js` | Export selection, validation, downloads, clipboard helpers, filenames |
+| `js/ui/export-view.js` | Validated Save/Copy rows, object URLs, image and text clipboard helpers |
+| `js/ui/export-controller.js` | Export request ids, progress, worker jobs, palette-file validation, stale-result handling |
 | `js/ui/status.js` | Progress, timings, warnings, toasts |
 | `js/ui/tooltips.js` | `?` control hints; fixed bubble, hover/focus/touch, Esc/outside close |
 | `js/ui/learn-view.js` | Contextual popovers, Help drawer, Guide/Shortcuts tabs, references |
@@ -1628,9 +1629,10 @@ Legend: **S** = signatures/notes, **T** = required tests.
 
 | Path | Responsibility |
 |---|---|
-| `js/content/learn.js` | Static guide topics: `{id, title, summary, paragraphs, links}` |
 | `js/content/references.js` | Canonical references `{id, title, authors, year, venue, url}`, plus credits; `url` is `null` for print-only papers |
-| `js/content/messages.js` | English and Russian flat UI catalogs; matching key sets and plural forms |
+| `js/content/messages.js` | Combines the two locale tables and exports `MESSAGES` |
+| `js/content/messages.en.js` | English flat UI catalog |
+| `js/content/messages.ru.js` | Russian flat UI catalog; the key set mirrors English |
 
 ### Worker
 
@@ -1648,6 +1650,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/rng.js` | `createRng(seed)`, `splitmix64`, `nextFloat` | `rng.test.js` |
 | `js/core/hash.js` | `sha256Hex`, `fnv1a64Hex`, `stableStringify` | `hash.test.js` |
 | `js/core/i18n.js` | Locale detection, interpolation, plural selection, number formatting; no DOM | `i18n.test.js` |
+| `js/core/theme-mode.js` | `normalizeThemeMode`, `nextThemeMode`, `resolveTheme`; no DOM | `theme.test.js` |
 | `js/core/histogram.js` | `buildHistogram(pixels, opts)` | `histogram.test.js` |
 | `js/core/quantize/index.js` | `extractPalette(hist, params)`, dispatch, refinement | `quantize.test.js`, `quantize-advanced.test.js` |
 | `js/core/quantize/popularity.js` | `extractPopularity` | `quantize.test.js` |
@@ -1699,6 +1702,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `assets/README.md` | Provenance, font source/license, regeneration command |
 | `tools/dev-server.mjs` | Zero-dep static server |
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
+| `tools/spec.mjs` | Print one plan/DESIGN/research section without loading the whole document |
 | `.github/workflows/ci.yml` | `node --test` on push/PR |
 | `.github/workflows/pages.yml` | Stage the static site and deploy it to GitHub Pages on `main` |
 
@@ -1850,7 +1854,7 @@ Each milestone ends with a demo and green tests. Version bumps: `0.1.0` at M0,
 - [x] Clear the palette selection by clicking empty strip space or pressing Esc while the
       palette has focus, so Pick can fill the HEX field for Add.
 - [x] Add helper tests for image clipboard support and PNG blob creation.
-- **Exit:** pending version bump and tag after review; `npm test` 148 passing and the
+- **Exit:** pending version bump and tag after review; `npm test` 156 passing and the
   browser pass at 1280/360 px is green.
 
 ### M7 — Later / not planned for v1.x

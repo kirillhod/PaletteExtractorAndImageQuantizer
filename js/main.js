@@ -1,8 +1,5 @@
 // @ts-check
 import { formatHex, parseHex } from './core/color.js';
-import { formatHexPalette, parseHexPalette } from './core/formats/hex.js';
-import { formatGplPalette, parseGplPalette } from './core/formats/gpl.js';
-import { formatPaletteJson, parsePaletteJson } from './core/formats/json.js';
 import { decodeUrlState, encodeUrlState } from './core/url-state.js';
 import {
   SESSION_VERSION,
@@ -14,7 +11,6 @@ import {
   addPaletteEntry,
   createPalette,
   movePaletteEntry,
-  paletteHexList,
   removePaletteEntry,
   setPaletteLock,
   sortPalette,
@@ -27,17 +23,16 @@ import {
 import { APP_VERSION } from './core/version.js';
 import { BUILTIN_PALETTES } from './core/palettes/builtin.js';
 import { parsePaletteFile } from './core/palettes/import.js';
-import { copyText, debounce, el } from './ui/dom.js';
+import { debounce, el } from './ui/dom.js';
+import { createExportController } from './ui/export-controller.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { createPickedMarkers } from './ui/picked-markers.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
 import {
   clearDownloadLinks,
-  getStripOrientation,
   refreshDownloadLinks,
   setExportEnabled,
-  showDownloadLinks,
 } from './ui/export-view.js';
 import {
   countLabel,
@@ -121,7 +116,6 @@ const paletteStatus = document.getElementById('palette-status');
 const transparentIndex = /** @type {HTMLSelectElement|null} */ (document.getElementById('transparent-index'));
 const alphaThreshold = /** @type {HTMLInputElement|null} */ (document.getElementById('alpha-threshold'));
 const alphaThresholdValue = document.getElementById('alpha-threshold-value');
-const paletteFormat = /** @type {HTMLSelectElement|null} */ (document.getElementById('palette-format'));
 const ditherMethod = /** @type {HTMLSelectElement|null} */ (document.getElementById('dither-method'));
 const ditherStrength = /** @type {HTMLInputElement|null} */ (document.getElementById('dither-strength'));
 const ditherStrengthValue = document.getElementById('dither-strength-value');
@@ -199,14 +193,29 @@ let paletteStatusName = '';
 let paletteStatusCount = 0;
 /** @type {{ kind:'imported'|'restored', name:string, count:number }|null} */
 let customPaletteOption = null;
-let exportProgressKey = '';
-let lastValidationDetailRaw = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let fixedColors = [];
 let fixedName = '';
 /** @type {{ r:number,g:number,b:number,a:number }[]} */
 let importedColors = [];
 let importedName = '';
+
+const exportController = createExportController({
+  app,
+  getWorker: () => worker,
+  nextRequestId: () => nextRequestId++,
+  getParams,
+  getProcessParams,
+  getColorSpace: () => controls.getParams().space,
+  getSortOrder: () => sortOrder,
+  decodeFullImage,
+  refreshExportState: updateExportState,
+  prepareForExport: () => {
+    pickedMarkersView?.cancelDrag();
+    stopPickMode();
+    updatePaletteEditor();
+  },
+});
 
 if (pickedMarkersHost) {
   pickedMarkersView = createPickedMarkers({
@@ -231,7 +240,7 @@ function createWorker() {
     setStatusMessage('status.workerError');
     if (canvasEmpty) canvasEmpty.hidden = true;
     app.exportBusy = false;
-    clearExportProgress();
+    exportController.clearExportProgress();
     updateExportState();
   });
   return instance;
@@ -253,7 +262,7 @@ function onWorkerMessage(event) {
         index: 'status.progressIndex',
         encode: 'status.progressEncode',
       };
-      if (labels[message.stage]) setExportProgress(labels[message.stage]);
+      if (labels[message.stage]) exportController.setExportProgress(labels[message.stage]);
     }
     return;
   }
@@ -308,23 +317,7 @@ function onWorkerMessage(event) {
   }
 
   if (message.type === 'exported') {
-    if (message.requestId !== app.exportRequestId) return;
-    const files = message.files ?? [];
-    const ok = files.length > 0 && files.every((file) => file.validation?.ok);
-    if (!ok) {
-      const detail = localizeDetail(files[0]?.validation?.detail);
-      toastKey('toast.exportFailedValidation', { detail }, 'error');
-      setStatusMessage('status.exportFailedValidation');
-      clearDownloadLinks();
-      finishExport();
-      return;
-    }
-    showDownloadLinks(files);
-    lastValidationDetailRaw = files[0]?.validation?.detail ?? '';
-    const detail = localizeDetail(lastValidationDetailRaw);
-    toastKey('toast.validatedDownload', {}, 'success');
-    setStatusMessage('status.validatedReady', { detail });
-    finishExport();
+    exportController.handleExported(message);
     return;
   }
 
@@ -356,7 +349,7 @@ function onWorkerMessage(event) {
     setStatusMessage('status.error');
     if (canvasEmpty) canvasEmpty.hidden = true;
     if (message.requestId === app.exportRequestId) {
-      finishExport();
+      exportController.finishExport();
     } else if (message.requestId === qaRequestId) {
       qaBusy = false;
       qaFailed = true;
@@ -485,56 +478,6 @@ function toggleQualityMap() {
   if (section) section.open = true;
   qaErrorToggle.checked = !qaErrorToggle.checked;
   showQualityMap();
-}
-
-/** @param {string} labelKey */
-function setExportProgress(labelKey) {
-  exportProgressKey = labelKey;
-  const host = document.getElementById('export-progress');
-  const labelNode = document.getElementById('export-progress-label');
-  const panel = document.querySelector('.peiq-export-panel');
-  if (labelNode) labelNode.textContent = t(labelKey);
-  if (host) host.hidden = false;
-  if (panel) panel.setAttribute('aria-busy', 'true');
-}
-
-function clearExportProgress() {
-  exportProgressKey = '';
-  const host = document.getElementById('export-progress');
-  const panel = document.querySelector('.peiq-export-panel');
-  if (host) host.hidden = true;
-  if (panel) panel.removeAttribute('aria-busy');
-}
-
-/**
- * @param {string} labelKey
- * @returns {number} request id, or 0 when an export is already running
- */
-function beginExport(labelKey) {
-  if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return 0;
-  const id = nextRequestId++;
-  app.exportRequestId = id;
-  app.exportBusy = true;
-  setExportEnabled(false);
-  pickedMarkersView?.cancelDrag();
-  stopPickMode();
-  updatePaletteEditor();
-  clearDownloadLinks();
-  setExportProgress(labelKey);
-  return id;
-}
-
-function finishExport() {
-  app.exportBusy = false;
-  clearExportProgress();
-  updateExportState();
-}
-
-function cancelExport() {
-  if (!app.exportBusy) return;
-  worker.postMessage({ type: 'cancel', requestId: app.exportRequestId });
-  app.exportRequestId = 0;
-  finishExport();
 }
 
 function renderPaletteStrip() {
@@ -1614,7 +1557,7 @@ function processPreview() {
   if (mode === 'map' && fixedColors.length === 0) {
     if (!loadTargetPalette(paletteSelect?.value || 'pico-8')) return;
   }
-  cancelExport();
+  exportController.cancelExport();
   clearDownloadLinks();
   if (app.previewRequestId) {
     worker.postMessage({ type: 'cancel', requestId: app.previewRequestId });
@@ -1650,7 +1593,7 @@ async function loadFile(file, restore = null) {
   const requestId = ++loadRequestId;
   try {
     if (!restore) sessionPersistence = true;
-    cancelExport();
+    exportController.cancelExport();
     setStatusMessage('status.decoding');
     const bitmap = await decodeBitmap(file);
     // A newer load, including a user drop while the saved session is still decoding,
@@ -1844,20 +1787,6 @@ function drawToImageData(bitmap, width, height, smooth) {
   return ctx.getImageData(0, 0, width, height);
 }
 
-function exportStrip() {
-  const id = beginExport('status.progressStrip');
-  if (!id) return;
-  setStatusMessage('status.buildingStrip');
-  worker.postMessage({
-    type: 'export-strip',
-    requestId: id,
-    palette: app.palette,
-    name: app.name,
-    orientation: getStripOrientation(),
-    transparentIndex: Number(transparentIndex?.value ?? -1),
-  });
-}
-
 /**
  * Decode the source at full resolution only when an export needs it. Keeping a
  * 16 MP RGBA copy for the whole session costs 64 MiB; the preview does not need it.
@@ -1874,187 +1803,6 @@ async function decodeFullImage() {
   } finally {
     bitmap.close?.();
   }
-}
-
-async function exportReduced() {
-  const id = beginExport('status.progressEncode');
-  if (!id) return;
-  setStatusMessage('status.encodingReduced');
-  const params = getProcessParams();
-  const name = app.name;
-  try {
-    const full = await decodeFullImage();
-    if (!full) throw new Error(t('error.imageDecode'));
-    if (!app.exportBusy || app.exportRequestId !== id) return;
-    worker.postMessage(
-      {
-        type: 'export-reduced',
-        requestId: id,
-        image: { data: full.data.buffer, width: app.width, height: app.height },
-        params,
-        name,
-      },
-      [full.data.buffer],
-    );
-  } catch (error) {
-    if (app.exportRequestId !== id) return;
-    toast(localizeError(error), 'error');
-    finishExport();
-  }
-}
-
-async function exportIndexed() {
-  const id = beginExport('status.progressIndex');
-  if (!id) return;
-  setStatusMessage('status.encodingIndexed');
-  const params = getParams();
-  const name = app.name;
-  const palette = app.palette.map((entry) => ({ ...entry, color: { ...entry.color } }));
-  try {
-    const full = await decodeFullImage();
-    if (!full) throw new Error(t('error.imageDecode'));
-    if (!app.exportBusy || app.exportRequestId !== id) return;
-    worker.postMessage(
-      {
-        type: 'export-indexed',
-        requestId: id,
-        image: { data: full.data.buffer, width: app.width, height: app.height },
-        palette,
-        params,
-        name,
-      },
-      [full.data.buffer],
-    );
-  } catch (error) {
-    if (app.exportRequestId !== id) return;
-    toast(localizeError(error), 'error');
-    finishExport();
-  }
-}
-
-function copyHex() {
-  if (!app.hasResult || app.palette.length === 0 || app.exportBusy) return;
-  copyText(paletteHexList(app.palette))
-    .then(() =>
-      toastKey(
-        'toast.copiedHexValues',
-        {
-          countLabel: countLabel('count.hexValues', app.palette.length),
-        },
-        'success',
-      ),
-    )
-    .catch(() => toastKey('toast.clipboardUnavailable', {}, 'error'));
-}
-
-async function exportPaletteFile() {
-  const id = beginExport('status.progressPaletteFile');
-  if (!id) return;
-  const format = paletteFormat?.value === 'gpl'
-    ? 'gpl'
-    : paletteFormat?.value === 'json'
-      ? 'json'
-      : 'hex';
-  const base = baseName(app.name);
-  const colors = app.palette.map((entry) => entry.color);
-  const expected = app.palette.map((entry) => entry.color);
-  let text;
-  let parsed;
-
-  try {
-    if (format === 'gpl') {
-      text = formatGplPalette(
-        colors,
-        base,
-        app.palette.map((entry) => entry.name),
-      );
-      parsed = parseGplPalette(text).colors;
-    } else if (format === 'json') {
-      text = await formatPaletteJson(app.palette, {
-        name: base,
-        order: sortOrder,
-        space: controls.getParams().space,
-      });
-      parsed = parsePaletteJson(text).colors;
-    } else {
-      text = formatHexPalette(colors);
-      parsed = parseHexPalette(text).colors;
-    }
-  } catch (error) {
-    finishExport();
-    toastKey('toast.paletteBuildFailed', { detail: localizeError(error) }, 'error');
-    return;
-  }
-
-  const compareAlpha = format !== 'gpl';
-  const validation = validatePaletteColors(parsed, expected, compareAlpha, format);
-  if (!validation.ok) {
-    finishExport();
-    toastKey(
-      'toast.paletteValidationFailed',
-      { detail: localizeDetail(validation.detail) },
-      'error',
-    );
-    setStatusMessage('status.validationFailed');
-    return;
-  }
-
-  const bytes = new TextEncoder().encode(text);
-  clearDownloadLinks();
-  showDownloadLinks([
-    {
-      name: `${base}-palette.${format}`,
-      mime: format === 'json' ? 'application/json' : 'text/plain',
-      data: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
-      validation,
-    },
-  ]);
-  toastKey('toast.paletteFileReady', {}, 'success');
-  lastValidationDetailRaw = validation.detail;
-  setStatusMessage('status.validatedReady', {
-    detail: localizeDetail(lastValidationDetailRaw),
-  });
-  finishExport();
-}
-
-/**
- * @param {{ r:number,g:number,b:number,a:number }[]} parsed
- * @param {{ r:number,g:number,b:number,a:number }[]} expected
- * @param {boolean} compareAlpha
- * @param {'hex'|'gpl'|'json'} format
- * @returns {{ ok:boolean, detail:string }}
- */
-function validatePaletteColors(parsed, expected, compareAlpha, format) {
-  if (parsed.length !== expected.length) {
-    return { ok: false, detail: `read ${parsed.length} colors, expected ${expected.length}` };
-  }
-  for (let i = 0; i < expected.length; i++) {
-    const actual = parsed[i];
-    const wanted = expected[i];
-    if (
-      actual.r !== wanted.r ||
-      actual.g !== wanted.g ||
-      actual.b !== wanted.b ||
-      (compareAlpha && actual.a !== wanted.a)
-    ) {
-      return { ok: false, detail: `color ${i + 1} does not round-trip` };
-    }
-  }
-  const alphaNote = compareAlpha ? '' : '; alpha not stored by GPL';
-  return {
-    ok: true,
-    detail: `${expected.length} colors · .${format} · RGB exact${alphaNote}`,
-  };
-}
-
-/** @param {string} name */
-function baseName(name) {
-  const base = String(name ?? '')
-    .toLowerCase()
-    .replace(/\.[a-z0-9]+$/i, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return base || 'image';
 }
 
 function toggleOriginalState() {
@@ -2078,13 +1826,14 @@ function renderOriginalLabels() {
 
 function refreshDynamicUi() {
   const lastStatus = getLastStatus();
+  const validationDetail = exportController.getValidationDetail();
   if (
     lastStatus.kind === 'message' &&
     lastStatus.key === 'status.validatedReady' &&
-    lastValidationDetailRaw
+    validationDetail
   ) {
     setStatusMessage('status.validatedReady', {
-      detail: localizeDetail(lastValidationDetailRaw),
+      detail: localizeDetail(validationDetail),
     });
   } else {
     refreshStatus();
@@ -2102,9 +1851,10 @@ function refreshDynamicUi() {
       pickingColor ? 'palette.pickHint' : 'palette.editHint',
     );
   }
-  if (exportProgressKey) {
+  const progressKey = exportController.getProgressKey();
+  if (progressKey) {
     const label = document.getElementById('export-progress-label');
-    if (label) label.textContent = t(exportProgressKey);
+    if (label) label.textContent = t(progressKey);
   }
   if (qaStatus) {
     if (qaBusy) qaStatus.textContent = t('quality.statusMeasuring');
@@ -2430,11 +2180,11 @@ function updateDitherControls() {
 }
 
 toggleOriginal.addEventListener('click', toggleOriginalState);
-document.getElementById('export-strip')?.addEventListener('click', exportStrip);
-document.getElementById('export-reduced')?.addEventListener('click', exportReduced);
-document.getElementById('export-indexed')?.addEventListener('click', exportIndexed);
-document.getElementById('export-palette')?.addEventListener('click', exportPaletteFile);
-document.getElementById('copy-hex')?.addEventListener('click', copyHex);
+document.getElementById('export-strip')?.addEventListener('click', exportController.exportStrip);
+document.getElementById('export-reduced')?.addEventListener('click', exportController.exportReduced);
+document.getElementById('export-indexed')?.addEventListener('click', exportController.exportIndexed);
+document.getElementById('export-palette')?.addEventListener('click', exportController.exportPaletteFile);
+document.getElementById('copy-hex')?.addEventListener('click', exportController.copyHex);
 
 window.addEventListener(
   'scroll',

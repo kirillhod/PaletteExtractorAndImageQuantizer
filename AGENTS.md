@@ -259,17 +259,18 @@ and the change is committed locally with a descriptive body (plan §16).
 8. Do not add dependencies, services, or telemetry to work around a problem.
 9. Do not refactor unrelated code or “improve” contracts opportunistically.
 10. Leave the repository green; fix flakiness instead of skipping silently.
-11. Keep context small. Load skill `peiq-context-map` to locate files and specs, grep
-    before reading, read large files in slices, and never read
-    `IMPLEMENTATION_PLAN.md`, `DESIGN.md`, `RESEARCH_REPORT.md`, `js/main.js`, or
-    `js/content/messages.js` end to end. Send “where/how” questions to the `explore`
+11. Keep context small. Load skill `peiq-context-map` to locate files and specs, use
+    `node tools/spec.mjs <plan|design|research> <section>` instead of reading a whole
+    document, grep before reading, and read large files in slices. Never read
+    `IMPLEMENTATION_PLAN.md`, `DESIGN.md`, `RESEARCH_REPORT.md`, `js/main.js`, or a
+    `messages.*.js` table end to end. Send “where/how” questions to the `explore`
     subagent and keep the main context for edits.
 
 ## 12. Current state and next task
 
 - Canonical status lives in plan §0; milestone checkboxes in plan §15; decisions in
   plan §18. Do not duplicate feature lists here.
-- Released `v1.3.1`; 148 tests. Perceptual palette ordering, picked-color anchors, the
+- Released `v1.3.1`; 156 tests. Perceptual palette ordering, picked-color anchors, the
   compact desktop frame, validated Copy on every export, and palette-selection clearing
   are implemented but unreleased.
 - Next: release those changes when requested; otherwise M7 — later / not planned for
@@ -287,5 +288,7 @@ npm run dev                    # http://localhost:5173/ + LAN URLs
 node tools/dev-server.mjs 8080
 node tools/dev-server.mjs 8080 --host=localhost   # loopback only
 node tools/gen-blue-noise.mjs
+node tools/spec.mjs plan 6.5        # one plan section only
+node tools/spec.mjs plan --list
 git status
 ```
