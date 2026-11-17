@@ -13,6 +13,16 @@
 - `DESIGN.md` §3 defines the `@font-face` rule and fallback stack.
 - If the font is replaced or updated, keep `OFL.txt` and update this note.
 
+## Icons
+
+`favicon.svg` is the PEIQ monogram supplied by the project owner as `PEIQ_Logo.svg` on
+2026-11-17: the four letters in one row, `#ED8F31` on `#1C1E22`, corner radius 50 of 256.
+The delivered drawing is kept unchanged; only the root element differs, dropping the
+fixed 256 px size and adding `role="img"` and `aria-label="PEIQ"`. A 512 px render of the
+asset matches the delivered file pixel for pixel, so its outlines, 8/256 stroke, and
+mask stay exactly as supplied. The header lockup and the social card still use the
+orange brand dot.
+
 ## Screenshots
 
 `screenshots/workspace-dark.png` and `screenshots/map-dither-dark.png` are captures of
