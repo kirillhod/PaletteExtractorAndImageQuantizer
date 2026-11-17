@@ -31,11 +31,11 @@
   color: var(--peiq-text-strong);
 }
 
-.peiq-header__brand-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--peiq-brand);
+.peiq-header__mark {
+  display: block;
+  flex: none;
+  width: 26px;
+  height: 26px;
 }
 
 .peiq-header__name-short {

@@ -74,9 +74,9 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
   redraws the map and markers, so a settings or palette change never silently turns the
   overlay off. Loading another image clears it.
   Contrast matrices are out of v1.1.
-- The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
-  with an `aria-label`/`title` carrying the full name. The document title uses the full
-  name.
+- The header leads with the PEIQ mark, then the full public name at ≥980 px; below that,
+  the short name `PEIQ` with an `aria-label`/`title` carrying the full name. The document
+  title uses the full name.
 - The `Help` and theme buttons are always visible, including the empty state.
 - Visual language, tokens, component styles, motion, and breakpoints: see
   [`DESIGN.md`](../../DESIGN.md).

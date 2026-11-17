@@ -20,8 +20,8 @@
 The delivered drawing is kept unchanged; only the root element differs, dropping the
 fixed 256 px size and adding `role="img"` and `aria-label="PEIQ"`. A 512 px render of the
 asset matches the delivered file pixel for pixel, so its outlines, 8/256 stroke, and
-mask stay exactly as supplied. The header lockup and the social card still use the
-orange brand dot.
+mask stay exactly as supplied. The same file is the browser icon, the 26 px header mark,
+and the mark on the social card.
 
 ## Screenshots
 
@@ -31,7 +31,7 @@ The workspace capture shows the palette editor open with a selected swatch, the 
 sort select with its direction button, and the full-screen preview button; the map capture
 shows the Game Boy DMG palette with Floyd–Steinberg dithering and the transparent index at
 None. Both show the footer's confirmed session clear. No third-party artwork, screenshots,
-or stock images are included. Refreshed 2026-11-16 at 1440×900 from the current UI.
+or stock images are included. Refreshed 2026-11-17 at 1440×900 from the current UI.
 
 Refresh both captures at 1440×900 in dark theme and English whenever the interface
 changes, keeping the same hydrangea composition. A stale capture is a documentation
@@ -44,7 +44,7 @@ using the self-hosted Inter font: the PEIQ mark, the product name, the page URL,
 workspace capture of the current UI (K-means++ with 12 colors and hue sort), and the
 matching palette strip. Regenerate it from the current UI whenever the interface or
 palette order changes; a stale card is a documentation defect. No third-party artwork,
-screenshots, or stock images are included. Refreshed 2026-11-16.
+screenshots, or stock images are included. Refreshed 2026-11-17.
 
 ## Blue noise
 

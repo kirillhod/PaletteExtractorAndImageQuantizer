@@ -992,11 +992,11 @@ column, handing its width to the stage.
   text-decoration: none;
   white-space: nowrap;
 }
-.peiq-header__brand-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--peiq-brand);
+.peiq-header__mark {
+  display: block;
+  flex: none;
+  width: 26px;
+  height: 26px;
 }
 .peiq-header__actions {
   display: flex;
