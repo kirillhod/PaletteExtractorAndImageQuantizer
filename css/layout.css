@@ -67,6 +67,7 @@
   justify-content: center;
   min-height: 480px;
   max-height: 560px;
+  height: calc(100vh - var(--peiq-header-height));
   height: calc(100svh - var(--peiq-header-height));
   margin-inline: calc(var(--peiq-space-3) * -1);
   padding: var(--peiq-space-5) var(--peiq-space-3);
@@ -117,6 +118,7 @@
     "rail";
   gap: var(--peiq-space-3);
   align-items: start;
+  min-height: calc(100vh - var(--peiq-header-height));
   min-height: calc(100svh - var(--peiq-header-height));
   padding-block: var(--peiq-space-4);
 }
@@ -169,6 +171,7 @@
   display: grid;
   gap: var(--peiq-space-3);
   min-width: 0;
+  max-height: calc(100vh - var(--peiq-header-height) - 32px);
   max-height: calc(100svh - var(--peiq-header-height) - 32px);
   overflow: auto;
   padding-right: 4px;

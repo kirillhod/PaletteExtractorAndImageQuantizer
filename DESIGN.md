@@ -575,6 +575,14 @@ rows, and the palette aligns with the canvas’s left edge below it. The palette
 sits under the export panel at the bottom of that free left column, so changing the hint
 text never resizes the canvas.
 
+The format row under the strip toggle keeps its label, select, and Save on one line while
+they fit. The Russian **Сохранить** is about 34 px wider than **Save**, so in the 180–220 px
+column the row breaks and puts Save on its own line instead of letting the select and the
+button overlap; the wrapped button keeps its label width and stays left-aligned. The panel
+is clamped to its column, so its content can never paint into the canvas. Height rules use
+`svh` with a `vh` fallback line, so a browser without small-viewport units falls back to the
+classic viewport height instead of the `min-height` clamp.
+
 ```css
 .peiq-workspace {
   display: grid;

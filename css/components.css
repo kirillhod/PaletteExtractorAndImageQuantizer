@@ -1067,6 +1067,7 @@ html.peiq-preview-open body {
   grid-area: export;
   display: grid;
   gap: var(--peiq-space-2);
+  min-width: 0;
   padding: var(--peiq-space-3) var(--peiq-space-4);
   border-radius: var(--peiq-radius-lg);
   background: var(--peiq-surface);
@@ -1110,16 +1111,26 @@ html.peiq-preview-open body {
   min-height: 30px;
 }
 
+/* The format row keeps its label, select, and Save on one line while they fit. The
+   export column is only 180-220 px, and the Russian "Сохранить" is about 34 px wider
+   than "Save", so the row wraps the button onto a second line instead of letting the
+   select and the button overlap in the narrow column. */
 .peiq-export-palette {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
 
+.peiq-export-palette > .peiq-label,
+.peiq-export-palette > .peiq-btn {
+  flex: 0 0 auto;
+}
+
 .peiq-export-palette .peiq-select {
-  width: 100%;
-  min-width: 56px;
+  flex: 1 1 3rem;
+  width: auto;
+  min-width: 0;
   min-height: 30px;
 }
 
@@ -1487,7 +1498,8 @@ html.peiq-preview-open body {
     margin-right: 0;
   }
 
-  .peiq-export-panel .peiq-btn {
+  .peiq-export-bar .peiq-btn,
+  .peiq-download-result .peiq-btn {
     width: 100%;
   }
 

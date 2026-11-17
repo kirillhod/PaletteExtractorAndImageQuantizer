@@ -53,6 +53,7 @@
   }
 
   .peiq-canvas-frame {
+    height: 55vh;
     height: 55svh;
   }
 }
