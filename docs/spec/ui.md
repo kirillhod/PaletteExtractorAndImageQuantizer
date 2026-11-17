@@ -279,10 +279,14 @@ Single-key shortcuts are disabled while a text field, textarea, contenteditable 
 or select has focus, so typing and type-ahead keep their keys. `?` is the exception: it
 opens Help from any control except a text field, textarea, or contenteditable element, and
 it closes the full-screen palette preview first, because the Help drawer sits below that
-overlay. `E` opens the Quality section, measures the preview when no quality result exists
-yet, and then draws the error map, so the first press is never a silent no-op. Text entry
-keeps its native undo; Ctrl/Cmd+Z and Ctrl/Cmd+Y still reach the shared history when a
-select, range slider, or checkbox is focused.
+overlay. `F`, `O`, `E`, and `T` match either the produced Latin letter or the physical key
+position, so they keep working on a non-Latin layout; `1` accepts the top-row key, while
+Shift+1 stays `!`. `?` means the question-mark character, so whether it needs Shift follows
+the keyboard layout: Shift+7 on Russian, Shift+/ on English. `E` opens the Quality section,
+measures the preview when no quality result exists yet, and then draws the error map, so the
+first press is never a silent no-op. Text entry keeps its native undo; Ctrl/Cmd+Z and
+Ctrl/Cmd+Y still reach the shared history when a select, range slider, or checkbox is
+focused.
 
 ### 8.6 Accessibility
 

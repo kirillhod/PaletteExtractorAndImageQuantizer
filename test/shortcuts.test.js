@@ -88,10 +88,35 @@ test('single-key shortcuts still work from the page', () => {
   assert.deepEqual(calls, ['fit', 'zoom100', 'original', 'map', 'theme']);
 });
 
+test('letters follow the physical key on a non-Latin layout', () => {
+  const { calls, press } = setup();
+  // Russian layout: these positions produce Cyrillic letters.
+  press('а', body, { code: 'KeyF' });
+  press('щ', body, { code: 'KeyO' });
+  press('у', body, { code: 'KeyE' });
+  press('е', body, { code: 'KeyT' });
+  assert.deepEqual(calls, ['fit', 'original', 'map', 'theme']);
+});
+
+test('letters also follow the produced character on a moved layout', () => {
+  const { calls, press } = setup();
+  // Dvorak puts F on the physical Y key; the character still names the action.
+  press('f', body, { code: 'KeyY' });
+  assert.deepEqual(calls, ['fit']);
+});
+
+test('1 uses the top-row key but Shift+1 stays an exclamation mark', () => {
+  const { calls, press } = setup();
+  press('1', body, { code: 'Digit1' });
+  press('!', body, { code: 'Digit1', shiftKey: true });
+  assert.deepEqual(calls, ['zoom100']);
+});
+
 test('single-key shortcuts pause when a list or input has focus', () => {
   for (const target of [select, rangeInput, textInput]) {
     const { calls, press } = setup();
     for (const key of ['f', '1', 'o', 'e', 't']) press(key, target);
+    press('а', target, { code: 'KeyF' });
     assert.deepEqual(calls, [], `${target.tagName} should keep its keys`);
   }
 });

@@ -28,6 +28,31 @@ function isTextEntry(target) {
 }
 
 /**
+ * A letter shortcut fires for the produced Latin letter or for the physical key
+ * position. The second half is what keeps F, O, E, and T alive on a Russian or other
+ * non-Latin layout, where those keys produce Cyrillic letters.
+ *
+ * @param {KeyboardEvent} event
+ * @param {string} letter
+ * @returns {boolean}
+ */
+function isLetterShortcut(event, letter) {
+  const produced = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+  return produced === letter || event.code === `Key${letter.toUpperCase()}`;
+}
+
+/**
+ * `1` matches the produced digit on layouts that need Shift for it, and the top-row
+ * key position on layouts that move it. Shift+1 stays `!` on a US layout.
+ *
+ * @param {KeyboardEvent} event
+ * @returns {boolean}
+ */
+function isZoomShortcut(event) {
+  return event.key === '1' || (event.code === 'Digit1' && !event.shiftKey);
+}
+
+/**
  * @param {{
  *   onFit:() => void,
  *   onZoom100:() => void,
@@ -59,29 +84,21 @@ export function initShortcuts(handlers) {
       return;
     }
 
-    switch (event.key.toLowerCase()) {
-      case 'f':
-        event.preventDefault();
-        handlers.onFit();
-        break;
-      case '1':
-        event.preventDefault();
-        handlers.onZoom100();
-        break;
-      case 'o':
-        event.preventDefault();
-        handlers.onToggleOriginal();
-        break;
-      case 'e':
-        event.preventDefault();
-        handlers.onToggleErrorMap();
-        break;
-      case 't':
-        event.preventDefault();
-        handlers.onCycleTheme();
-        break;
-      default:
-        break;
+    if (isLetterShortcut(event, 'f')) {
+      event.preventDefault();
+      handlers.onFit();
+    } else if (isZoomShortcut(event)) {
+      event.preventDefault();
+      handlers.onZoom100();
+    } else if (isLetterShortcut(event, 'o')) {
+      event.preventDefault();
+      handlers.onToggleOriginal();
+    } else if (isLetterShortcut(event, 'e')) {
+      event.preventDefault();
+      handlers.onToggleErrorMap();
+    } else if (isLetterShortcut(event, 't')) {
+      event.preventDefault();
+      handlers.onCycleTheme();
     }
   });
 }
