@@ -3,8 +3,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  DEFAULT_CAPTION_COLOR,
   DEFAULT_PREVIEW_LAYOUT,
   PREVIEW_COLUMN_CHOICES,
+  normalizeCaptionColor,
   normalizePreviewLayout,
   previewGridColumns,
   previewSwatchLabels,
@@ -22,13 +24,18 @@ test('a stored layout keeps every valid field', () => {
     columns: 10,
     hex: true,
     rgb: true,
+    labelColor: DEFAULT_CAPTION_COLOR,
   });
-  assert.deepEqual(normalizePreviewLayout({ mode: 'column', columns: 16, rgb: true }), {
-    mode: 'column',
-    columns: 16,
-    hex: false,
-    rgb: true,
-  });
+  assert.deepEqual(
+    normalizePreviewLayout({ mode: 'column', columns: 16, rgb: true, labelColor: '#F2F0E6' }),
+    {
+      mode: 'column',
+      columns: 16,
+      hex: false,
+      rgb: true,
+      labelColor: '#f2f0e6',
+    },
+  );
 });
 
 test('unknown modes, column counts, and label flags are replaced one by one', () => {
@@ -37,13 +44,24 @@ test('unknown modes, column counts, and label flags are replaced one by one', ()
     columns: 0,
     hex: false,
     rgb: false,
+    labelColor: DEFAULT_CAPTION_COLOR,
   });
   assert.deepEqual(normalizePreviewLayout({ mode: 'grid', columns: -4, hex: true }), {
     mode: 'grid',
     columns: 0,
     hex: true,
     rgb: false,
+    labelColor: DEFAULT_CAPTION_COLOR,
   });
+});
+
+test('caption color accepts six-digit hex and rejects anything else', () => {
+  assert.equal(normalizeCaptionColor('#ffffff'), '#ffffff');
+  assert.equal(normalizeCaptionColor('00ff88'), '#00ff88');
+  assert.equal(normalizeCaptionColor(' #AbCdEf '), '#abcdef');
+  for (const value of [null, undefined, '', '#fff', '#12345g', 'red', 123]) {
+    assert.equal(normalizeCaptionColor(value), DEFAULT_CAPTION_COLOR);
+  }
 });
 
 test('the column select offers auto plus even counts up to 32', () => {

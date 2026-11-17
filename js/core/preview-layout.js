@@ -3,7 +3,7 @@ import { parseHex } from './color.js';
 
 /**
  * @typedef {'row'|'column'|'grid'} PreviewMode
- * @typedef {{ mode:PreviewMode, columns:number, hex:boolean, rgb:boolean }} PreviewLayout
+ * @typedef {{ mode:PreviewMode, columns:number, hex:boolean, rgb:boolean, labelColor:string }} PreviewLayout
  * @typedef {{ hex:string, color?:{ r:number, g:number, b:number } }} LabelEntry
  */
 
@@ -16,16 +16,32 @@ export const PREVIEW_MODES = Object.freeze(['row', 'column', 'grid']);
  */
 export const PREVIEW_COLUMN_CHOICES = Object.freeze([0, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32]);
 
+export const DEFAULT_CAPTION_COLOR = '#000000';
+
 /** @type {Readonly<PreviewLayout>} */
 export const DEFAULT_PREVIEW_LAYOUT = Object.freeze({
   mode: 'row',
   columns: 0,
   hex: false,
   rgb: false,
+  labelColor: DEFAULT_CAPTION_COLOR,
 });
 
 export const PREVIEW_AUTO_MAX_COLUMNS = 16;
 export const PREVIEW_MAX_COLUMNS = 32;
+
+/**
+ * Caption text sits directly on the user-chosen preview background, so its color is a
+ * user setting too. Anything that is not a six-digit hex falls back to black.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function normalizeCaptionColor(value) {
+  if (typeof value !== 'string') return DEFAULT_CAPTION_COLOR;
+  const match = /^#?([0-9a-f]{6})$/i.exec(value.trim());
+  return match ? `#${match[1].toLowerCase()}` : DEFAULT_CAPTION_COLOR;
+}
 
 /**
  * Normalize a stored or hand-edited preview layout. Unknown fields fall back one by
@@ -46,6 +62,7 @@ export function normalizePreviewLayout(value) {
       : DEFAULT_PREVIEW_LAYOUT.columns,
     hex: source.hex === true,
     rgb: source.rgb === true,
+    labelColor: normalizeCaptionColor(source.labelColor),
   };
 }
 

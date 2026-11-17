@@ -112,6 +112,7 @@ export const EN_MESSAGES = {
   'palette.previewPerRow': 'Per row',
   'palette.previewAuto': 'Auto',
   'palette.previewLabels': 'Labels',
+  'palette.previewLabelColor': 'Label color',
   'palette.pick': 'Pick',
   'palette.apply': 'Apply',
   'palette.add': 'Add',

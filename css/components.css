@@ -792,27 +792,23 @@ html.peiq-preview-open body {
   justify-self: center;
   max-width: 100%;
   margin-top: 4px;
-  padding: 2px 6px;
-  border-radius: var(--peiq-radius);
-  background: var(--peiq-preview-label-bg);
-  color: var(--peiq-preview-label-text);
+  color: var(--peiq-preview-label);
   font: 400 0.6875rem/1.35 var(--peiq-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 .peiq-palette-preview__label {
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
+  text-align: center;
 }
 
 .peiq-palette-preview__label + .peiq-palette-preview__label {
   margin-top: 1px;
 }
 
-/* Below roughly 96 px per color the caption cannot hold "#rrggbb" or an RGB triple, so
-   the block wins and the chip steps aside; the aria-label still names both values. */
+/* A caption needs about 56 px for "#rrggbb"; below that the chip cannot show a value
+   even on two lines, so it steps aside and the aria-label still names both values. */
 .peiq-palette-preview__strip[data-compact='true'] .peiq-palette-preview__labels {
   display: none;
 }
@@ -853,8 +849,14 @@ html.peiq-preview-open body {
   margin-inline: auto;
 }
 
+/* The color itself stays square: the block takes the width of its slot and the cell
+   grows downward for the caption instead of squashing the block. */
 .peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__swatch {
   flex: none;
+  grid-template-rows: auto auto;
+}
+
+.peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__swatch::before {
   aspect-ratio: 1;
 }
 

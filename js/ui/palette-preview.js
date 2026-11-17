@@ -2,6 +2,7 @@
 import {
   DEFAULT_PREVIEW_LAYOUT,
   PREVIEW_COLUMN_CHOICES,
+  PREVIEW_MAX_COLUMNS,
   normalizePreviewLayout,
   previewGridColumns,
   previewSwatchLabels,
@@ -53,6 +54,9 @@ export function createPalettePreview(deps) {
   const rgbInput = /** @type {HTMLInputElement|null} */ (
     document.getElementById('palette-preview-rgb')
   );
+  const labelColorInput = /** @type {HTMLInputElement|null} */ (
+    document.getElementById('palette-preview-label-color')
+  );
 
   if (
     !trigger ||
@@ -64,7 +68,8 @@ export function createPalettePreview(deps) {
     !colorInput ||
     !columnsSelect ||
     !hexInput ||
-    !rgbInput
+    !rgbInput ||
+    !labelColorInput
   ) {
     return {
       open() {},
@@ -174,6 +179,7 @@ export function createPalettePreview(deps) {
    */
   function applyLayout() {
     dialog.dataset.mode = layout.mode;
+    dialog.style.setProperty('--peiq-preview-label', layout.labelColor);
     for (const button of modeButtons) {
       button.setAttribute('aria-pressed', String(button.dataset.mode === layout.mode));
     }
@@ -181,6 +187,23 @@ export function createPalettePreview(deps) {
     columnsSelect.disabled = layout.mode !== 'grid';
     hexInput.checked = layout.hex;
     rgbInput.checked = layout.rgb;
+    labelColorInput.value = layout.labelColor;
+    labelColorInput.disabled = !layout.hex && !layout.rgb;
+  }
+
+  /**
+   * Caption color changes do not touch the strip contents, so they only repaint and
+   * persist instead of rebuilding up to 256 swatches per pointer move.
+   *
+   * @param {string} value
+   * @param {boolean} [persist]
+   */
+  function setCaptionColor(value, persist = true) {
+    layout = normalizePreviewLayout({ ...layout, labelColor: value });
+    dialog.style.setProperty('--peiq-preview-label', layout.labelColor);
+    labelColorInput.value = layout.labelColor;
+    if (!persist) return;
+    writeStored(LAYOUT_KEY, JSON.stringify(layout));
   }
 
   function renderStrip() {
@@ -189,10 +212,9 @@ export function createPalettePreview(deps) {
     trigger.disabled = palette.length === 0;
     if (!isOpen()) return;
     strip.replaceChildren();
-    strip.style.setProperty(
-      '--preview-columns',
-      String(previewGridColumns(palette.length, layout.columns)),
-    );
+    const count = palette.length;
+    const provisional = provisionalColumns(count);
+    applyColumns(provisional);
     for (const entry of palette) {
       const swatch = document.createElement('div');
       swatch.className = 'peiq-palette-preview__swatch';
@@ -219,27 +241,84 @@ export function createPalettePreview(deps) {
       'aria-label',
       `${t('palette.previewTitle')} · ${countLabel('count.colors', palette.length)}`,
     );
-    updateCaptionDensity();
+    applyColumns(count === 0 ? 1 : finalColumns(count));
   }
 
   /**
-   * A caption chip needs about 96 px. Below that the block is the useful signal, so the
-   * captions step aside instead of clipping; the swatch aria-label keeps both values.
+   * Columns applied before the cells exist. Auto starts from the square-ish count and
+   * may still be narrowed once the real heights are measurable.
+   *
+   * @param {number} count
    */
-  function updateCaptionDensity() {
-    const count = strip.children.length;
-    if (count === 0) {
+  function provisionalColumns(count) {
+    if (layout.mode === 'grid') return previewGridColumns(count, layout.columns);
+    return layout.mode === 'column' ? 1 : Math.max(1, count);
+  }
+
+  /**
+   * Auto is a fit-to-view choice: it picks the widest color that still shows the whole
+   * palette without scrolling. When captions are on, Auto also keeps every cell wide
+   * enough for them; a palette too large for that scrolls rather than hiding captions.
+   *
+   * @param {number} count
+   */
+  function finalColumns(count) {
+    if (layout.mode === 'grid') {
+      return layout.columns > 0 ? previewGridColumns(count, layout.columns) : fitColumns(count);
+    }
+    return layout.mode === 'column' ? 1 : Math.max(1, count);
+  }
+
+  /**
+   * Auto keeps the square-ish grid when it fits and only adds columns until the whole
+   * palette is visible, so small palettes do not collapse into a narrow tower. Fitting
+   * is monotone enough for a search: more columns means smaller cells and no more rows.
+   *
+   * @param {number} count
+   */
+  function fitColumns(count) {
+    const labelsOn = layout.hex || layout.rgb;
+    const captionLimit = labelsOn ? Math.floor(stage.clientWidth / 56) : PREVIEW_MAX_COLUMNS;
+    const limit = Math.max(
+      1,
+      Math.min(PREVIEW_MAX_COLUMNS, count, captionLimit > 0 ? captionLimit : 1),
+    );
+    const fits = (columns) => {
+      applyColumns(columns);
+      return stage.scrollHeight <= stage.clientHeight + 1;
+    };
+    const start = Math.max(1, Math.min(limit, previewGridColumns(count, 0)));
+    if (fits(start)) return start;
+    if (!fits(limit)) return limit;
+    let low = start + 1;
+    let high = limit;
+    let best = limit;
+    while (low <= high) {
+      const middle = (low + high) >> 1;
+      if (fits(middle)) {
+        best = middle;
+        high = middle - 1;
+      } else {
+        low = middle + 1;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Set the column count and hide captions where a cell cannot hold a hex value.
+   * A caption needs about 56 px for "#rrggbb"; the RGB triple can wrap to a second line.
+   *
+   * @param {number} columns
+   */
+  function applyColumns(columns) {
+    strip.style.setProperty('--preview-columns', String(columns));
+    if (strip.children.length === 0) {
       delete strip.dataset.compact;
       return;
     }
-    const columns =
-      layout.mode === 'grid'
-        ? previewGridColumns(count, layout.columns)
-        : layout.mode === 'column'
-          ? 1
-          : count;
     const cell = strip.clientWidth / Math.max(1, columns);
-    strip.dataset.compact = cell < 96 ? 'true' : 'false';
+    strip.dataset.compact = cell < 56 ? 'true' : 'false';
   }
 
   function refresh() {
@@ -265,6 +344,8 @@ export function createPalettePreview(deps) {
   });
   hexInput.addEventListener('change', () => setLayout({ hex: hexInput.checked }));
   rgbInput.addEventListener('change', () => setLayout({ rgb: rgbInput.checked }));
+  labelColorInput.addEventListener('input', () => setCaptionColor(labelColorInput.value, false));
+  labelColorInput.addEventListener('change', () => setCaptionColor(labelColorInput.value));
 
   function open() {
     if (deps.getPalette().length === 0) return;
@@ -326,7 +407,9 @@ export function createPalettePreview(deps) {
   colorInput.addEventListener('change', () => setBackground(colorInput.value));
   window.addEventListener('peiqq:localechange', refresh);
   window.addEventListener('resize', () => {
-    if (isOpen()) updateCaptionDensity();
+    if (!isOpen()) return;
+    const count = strip.children.length;
+    if (count > 0) applyColumns(finalColumns(count));
   });
 
   setBackground(readStored(BACKGROUND_KEY), false);

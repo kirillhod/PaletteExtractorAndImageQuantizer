@@ -62,8 +62,6 @@ const REQUIRED_TOKENS = [
   '--peiq-brand-ink',
   '--peiq-checker-a',
   '--peiq-checker-b',
-  '--peiq-preview-label-bg',
-  '--peiq-preview-label-text',
   '--peiq-text-on-accent',
 ];
 

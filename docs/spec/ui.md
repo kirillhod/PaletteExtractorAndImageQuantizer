@@ -134,9 +134,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   neutral gray background, with two gray presets and a color picker for the background. The
   header has no title and no band of its own; it is transparent over the chosen background,
   and its controls sit in two surface chips. Layout switches between one row, a column, and
-  a wrapping grid; in the grid a "per row" select offers Auto (square-ish) or 2–32 columns,
-  and HEX and RGB captions can be shown under each color, persisting with the background
-  under `peiq.previewLayout` and `peiq.previewBg`. Color blocks keep a gap of roughly 15% of
+  a wrapping grid; in the grid a "per row" select offers Auto (fits the palette to the view)
+  or 2–32 columns, and HEX and RGB captions can be shown under each color with a user-chosen
+  text color, persisting with the background under `peiq.previewLayout` and `peiq.previewBg`. Color blocks keep a gap of roughly 15% of
   the block width between neighbors at any palette size. The preview is read-only and never
   changes the export. `Esc`, the close button, or a click on the
   backdrop closes it, and focus returns to the trigger. The dialog traps Tab while open,

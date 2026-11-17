@@ -673,16 +673,22 @@ the controls. The controls sit in two floating `--peiq-surface` chips instead of
 bar, so their labels stay legible on any field: the left chip holds **Layout**, **Per row**,
 and **Labels**, the right one the Background presets and picker, with the close button last.
 **Layout** is a three-way segmented control: Row keeps one strip, Column stacks one color per
-row, and Grid wraps the palette. In Grid, **Per row** offers Auto plus 2–32 columns; Auto
-picks `ceil(sqrt(K))` capped at 16, and an explicit count is capped by the palette size. The
+row, and Grid wraps the palette. In Grid, **Per row** offers Auto plus 2–32 columns. Auto
+keeps a square-ish grid when it fits and adds columns until the whole palette is visible
+without scrolling, so the tiles stay as large as possible; with captions on it keeps every
+cell at least 56 px, which means a 256-color palette with captions scrolls instead of dropping
+them. An explicit count is capped by the palette size. The
 **Labels** checkboxes show the hex and the RGB triple independently under each color. Captions
-use `--peiq-font-mono` at 11 px on a fixed `--peiq-preview-label-bg` chip, because the field
-behind them is user-chosen; below about 96 px per color they step aside instead of clipping,
-and each swatch keeps both values in its `aria-label`. Row mode keeps
+are plain `--peiq-font-mono` text at 11 px with no chip of their own, because the field behind
+them is user-chosen: a small color swatch next to the toggles sets the caption color, black by
+default, and the choice persists with the rest of the layout. A narrow cell lets the RGB triple
+wrap at its spaces, and below about 56 px per color the caption steps aside instead of breaking
+digits, while each swatch keeps both values in its `aria-label`. Row mode keeps
 `height: clamp(140px, 40vh, 440px)` and equal flex slots; Column and Grid scroll inside the
 stage. Each color block fills 87% of its slot, leaving a gap of about 15% of the block width
-between neighboring colors, with a matching half-inset at the strip ends; Grid tiles stop
-growing at 220 px so a small palette does not become half-screen squares. Desktop controls
+between neighboring colors, with a matching half-inset at the strip ends. In Grid the block is
+always square and the cell grows downward for the caption; tiles stop growing at 220 px so a
+small palette does not become half-screen squares. Desktop controls
 are 26–32 px; below 600 px the visible Background label becomes screen-reader-only, the
 segmented buttons are 40 px, and presets, picker, and close are 44 px. The overlay covers the
 page, locks body scroll, traps Tab (including the select), and closes on `Esc`, the close
@@ -803,10 +809,7 @@ button, or a backdrop click.
   justify-self: center;
   max-width: 100%;
   margin-top: 4px;
-  padding: 2px 6px;
-  border-radius: var(--peiq-radius);
-  background: var(--peiq-preview-label-bg);
-  color: var(--peiq-preview-label-text);
+  color: var(--peiq-preview-label);
   font: 400 0.6875rem/1.35 var(--peiq-font-mono);
 }
 .peiq-select--compact {

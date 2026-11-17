@@ -112,6 +112,7 @@ export const RU_MESSAGES = {
   'palette.previewPerRow': 'В ряду',
   'palette.previewAuto': 'Авто',
   'palette.previewLabels': 'Подписи',
+  'palette.previewLabelColor': 'Цвет подписей',
   'palette.pick': 'Пипетка',
   'palette.apply': 'Применить',
   'palette.add': 'Добавить',
