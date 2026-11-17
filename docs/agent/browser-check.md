@@ -90,6 +90,23 @@ Then read back: `navigator.clipboard.read()` for images, `readText()` for `.hex`
 
 ```powershell
 taskkill /PID <pid> /T /F
+Remove-Item -LiteralPath "$env:TEMP\peiq-chrome" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
 Leave the dev server running only when the user asked for it.
+
+Every Chrome instance writes a full profile: 70-200 MB, tens of thousands of files. Use
+**one** path, `$env:TEMP\peiq-chrome`, for every run, including one-shot
+`--screenshot` calls. Never invent a new `--user-data-dir` per screenshot; a few dozen
+ad-hoc checks silently cost several gigabytes. Kill the instance first, then delete the
+profile, and reuse the same path on the next run.
+
+Sweep leftovers from earlier runs when the temp drive grows:
+
+```powershell
+Get-ChildItem D:\Temp, D:\Temp\opencode -Directory -ErrorAction SilentlyContinue |
+  Where-Object { Test-Path (Join-Path $_.FullName 'Local State') } |
+  Remove-Item -Recurse -Force
+```
+
+`Local State` marks a Chrome profile root, so the filter never touches scripts or images.
