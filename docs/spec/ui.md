@@ -143,9 +143,13 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   or 2–32 columns, and HEX and RGB captions can be shown under each color with a user-chosen
   text color, persisting with the background under `peiq.previewLayout` and `peiq.previewBg`.
   On phones the option tray collapses behind one Settings button beside the close button and
-  starts collapsed, so the palette gets the screen; the button expands it in place. Color
-  blocks keep a gap of roughly 15% of the block width between neighbors in both axes at any
-  palette size.
+  starts collapsed, so the palette gets the screen; the button expands it in place. A grid
+  whose colors all fit is centered in the stage both ways and falls back to top alignment
+  when it has to scroll. Color blocks keep a gap of roughly 15% of the block width between
+  neighbors in both axes at any palette size. In Row mode a caption is added under the
+  color instead of shrinking it, so the block keeps its viewport-based height when HEX or
+  RGB is switched on, and the RGB triple stacks one channel per line so a narrow column
+  never wraps it at an awkward space.
   The preview is read-only and never changes the export. `Esc`, the close button, or a click
   on the backdrop closes it, and focus returns to the trigger. The dialog traps Tab while
   open,

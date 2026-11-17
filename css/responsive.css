@@ -182,7 +182,7 @@
   }
 
   .peiq-palette-preview__strip {
-    height: clamp(120px, 42vh, 360px);
+    --preview-block-height: clamp(120px, 42vh, 360px);
   }
 
   .peiq-palette-preview__options {

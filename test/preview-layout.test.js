@@ -9,6 +9,7 @@ import {
   normalizeCaptionColor,
   normalizePreviewLayout,
   previewGridColumns,
+  previewSwatchLabelRows,
   previewSwatchLabels,
 } from '../js/core/preview-layout.js';
 
@@ -111,6 +112,21 @@ test('labels list hex and RGB independently', () => {
     '#f2798a',
     '242 121 138',
   ]);
+});
+
+test('caption rows keep the RGB channels apart for row mode', () => {
+  const entry = { hex: '#F2798A', color: { r: 242, g: 121, b: 138 } };
+  assert.deepEqual(previewSwatchLabelRows(entry, { hex: true, rgb: true }), [
+    { kind: 'hex', text: '#f2798a', parts: ['#f2798a'] },
+    { kind: 'rgb', text: '242 121 138', parts: ['242', '121', '138'] },
+  ]);
+  assert.deepEqual(previewSwatchLabelRows(entry, { hex: false, rgb: true }), [
+    { kind: 'rgb', text: '242 121 138', parts: ['242', '121', '138'] },
+  ]);
+  assert.deepEqual(previewSwatchLabelRows({ hex: '#0b0b0b' }, { hex: false, rgb: true }), [
+    { kind: 'rgb', text: '11 11 11', parts: ['11', '11', '11'] },
+  ]);
+  assert.deepEqual(previewSwatchLabelRows(null, { hex: true, rgb: true }), []);
 });
 
 test('a bare entry without a parsed color still labels its RGB', () => {

@@ -5,6 +5,7 @@ import {
   PREVIEW_MAX_COLUMNS,
   normalizePreviewLayout,
   previewGridColumns,
+  previewSwatchLabelRows,
   previewSwatchLabels,
 } from '../core/preview-layout.js';
 import {
@@ -240,15 +241,26 @@ export function createPalettePreview(deps) {
       swatch.className = 'peiq-palette-preview__swatch';
       swatch.setAttribute('role', 'listitem');
       swatch.style.setProperty('--swatch', entry.hex);
-      const caption = previewSwatchLabels(entry, layout);
+      const caption = previewSwatchLabelRows(entry, layout);
       if (caption.length > 0) {
         const labels = document.createElement('span');
         labels.className = 'peiq-palette-preview__labels';
         labels.setAttribute('aria-hidden', 'true');
-        for (const line of caption) {
+        for (const row of caption) {
           const span = document.createElement('span');
           span.className = 'peiq-palette-preview__label';
-          span.textContent = line;
+          if (row.kind === 'rgb') {
+            span.classList.add('peiq-palette-preview__label--rgb');
+            for (const [index, part] of row.parts.entries()) {
+              if (index > 0) span.append(' ');
+              const channel = document.createElement('span');
+              channel.className = 'peiq-palette-preview__channel';
+              channel.textContent = part;
+              span.append(channel);
+            }
+          } else {
+            span.textContent = row.text;
+          }
           labels.append(span);
         }
         swatch.append(labels);

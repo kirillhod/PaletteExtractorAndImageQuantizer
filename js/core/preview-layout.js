@@ -84,21 +84,43 @@ export function previewGridColumns(count, columns) {
 
 /**
  * Visible caption lines for one swatch, in the order the checkboxes are listed in the
- * UI. `entry.color` is preferred because the palette already carries it; the hex is
- * parsed only when a caller passes a bare entry.
+ * UI, together with the tokens that make each line. `entry.color` is preferred because
+ * the palette already carries it; the hex is parsed only when a caller passes a bare
+ * entry.
+ *
+ * Row mode gives a color a narrow column, where the RGB triple is easier to read stacked
+ * by channel than wrapped at an arbitrary space, so the UI needs the three numbers
+ * separately even though the plain label joins them.
+ *
+ * @typedef {{ kind:'hex'|'rgb', text:string, parts:string[] }} PreviewLabelRow
+ * @param {LabelEntry|null|undefined} entry
+ * @param {{ hex:boolean, rgb:boolean }} labels
+ * @returns {PreviewLabelRow[]}
+ */
+export function previewSwatchLabelRows(entry, labels) {
+  /** @type {PreviewLabelRow[]} */
+  const rows = [];
+  if (!entry || typeof entry.hex !== 'string') return rows;
+  if (labels.hex) {
+    const hex = entry.hex.toLowerCase();
+    rows.push({ kind: 'hex', text: hex, parts: [hex] });
+  }
+  if (labels.rgb) {
+    const color = entry.color ?? parseHex(entry.hex);
+    const parts = [String(color.r), String(color.g), String(color.b)];
+    rows.push({ kind: 'rgb', text: parts.join(' '), parts });
+  }
+  return rows;
+}
+
+/**
+ * Visible caption lines as plain strings, for `aria-label` and callers that do not
+ * need the per-channel tokens.
  *
  * @param {LabelEntry|null|undefined} entry
  * @param {{ hex:boolean, rgb:boolean }} labels
  * @returns {string[]}
  */
 export function previewSwatchLabels(entry, labels) {
-  /** @type {string[]} */
-  const lines = [];
-  if (!entry || typeof entry.hex !== 'string') return lines;
-  if (labels.hex) lines.push(entry.hex.toLowerCase());
-  if (labels.rgb) {
-    const color = entry.color ?? parseHex(entry.hex);
-    lines.push(`${color.r} ${color.g} ${color.b}`);
-  }
-  return lines;
+  return previewSwatchLabelRows(entry, labels).map((row) => row.text);
 }

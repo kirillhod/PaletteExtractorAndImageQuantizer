@@ -933,22 +933,23 @@ html.peiq-preview-open body {
 }
 
 .peiq-palette-preview__strip {
+  --preview-block-height: clamp(140px, 40vh, 440px);
   display: flex;
   width: 100%;
-  height: clamp(140px, 40vh, 440px);
 }
 
 .peiq-palette-preview__swatch {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: var(--preview-block-height) auto;
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
 }
 
 /* The color block fills 87% of its slot, so neighboring colors keep a gap of about
-   15% of the block width regardless of the palette size. The caption, when shown,
-   takes height from the block instead of overlapping it. */
+   15% of the block width regardless of the palette size. The block height comes from
+   the strip variable, so turning captions on adds a line under the color instead of
+   squashing the block. */
 .peiq-palette-preview__swatch::before {
   content: '';
   grid-row: 1;
@@ -977,6 +978,14 @@ html.peiq-preview-open body {
 
 .peiq-palette-preview__label + .peiq-palette-preview__label {
   margin-top: 1px;
+}
+
+/* Row mode gives each color a narrow column, so the RGB triple stacks by channel
+   instead of wrapping at whichever space runs out first. */
+.peiq-palette-preview[data-mode='row'] .peiq-palette-preview__label--rgb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* A caption needs about 56 px for "#rrggbb"; below that the chip cannot show a value
@@ -1010,7 +1019,8 @@ html.peiq-preview-open body {
 
 /* Grid mode wraps the palette into rows; Auto picks a square-ish column count. The
    strip stops growing at 220 px per tile, so a 3-color palette does not turn into
-   three half-screen squares. */
+   three half-screen squares. Auto block margins center a grid that fits the stage
+   both ways and fall back to the top when the grid is taller and has to scroll. */
 .peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__strip {
   display: grid;
   grid-template-columns: repeat(var(--preview-columns, 4), minmax(0, 1fr));
@@ -1018,7 +1028,7 @@ html.peiq-preview-open body {
   gap: 0;
   width: min(100%, calc(var(--preview-columns, 4) * 220px));
   height: auto;
-  margin-inline: auto;
+  margin: auto;
 }
 
 /* The color itself stays square: the block takes the width of its slot and the cell

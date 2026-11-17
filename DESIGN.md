@@ -705,11 +705,14 @@ popover with `--peiq-shadow-popover` holding a square saturation/value field wit
 ring marker, a hue ramp, and a hex field. It opens under its swatch, clamps to the viewport,
 repositions on resize, and closes on an outside click, `Esc`, or focus leaving; while it is
 open, `Esc` closes the picker only. Arrow keys move the field marker, the hue ramp and hex
-field are native controls, and an invalid hex reverts. Row mode keeps
-`height: clamp(140px, 40vh, 440px)` and equal flex slots; Column and Grid scroll inside the
-stage. Each color block fills 87% of its slot, leaving a gap of about 15% of the block width
-between neighboring colors in both axes, with a matching half-inset at the strip ends. In
-Grid the block is always square and the cell grows downward for the caption; tiles stop
+field are native controls, and an invalid hex reverts. Row mode fixes the color block at
+`--preview-block-height: clamp(140px, 40vh, 440px)` and adds the caption below it, so
+turning captions on never squashes the block; Column and Grid scroll inside the stage. Each
+color block fills 87% of its slot, leaving a gap of about 15% of the block width between
+neighboring colors in both axes, with a matching half-inset at the strip ends. In Grid the
+block is always square and the cell grows downward for the caption; a grid that fits the
+stage is centered both ways and starts at the top only when it has to scroll. In Row the
+RGB triple is a column of three channels, which keeps narrow columns tidy. Tiles stop
 growing at 220 px so a small palette does not become half-screen squares. Desktop controls
 are 26–32 px; below 600 px the visible Background label becomes screen-reader-only, the
 segmented buttons are 40 px, and presets, picker, and close are 44 px. Below 600 px the
@@ -815,11 +818,11 @@ button, or a backdrop click.
 .peiq-palette-preview__strip {
   display: flex;
   width: 100%;
-  height: clamp(140px, 40vh, 440px);
+  --preview-block-height: clamp(140px, 40vh, 440px);
 }
 .peiq-palette-preview__swatch {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: var(--preview-block-height) auto;
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
