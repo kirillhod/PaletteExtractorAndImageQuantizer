@@ -114,6 +114,9 @@ const app = {
 
 const palettePreview = createPalettePreview({
   getPalette: () => app.palette,
+  // The drawer sits below the full-screen overlay; close it instead of leaving an
+  // invisible open panel behind the preview.
+  onOpen: () => learn.close(),
 });
 
 let nextRequestId = 1;
@@ -1010,7 +1013,16 @@ initShortcuts({
   onFit: () => canvasView.fit(),
   onZoom100: () => canvasView.zoom100(),
   onToggleOriginal: toggleOriginalState,
-  onToggleHelp: () => learn.toggle(),
+  onToggleHelp: () => {
+    // The preview covers the drawer, so toggling Help there would open it out of
+    // sight. Leave the preview first and let Help take the screen.
+    if (palettePreview.isOpen()) {
+      palettePreview.close();
+      if (!learn.isOpen()) learn.toggle();
+      return;
+    }
+    learn.toggle();
+  },
   onCycleTheme: () => theme.cycle(),
   onToggleErrorMap: qualityPanel.toggleMap,
 });

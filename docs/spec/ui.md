@@ -68,9 +68,11 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
   the bottom of the free left column. After validation, every result offers Save and Copy.
 - **Quality:** export validation and palette compliance stay in the status line. The
   Quality section measures the current preview with CIEDE2000: mean, p95, max, a toggleable
-  error map, and the 20 worst pixels. Once the error map is on it stays on: every new
-  preview of the same image re-measures and redraws the map and markers, so a settings or
-  palette change never silently turns the overlay off. Loading another image clears it.
+  error map, and the 20 worst pixels. `E` or the toggle opens the section; with no
+  measurement yet the shortcut measures first and draws the map when the result arrives.
+  Once the error map is on it stays on: every new preview of the same image re-measures and
+  redraws the map and markers, so a settings or palette change never silently turns the
+  overlay off. Loading another image clears it.
   Contrast matrices are out of v1.1.
 - The header shows the full public name at ≥980 px; below that, the short mark `PEIQ`
   with an `aria-label`/`title` carrying the full name. The document title uses the full
@@ -218,7 +220,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 **Help**
 
 - Header `?` button opens the Help drawer with How it works, shortcuts, references, and
-  credits.
+  credits. The drawer never opens behind the full-screen palette preview: `?` leaves the
+  preview first, and opening the preview closes the drawer.
 - Header theme toggle cycles `auto → light → dark`; the preference persists in
   `localStorage` under `peiq.theme`; the current mode is announced.
 - Header language toggle cycles `auto → en → ru`; `peiq.locale` persists the mode and
@@ -271,9 +274,14 @@ All colors, typography, component styles, depth, motion, and breakpoints are def
 | `?` | Toggle Help drawer |
 | `Esc` | Close help, popover, or picking mode |
 
-Single-key shortcuts are disabled while an input, textarea, or select has focus. Text
-entry keeps its native undo; Ctrl/Cmd+Z and Ctrl/Cmd+Y still reach the shared history
-when a select, range slider, or checkbox is focused.
+Single-key shortcuts are disabled while a text field, textarea, contenteditable element,
+or select has focus, so typing and type-ahead keep their keys. `?` is the exception: it
+opens Help from any control except a text field, textarea, or contenteditable element, and
+it closes the full-screen palette preview first, because the Help drawer sits below that
+overlay. `E` opens the Quality section, measures the preview when no quality result exists
+yet, and then draws the error map, so the first press is never a silent no-op. Text entry
+keeps its native undo; Ctrl/Cmd+Z and Ctrl/Cmd+Y still reach the shared history when a
+select, range slider, or checkbox is focused.
 
 ### 8.6 Accessibility
 

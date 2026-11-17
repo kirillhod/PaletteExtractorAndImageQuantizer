@@ -175,12 +175,15 @@ export function createQualityPanel(deps) {
 
   function toggleMap() {
     if (!qaErrorToggle) return;
-    // Before the first measurement the only meaningful action is to turn a pending
-    // overlay off; enabling it without stats has nothing to draw.
-    if (!result && !mapOn) return;
+    const app = deps.getApp();
+    if (!app.hasResult) return;
+    const next = !mapOn;
     const section = document.getElementById('qa-section');
     if (section) /** @type {HTMLDetailsElement} */ (section).open = true;
-    setMapIntent(!mapOn);
+    setMapIntent(next);
+    // Nothing is cached before the first measurement, so the first press measures
+    // instead of appearing to do nothing; the map then draws with the stats.
+    if (next && !result) run();
   }
 
   /**

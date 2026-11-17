@@ -21,6 +21,8 @@ const OPEN_CLASS = 'peiq-preview-open';
 /**
  * @typedef {Object} PalettePreviewDeps
  * @property {() => { hex:string, color?:{ r:number, g:number, b:number } }[]} getPalette
+ * @property {() => void} [onOpen] Called before the dialog takes focus, so a page panel
+ *   that would sit behind the full-screen overlay can close first.
  */
 
 /**
@@ -389,6 +391,7 @@ export function createPalettePreview(deps) {
     trigger.setAttribute('aria-expanded', 'true');
     document.documentElement.classList.add(OPEN_CLASS);
     setSettings(false);
+    deps.onOpen?.();
     refresh();
     closeButton.focus();
   }

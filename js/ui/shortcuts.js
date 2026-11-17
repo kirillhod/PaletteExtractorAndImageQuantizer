@@ -1,4 +1,32 @@
 // @ts-check
+
+/** Input types that do not accept typed text, so a letter cannot be lost there. */
+const NON_TEXT_INPUT_TYPES = new Set([
+  'button',
+  'checkbox',
+  'color',
+  'file',
+  'radio',
+  'range',
+  'reset',
+  'submit',
+]);
+
+/**
+ * A field that owns printable characters. Help stays available from every other
+ * control, because `?` cannot collide with a select's type-ahead or a slider.
+ *
+ * @param {HTMLElement|null} target
+ * @returns {boolean}
+ */
+function isTextEntry(target) {
+  if (!target) return false;
+  if (target.isContentEditable) return true;
+  if (target.tagName === 'TEXTAREA') return true;
+  if (target.tagName !== 'INPUT') return false;
+  return !NON_TEXT_INPUT_TYPES.has(/** @type {HTMLInputElement} */ (target).type);
+}
+
 /**
  * @param {{
  *   onFit:() => void,
@@ -13,6 +41,14 @@ export function initShortcuts(handlers) {
   document.addEventListener('keydown', (event) => {
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
     const target = /** @type {HTMLElement|null} */ (event.target);
+
+    if (event.key === '?') {
+      if (isTextEntry(target)) return;
+      event.preventDefault();
+      handlers.onToggleHelp();
+      return;
+    }
+
     if (
       target &&
       (target.tagName === 'INPUT' ||
@@ -20,12 +56,6 @@ export function initShortcuts(handlers) {
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable)
     ) {
-      return;
-    }
-
-    if (event.key === '?') {
-      event.preventDefault();
-      handlers.onToggleHelp();
       return;
     }
 

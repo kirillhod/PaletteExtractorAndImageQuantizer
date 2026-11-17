@@ -1260,7 +1260,9 @@ blue fill, with dark text for contrast.
 ### Drawer and popover
 
 The site’s dark theme boxes are matte and shadowed; the Help drawer follows that, not a
-light “paper” sheet.
+light “paper” sheet. The drawer sits below the full-screen palette preview
+(`z-index: 60` against `70`), so opening Help leaves the preview first; the drawer is never
+left open behind the overlay.
 
 ```css
 .peiq-drawer {
