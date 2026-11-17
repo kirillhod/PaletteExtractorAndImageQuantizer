@@ -113,6 +113,7 @@ export const RU_MESSAGES = {
   'palette.previewAuto': 'Авто',
   'palette.previewLabels': 'Подписи',
   'palette.previewLabelColor': 'Цвет подписей',
+  'palette.previewSettings': 'Настройки',
   'palette.pickerArea': 'Насыщенность и яркость',
   'palette.pickerHue': 'Оттенок',
   'palette.pickerHex': 'Значение HEX',

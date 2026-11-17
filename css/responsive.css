@@ -120,8 +120,46 @@
     padding-inline: var(--peiq-space-3);
   }
 
+  .peiq-palette-preview__settings {
+    display: inline-flex;
+    order: 1;
+  }
+
+  .peiq-palette-preview__close {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .peiq-palette-preview__tray {
+    display: none;
+    flex: 1 1 100%;
+    flex-direction: column;
+    order: 3;
+    gap: var(--peiq-space-2);
+  }
+
+  .peiq-palette-preview[data-settings='open'] .peiq-palette-preview__tray {
+    display: flex;
+  }
+
+  /* The caption toggles need no label, which frees a row: the per-row count and the
+     caption controls share one line. */
+  .peiq-palette-preview__option[data-option='labels'] > .peiq-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   .peiq-palette-preview__background {
+    align-self: flex-start;
     justify-content: flex-start;
+    margin-left: 0;
   }
 
   .peiq-palette-preview__background > .peiq-label {
@@ -149,11 +187,15 @@
 
   .peiq-palette-preview__options {
     row-gap: var(--peiq-space-2);
-    column-gap: var(--peiq-space-3);
+    column-gap: var(--peiq-space-2);
+  }
+
+  .peiq-palette-preview__checks {
+    gap: var(--peiq-space-2);
   }
 
   .peiq-palette-preview__columns {
-    min-width: 4.5rem;
+    min-width: 4rem;
   }
 
   .peiq-palette-preview__mode-btn {

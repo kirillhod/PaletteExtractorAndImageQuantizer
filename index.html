@@ -526,38 +526,44 @@
     </div>
   </aside>
 
-  <div class="peiq-palette-preview" id="palette-preview" role="dialog" aria-modal="true" data-i18n-aria-label="palette.previewTitle" aria-label="Palette preview" hidden>
+  <div class="peiq-palette-preview" id="palette-preview" role="dialog" aria-modal="true" data-i18n-aria-label="palette.previewTitle" aria-label="Palette preview" data-settings="closed" hidden>
     <div class="peiq-palette-preview__bar">
-      <div class="peiq-palette-preview__options">
-        <div class="peiq-palette-preview__option">
-          <span class="peiq-label" id="palette-preview-layout-label" data-i18n="palette.previewLayout">Layout</span>
-          <div class="peiq-palette-preview__mode" id="palette-preview-mode" role="group" aria-labelledby="palette-preview-layout-label">
-            <button class="peiq-palette-preview__mode-btn" type="button" data-mode="row" data-i18n="palette.previewModeRow" aria-pressed="true">Row</button>
-            <button class="peiq-palette-preview__mode-btn" type="button" data-mode="column" data-i18n="palette.previewModeColumn" aria-pressed="false">Column</button>
-            <button class="peiq-palette-preview__mode-btn" type="button" data-mode="grid" data-i18n="palette.previewModeGrid" aria-pressed="false">Grid</button>
+      <button class="peiq-palette-preview__settings" id="palette-preview-settings" type="button" aria-expanded="false" aria-controls="palette-preview-tray">
+        <span data-i18n="palette.previewSettings">Settings</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="peiq-palette-preview__tray" id="palette-preview-tray">
+        <div class="peiq-palette-preview__options">
+          <div class="peiq-palette-preview__option" data-option="layout">
+            <span class="peiq-label" id="palette-preview-layout-label" data-i18n="palette.previewLayout">Layout</span>
+            <div class="peiq-palette-preview__mode" id="palette-preview-mode" role="group" aria-labelledby="palette-preview-layout-label">
+              <button class="peiq-palette-preview__mode-btn" type="button" data-mode="row" data-i18n="palette.previewModeRow" aria-pressed="true">Row</button>
+              <button class="peiq-palette-preview__mode-btn" type="button" data-mode="column" data-i18n="palette.previewModeColumn" aria-pressed="false">Column</button>
+              <button class="peiq-palette-preview__mode-btn" type="button" data-mode="grid" data-i18n="palette.previewModeGrid" aria-pressed="false">Grid</button>
+            </div>
+          </div>
+          <div class="peiq-palette-preview__option" data-option="per-row">
+            <label class="peiq-label" for="palette-preview-columns" data-i18n="palette.previewPerRow">Per row</label>
+            <select class="peiq-select peiq-select--compact peiq-palette-preview__columns" id="palette-preview-columns"></select>
+          </div>
+          <div class="peiq-palette-preview__option" data-option="labels">
+            <span class="peiq-label" id="palette-preview-labels-label" data-i18n="palette.previewLabels">Labels</span>
+            <span class="peiq-palette-preview__checks" role="group" aria-labelledby="palette-preview-labels-label">
+              <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-hex" type="checkbox"><span>HEX</span></label>
+              <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-rgb" type="checkbox"><span>RGB</span></label>
+            </span>
+            <span class="peiq-palette-preview__custom">
+              <button class="peiq-palette-preview__color" id="palette-preview-label-color" type="button" data-i18n-aria-label="palette.previewLabelColor" data-i18n-title="palette.previewLabelColor" aria-label="Label color" title="Label color"></button>
+            </span>
           </div>
         </div>
-        <div class="peiq-palette-preview__option">
-          <label class="peiq-label" for="palette-preview-columns" data-i18n="palette.previewPerRow">Per row</label>
-          <select class="peiq-select peiq-select--compact peiq-palette-preview__columns" id="palette-preview-columns"></select>
-        </div>
-        <div class="peiq-palette-preview__option">
-          <span class="peiq-label" id="palette-preview-labels-label" data-i18n="palette.previewLabels">Labels</span>
-          <span class="peiq-palette-preview__checks" role="group" aria-labelledby="palette-preview-labels-label">
-            <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-hex" type="checkbox"><span>HEX</span></label>
-            <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-rgb" type="checkbox"><span>RGB</span></label>
-          </span>
+        <div class="peiq-palette-preview__background" role="group" data-i18n-aria-label="palette.previewBackground" aria-label="Preview background">
+          <span class="peiq-label" data-i18n="palette.previewBackground">Background</span>
+          <div class="peiq-palette-preview__presets" id="palette-preview-presets"></div>
           <span class="peiq-palette-preview__custom">
-            <button class="peiq-palette-preview__color" id="palette-preview-label-color" type="button" data-i18n-aria-label="palette.previewLabelColor" data-i18n-title="palette.previewLabelColor" aria-label="Label color" title="Label color"></button>
+            <button class="peiq-palette-preview__color" id="palette-preview-bg" type="button" data-i18n-aria-label="palette.previewCustom" data-i18n-title="palette.previewCustom" aria-label="Custom background" title="Custom background"></button>
           </span>
         </div>
-      </div>
-      <div class="peiq-palette-preview__background" role="group" data-i18n-aria-label="palette.previewBackground" aria-label="Preview background">
-        <span class="peiq-label" data-i18n="palette.previewBackground">Background</span>
-        <div class="peiq-palette-preview__presets" id="palette-preview-presets"></div>
-        <span class="peiq-palette-preview__custom">
-          <button class="peiq-palette-preview__color" id="palette-preview-bg" type="button" data-i18n-aria-label="palette.previewCustom" data-i18n-title="palette.previewCustom" aria-label="Custom background" title="Custom background"></button>
-        </span>
       </div>
       <button class="peiq-icon-btn peiq-palette-preview__close" id="palette-preview-close" type="button" data-i18n-aria-label="palette.previewClose" data-i18n-title="palette.previewClose" aria-label="Close preview" title="Close preview">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>

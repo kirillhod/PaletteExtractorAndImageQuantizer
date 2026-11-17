@@ -712,7 +712,11 @@ between neighboring colors, with a matching half-inset at the strip ends. In Gri
 always square and the cell grows downward for the caption; tiles stop growing at 220 px so a
 small palette does not become half-screen squares. Desktop controls
 are 26–32 px; below 600 px the visible Background label becomes screen-reader-only, the
-segmented buttons are 40 px, and presets, picker, and close are 44 px. The overlay covers the
+segmented buttons are 40 px, and presets, picker, and close are 44 px. Below 600 px the
+option tray also collapses behind a **Settings** button in the same row as the close button:
+the preview opens with only that row, so the palette keeps the screen, and the button expands
+the tray in place. The expanded tray merges the per-row count and the caption controls onto
+one line, since the caption label is self-evident from HEX and RGB. The overlay covers the
 page, locks body scroll, traps Tab (including the select), and closes on `Esc`, the close
 button, or a backdrop click.
 

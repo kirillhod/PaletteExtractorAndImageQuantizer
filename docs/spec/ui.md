@@ -134,15 +134,18 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   neutral gray background, with two gray presets and an in-page color picker for the
   background and the caption color. The picker is a square saturation/value field, a hue
   ramp, and a hex field in a popover under its swatch; it replaces the browser's dialog,
-  which cannot follow the theme. The
-  header has no title and no band of its own; it is transparent over the chosen background,
+  which cannot follow the theme. The header has no title and no band of its own; it is
+  transparent over the chosen background,
   and its controls sit in two surface chips. Layout switches between one row, a column, and
   a wrapping grid; in the grid a "per row" select offers Auto (fits the palette to the view)
   or 2–32 columns, and HEX and RGB captions can be shown under each color with a user-chosen
-  text color, persisting with the background under `peiq.previewLayout` and `peiq.previewBg`. Color blocks keep a gap of roughly 15% of
-  the block width between neighbors at any palette size. The preview is read-only and never
-  changes the export. `Esc`, the close button, or a click on the
-  backdrop closes it, and focus returns to the trigger. The dialog traps Tab while open,
+  text color, persisting with the background under `peiq.previewLayout` and `peiq.previewBg`.
+  On phones the option tray collapses behind one Settings button beside the close button and
+  starts collapsed, so the palette gets the screen; the button expands it in place. Color
+  blocks keep a gap of roughly 15% of the block width between neighbors at any palette size.
+  The preview is read-only and never changes the export. `Esc`, the close button, or a click
+  on the backdrop closes it, and focus returns to the trigger. The dialog traps Tab while
+  open,
   and the page behind it does not scroll. Edit is a
   toggle button with a visible pressed state; its label does not change, so the bar never
   rewraps. The editor row reveals with a 150 ms height transition and the canvas refits

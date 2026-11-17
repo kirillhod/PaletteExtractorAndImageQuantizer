@@ -113,6 +113,7 @@ export const EN_MESSAGES = {
   'palette.previewAuto': 'Auto',
   'palette.previewLabels': 'Labels',
   'palette.previewLabelColor': 'Label color',
+  'palette.previewSettings': 'Settings',
   'palette.pickerArea': 'Saturation and brightness',
   'palette.pickerHue': 'Hue',
   'palette.pickerHex': 'Hex value',

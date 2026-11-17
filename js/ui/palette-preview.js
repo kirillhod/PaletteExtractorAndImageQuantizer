@@ -58,6 +58,9 @@ export function createPalettePreview(deps) {
   const labelColorButton = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('palette-preview-label-color')
   );
+  const settingsButton = /** @type {HTMLButtonElement|null} */ (
+    document.getElementById('palette-preview-settings')
+  );
 
   if (
     !trigger ||
@@ -70,7 +73,8 @@ export function createPalettePreview(deps) {
     !columnsSelect ||
     !hexInput ||
     !rgbInput ||
-    !labelColorButton
+    !labelColorButton ||
+    !settingsButton
   ) {
     return {
       open() {},
@@ -360,6 +364,23 @@ export function createPalettePreview(deps) {
   });
   hexInput.addEventListener('change', () => setLayout({ hex: hexInput.checked }));
   rgbInput.addEventListener('change', () => setLayout({ rgb: rgbInput.checked }));
+  settingsButton.addEventListener('click', () => {
+    setSettings(dialog.dataset.settings !== 'open');
+  });
+
+  /**
+   * Below 600 px the chips live behind one button so the palette keeps the screen; on
+   * desktop the tray is a pass-through and the attribute only parks the state.
+   *
+   * @param {boolean} expanded
+   */
+  function setSettings(expanded) {
+    dialog.dataset.settings = expanded ? 'open' : 'closed';
+    settingsButton.setAttribute('aria-expanded', String(expanded));
+    if (expanded) return;
+    backgroundPicker.close();
+    captionPicker.close();
+  }
 
   function open() {
     if (deps.getPalette().length === 0) return;
@@ -367,6 +388,7 @@ export function createPalettePreview(deps) {
     dialog.hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
     document.documentElement.classList.add(OPEN_CLASS);
+    setSettings(false);
     refresh();
     closeButton.focus();
   }
@@ -393,7 +415,7 @@ export function createPalettePreview(deps) {
         ...dialog.querySelectorAll(
           'button:not([disabled]), input:not([disabled]), select:not([disabled])',
         ),
-      ]
+      ].filter((element) => element.getClientRects().length > 0)
     );
     if (focusable.length === 0) return;
     const first = focusable[0];

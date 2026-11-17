@@ -642,6 +642,51 @@ html.peiq-preview-open body {
   padding: var(--peiq-space-2) var(--peiq-space-4);
 }
 
+/* The option chips sit in a tray so a phone can collapse them behind one button. On
+   desktop the tray is a pass-through, which keeps the one-line chip layout unchanged. */
+.peiq-palette-preview__tray {
+  display: contents;
+}
+
+/* Mobile-only disclosure: hidden here, shown by the 600 px rules. */
+.peiq-palette-preview__settings {
+  display: none;
+  align-items: center;
+  gap: var(--peiq-space-1);
+  min-height: 44px;
+  padding: 0 var(--peiq-space-3);
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-surface);
+  color: var(--peiq-text);
+  font: 500 0.8125rem/1 var(--peiq-font-ui);
+  cursor: pointer;
+}
+
+.peiq-palette-preview__settings:hover {
+  border-color: var(--peiq-accent);
+}
+
+.peiq-palette-preview__settings[aria-expanded='true'] {
+  color: var(--peiq-text-strong);
+  border-color: var(--peiq-accent);
+}
+
+.peiq-palette-preview__settings svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--peiq-dur) var(--peiq-ease);
+}
+
+.peiq-palette-preview__settings[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
 .peiq-palette-preview__options,
 .peiq-palette-preview__background {
   display: flex;
