@@ -378,7 +378,7 @@ export const EN_MESSAGES = {
   'help.toggleDrawer': 'Toggle this drawer',
   'help.esc': 'Close tooltip or help; cancel picking',
   'help.shortcutScope':
-    'Single-key shortcuts pause while a text field, textarea, or list has focus, but ? still opens this drawer from any other control; Ctrl/Cmd+Z and Ctrl/Cmd+Y still undo and redo outside text fields. F, O, E, T, and 1 follow the key position, so they also work on a Russian layout. The Help key is the question-mark character, so press Shift where the layout needs it: Shift+7 on Russian and Shift+/ on English.',
+    'Single-key shortcuts pause while a text field, textarea, or list has focus, but the Help shortcut still works from any other control; Ctrl/Cmd+Z and Ctrl/Cmd+Y still undo and redo outside text fields. F, O, E, T, and 1 follow the key position, so they also work on a Russian layout.',
   'help.referencesTitle': 'References',
   'help.referencesP':
     'Papers and specifications behind the extractors, dithering, color math, and output. Links open only when clicked.',
