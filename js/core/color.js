@@ -12,6 +12,7 @@
  */
 
 /** @typedef {{ r: number, g: number, b: number, a: number }} RGBA8 */
+/** @typedef {{ h: number, s: number, v: number }} HSV */
 /** @typedef {{ L: number, a: number, b: number }} Oklab */
 /** @typedef {{ L: number, a: number, b: number }} Lab */
 /** @typedef {{ r: number, g: number, b: number }} LinearRgb */
@@ -347,6 +348,71 @@ export function formatHex(color) {
  */
 export function formatHexAlpha(color) {
   return `#${hex2(color.r)}${hex2(color.g)}${hex2(color.b)}${hex2(color.a)}`;
+}
+
+/**
+ * Convert 8-bit sRGB to HSV. Hue is degrees in [0, 360); saturation and value are
+ * fractions in [0, 1]. Grays report hue 0, which callers that keep a hue across edits
+ * (the color picker) replace with their own.
+ *
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ * @returns {HSV}
+ */
+export function rgb8ToHsv(r, g, b) {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+
+  let h = 0;
+  if (delta > 0) {
+    if (max === rn) h = ((gn - bn) / delta) % 6;
+    else if (max === gn) h = (bn - rn) / delta + 2;
+    else h = (rn - gn) / delta + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  return { h, s: max === 0 ? 0 : delta / max, v: max };
+}
+
+/**
+ * Convert HSV back to 8-bit sRGB. Hue wraps, saturation and value clamp to [0, 1].
+ *
+ * @param {number} h degrees
+ * @param {number} s 0..1
+ * @param {number} v 0..1
+ * @returns {{ r: number, g: number, b: number }}
+ */
+export function hsvToRgb8(h, s, v) {
+  const hue = ((Number.isFinite(h) ? h : 0) % 360 + 360) % 360;
+  const sat = clamp01(Number.isFinite(s) ? s : 0);
+  const val = clamp01(Number.isFinite(v) ? v : 0);
+
+  const c = val * sat;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = val - c;
+  const sector = Math.floor(hue / 60) % 6;
+  /** @type {readonly [number, number, number][]} */
+  const table = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ];
+  const [rr, gg, bb] = table[sector];
+
+  return {
+    r: Math.round((rr + m) * 255),
+    g: Math.round((gg + m) * 255),
+    b: Math.round((bb + m) * 255),
+  };
 }
 
 /**

@@ -8,8 +8,10 @@ import {
   deltaE76,
   formatHex,
   formatHexAlpha,
+  hsvToRgb8,
   oklabToRgb8,
   parseHex,
+  rgb8ToHsv,
   rgb8ToOklab,
   relativeLuminance,
 } from '../js/core/color.js';
@@ -156,4 +158,44 @@ test('WCAG contrast ratio of black and white is 21', () => {
     1e-9,
   );
   close(contrastRatio({ r: 0, g: 0, b: 0 }, { r: 0, g: 0, b: 0 }), 1, 1e-12);
+});
+
+test('RGB to HSV reports the primaries, grays and black', () => {
+  assert.deepEqual(rgb8ToHsv(255, 0, 0), { h: 0, s: 1, v: 1 });
+  assert.deepEqual(rgb8ToHsv(0, 255, 0), { h: 120, s: 1, v: 1 });
+  assert.deepEqual(rgb8ToHsv(0, 0, 255), { h: 240, s: 1, v: 1 });
+  assert.deepEqual(rgb8ToHsv(0, 0, 0), { h: 0, s: 0, v: 0 });
+  const gray = rgb8ToHsv(128, 128, 128);
+  assert.equal(gray.h, 0);
+  assert.equal(gray.s, 0);
+  close(gray.v, 128 / 255, 1e-12, 'gray value');
+  const hue = rgb8ToHsv(255, 0, 255);
+  close(hue.h, 300, 1e-9, 'magenta');
+});
+
+test('HSV to RGB matches known colors and clamps its inputs', () => {
+  assert.deepEqual(hsvToRgb8(0, 1, 1), { r: 255, g: 0, b: 0 });
+  assert.deepEqual(hsvToRgb8(120, 1, 1), { r: 0, g: 255, b: 0 });
+  assert.deepEqual(hsvToRgb8(240, 1, 1), { r: 0, g: 0, b: 255 });
+  assert.deepEqual(hsvToRgb8(60, 1, 1), { r: 255, g: 255, b: 0 });
+  assert.deepEqual(hsvToRgb8(0, 0, 0), { r: 0, g: 0, b: 0 });
+  assert.deepEqual(hsvToRgb8(0, 0, 1), { r: 255, g: 255, b: 255 });
+  assert.deepEqual(hsvToRgb8(360, 1, 1), { r: 255, g: 0, b: 0 });
+  assert.deepEqual(hsvToRgb8(-120, 1, 1), { r: 0, g: 0, b: 255 });
+  assert.deepEqual(hsvToRgb8(0, 4, 4), { r: 255, g: 0, b: 0 });
+  assert.deepEqual(hsvToRgb8(Number.NaN, Number.NaN, Number.NaN), { r: 0, g: 0, b: 0 });
+});
+
+test('HSV round-trips through 8-bit RGB', () => {
+  let worst = 0;
+  for (let r = 0; r <= 255; r += 17) {
+    for (let g = 0; g <= 255; g += 17) {
+      for (let b = 0; b <= 255; b += 17) {
+        const hsv = rgb8ToHsv(r, g, b);
+        const back = hsvToRgb8(hsv.h, hsv.s, hsv.v);
+        worst = Math.max(worst, Math.abs(back.r - r), Math.abs(back.g - g), Math.abs(back.b - b));
+      }
+    }
+  }
+  assert.ok(worst <= 1, `worst channel error ${worst}`);
 });

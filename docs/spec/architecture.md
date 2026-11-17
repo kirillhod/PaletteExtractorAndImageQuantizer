@@ -321,7 +321,8 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/ui/canvas-view.js` | Render, zoom/pan, divider, original/error/swap views |
 | `js/ui/palette-view.js` | Swatches, reorder, lock, add/remove, copy hex, import |
 | `js/ui/palette-editor.js` | Strip and editor controls, selection, undo/redo history, transparent index, status |
-| `js/ui/palette-preview.js` | Full-screen palette strip, gray presets and custom background, focus return, `peiq.previewBg` persistence |
+| `js/ui/palette-preview.js` | Full-screen palette strip, layouts, caption color, background presets and color pickers, focus return, `peiq.previewBg` and `peiq.previewLayout` persistence |
+| `js/ui/color-picker.js` | Swatch popover: saturation/value field, hue ramp, hex field, viewport clamp, `Esc` scoping |
 | `js/ui/picked-markers.js` | Picked-color overlay, drag/cancel, overlap offsets, keyboard nudge focus |
 | `js/ui/palette-picker.js` | Pick mode, loupe, preview tooltip, marker drag, canvas pointer routing |
 | `js/ui/export-view.js` | Validated Save/Copy rows, object URLs, image and text clipboard helpers |

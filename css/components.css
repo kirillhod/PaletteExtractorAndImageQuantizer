@@ -679,18 +679,146 @@ html.peiq-preview-open body {
   box-shadow: 0 0 0 2px var(--peiq-focus);
 }
 
+/* The custom swatches open the in-page color picker. They match the preset chips in
+   size and shape so the row reads as one set of color controls. */
 .peiq-palette-preview__custom {
+  position: relative;
   display: inline-flex;
 }
 
 .peiq-palette-preview__color {
-  width: 32px;
-  height: 32px;
-  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: 1px solid var(--peiq-border-strong);
   border-radius: var(--peiq-radius);
-  background: var(--peiq-surface);
+  background: var(--swatch, var(--peiq-surface));
   cursor: pointer;
+  transition: border-color var(--peiq-dur) var(--peiq-ease),
+    box-shadow var(--peiq-dur) var(--peiq-ease);
+}
+
+.peiq-palette-preview__color:hover {
+  border-color: var(--peiq-accent);
+}
+
+.peiq-palette-preview__color[aria-expanded='true'] {
+  box-shadow: 0 0 0 2px var(--peiq-focus);
+}
+
+.peiq-palette-preview__color:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.peiq-palette-preview__color:disabled:hover {
+  border-color: var(--peiq-border-strong);
+}
+
+/* A square saturation/value field, a hue ramp, and a hex field on the usual surface.
+   The field and the ramp show user color, so those gradients are content, not theme. */
+.peiq-color-picker {
+  position: fixed;
+  z-index: 8;
+  display: grid;
+  gap: var(--peiq-space-2);
+  width: 232px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  padding: var(--peiq-space-2);
+  border: 1px solid var(--peiq-border-strong);
+  border-radius: var(--peiq-radius-lg);
+  background: var(--peiq-surface);
+  color: var(--peiq-text);
+  box-shadow: var(--peiq-shadow-popover);
+}
+
+.peiq-color-picker__area {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--peiq-radius);
+  background-image:
+    linear-gradient(to top, var(--peiq-picker-ink), transparent),
+    linear-gradient(to right, var(--peiq-picker-paper), var(--picker-hue));
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.peiq-color-picker__area:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
+/* The two-tone ring keeps the marker readable on the darkest and lightest corners. */
+.peiq-color-picker__marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--peiq-picker-paper);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px var(--peiq-picker-ink),
+    inset 0 0 0 1px var(--peiq-picker-ink);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.peiq-color-picker__hue {
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-picker-hue-ramp);
+  appearance: none;
+  cursor: pointer;
+}
+
+.peiq-color-picker__hue::-webkit-slider-thumb {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--peiq-picker-paper);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--peiq-picker-ink);
+  appearance: none;
+}
+
+.peiq-color-picker__hue::-moz-range-track {
+  height: 16px;
+  border-radius: var(--peiq-radius);
+  background: transparent;
+}
+
+.peiq-color-picker__hue::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--peiq-picker-paper);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--peiq-picker-ink);
+}
+
+.peiq-color-picker__hue:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
+.peiq-color-picker__hex {
+  min-height: 32px;
+  padding: 0 var(--peiq-space-2);
+  font-family: var(--peiq-font-mono);
+  font-size: 0.8125rem;
+  text-transform: lowercase;
+}
+
+.peiq-color-picker__hex[aria-invalid='true'] {
+  border-color: var(--peiq-danger);
 }
 
 .peiq-palette-preview__close {
@@ -783,8 +911,7 @@ html.peiq-preview-open body {
   background: var(--swatch);
 }
 
-/* Captions keep one fixed dark chip in both themes: the field behind them is chosen by
-   the user, so theme text colors cannot guarantee contrast. */
+/* Captions are plain text on the user-chosen field, colored by --peiq-preview-label. */
 .peiq-palette-preview__labels {
   display: grid;
   grid-row: 2;

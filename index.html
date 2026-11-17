@@ -547,19 +547,17 @@
             <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-hex" type="checkbox"><span>HEX</span></label>
             <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-rgb" type="checkbox"><span>RGB</span></label>
           </span>
-          <label class="peiq-palette-preview__custom" data-i18n-title="palette.previewLabelColor" title="Label color">
-            <span class="sr-only" data-i18n="palette.previewLabelColor">Label color</span>
-            <input class="peiq-palette-preview__color" id="palette-preview-label-color" type="color" value="#000000">
-          </label>
+          <span class="peiq-palette-preview__custom">
+            <button class="peiq-palette-preview__color" id="palette-preview-label-color" type="button" data-i18n-aria-label="palette.previewLabelColor" data-i18n-title="palette.previewLabelColor" aria-label="Label color" title="Label color"></button>
+          </span>
         </div>
       </div>
       <div class="peiq-palette-preview__background" role="group" data-i18n-aria-label="palette.previewBackground" aria-label="Preview background">
         <span class="peiq-label" data-i18n="palette.previewBackground">Background</span>
         <div class="peiq-palette-preview__presets" id="palette-preview-presets"></div>
-        <label class="peiq-palette-preview__custom" data-i18n-title="palette.previewCustom" title="Custom background">
-          <span class="sr-only" data-i18n="palette.previewCustom">Custom background</span>
-          <input class="peiq-palette-preview__color" id="palette-preview-bg" type="color">
-        </label>
+        <span class="peiq-palette-preview__custom">
+          <button class="peiq-palette-preview__color" id="palette-preview-bg" type="button" data-i18n-aria-label="palette.previewCustom" data-i18n-title="palette.previewCustom" aria-label="Custom background" title="Custom background"></button>
+        </span>
       </div>
       <button class="peiq-icon-btn peiq-palette-preview__close" id="palette-preview-close" type="button" data-i18n-aria-label="palette.previewClose" data-i18n-title="palette.previewClose" aria-label="Close preview" title="Close preview">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>

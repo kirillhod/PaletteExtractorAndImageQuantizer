@@ -12,6 +12,7 @@ import {
   normalizePreviewBackground,
 } from '../core/preview-bg.js';
 import { countLabel, t } from './i18n.js';
+import { createColorPicker } from './color-picker.js';
 
 const BACKGROUND_KEY = 'peiq.previewBg';
 const LAYOUT_KEY = 'peiq.previewLayout';
@@ -42,7 +43,7 @@ export function createPalettePreview(deps) {
     document.getElementById('palette-preview-close')
   );
   const presetsHost = document.getElementById('palette-preview-presets');
-  const colorInput = /** @type {HTMLInputElement|null} */ (
+  const backgroundButton = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('palette-preview-bg')
   );
   const columnsSelect = /** @type {HTMLSelectElement|null} */ (
@@ -54,7 +55,7 @@ export function createPalettePreview(deps) {
   const rgbInput = /** @type {HTMLInputElement|null} */ (
     document.getElementById('palette-preview-rgb')
   );
-  const labelColorInput = /** @type {HTMLInputElement|null} */ (
+  const labelColorButton = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('palette-preview-label-color')
   );
 
@@ -65,11 +66,11 @@ export function createPalettePreview(deps) {
     !strip ||
     !closeButton ||
     !presetsHost ||
-    !colorInput ||
+    !backgroundButton ||
     !columnsSelect ||
     !hexInput ||
     !rgbInput ||
-    !labelColorInput
+    !labelColorButton
   ) {
     return {
       open() {},
@@ -145,11 +146,14 @@ export function createPalettePreview(deps) {
   }
   layout = normalizePreviewLayout(readLayout());
 
+  /** @type {string} */
+  let background = normalizePreviewBackground(readStored(BACKGROUND_KEY));
+
   /** @param {string} value @param {boolean} [persist] */
   function setBackground(value, persist = true) {
-    const background = normalizePreviewBackground(value);
+    background = normalizePreviewBackground(value);
     dialog.style.setProperty('--peiq-preview-bg', background);
-    colorInput.value = background;
+    backgroundPicker.setValue(background);
     for (const button of presetButtons) {
       button.setAttribute('aria-pressed', String(button.dataset.bg === background));
     }
@@ -187,8 +191,9 @@ export function createPalettePreview(deps) {
     columnsSelect.disabled = layout.mode !== 'grid';
     hexInput.checked = layout.hex;
     rgbInput.checked = layout.rgb;
-    labelColorInput.value = layout.labelColor;
-    labelColorInput.disabled = !layout.hex && !layout.rgb;
+    captionPicker.setValue(layout.labelColor);
+    labelColorButton.disabled = !layout.hex && !layout.rgb;
+    if (labelColorButton.disabled) captionPicker.close();
   }
 
   /**
@@ -201,10 +206,19 @@ export function createPalettePreview(deps) {
   function setCaptionColor(value, persist = true) {
     layout = normalizePreviewLayout({ ...layout, labelColor: value });
     dialog.style.setProperty('--peiq-preview-label', layout.labelColor);
-    labelColorInput.value = layout.labelColor;
+    captionPicker.setValue(layout.labelColor);
     if (!persist) return;
     writeStored(LAYOUT_KEY, JSON.stringify(layout));
   }
+
+  const backgroundPicker = createColorPicker({
+    trigger: backgroundButton,
+    onChange: (hex, persist) => setBackground(hex, persist),
+  });
+  const captionPicker = createColorPicker({
+    trigger: labelColorButton,
+    onChange: (hex, persist) => setCaptionColor(hex, persist),
+  });
 
   function renderStrip() {
     const palette = deps.getPalette();
@@ -327,9 +341,11 @@ export function createPalettePreview(deps) {
       const label = t(preset.labelKey);
       button.setAttribute('aria-label', label);
       button.setAttribute('title', label);
-      button.setAttribute('aria-pressed', String(button.dataset.bg === colorInput.value));
+      button.setAttribute('aria-pressed', String(button.dataset.bg === background));
     }
     if (autoOption) autoOption.textContent = t('palette.previewAuto');
+    backgroundPicker.refresh();
+    captionPicker.refresh();
     applyLayout();
     renderStrip();
   }
@@ -344,8 +360,6 @@ export function createPalettePreview(deps) {
   });
   hexInput.addEventListener('change', () => setLayout({ hex: hexInput.checked }));
   rgbInput.addEventListener('change', () => setLayout({ rgb: rgbInput.checked }));
-  labelColorInput.addEventListener('input', () => setCaptionColor(labelColorInput.value, false));
-  labelColorInput.addEventListener('change', () => setCaptionColor(labelColorInput.value));
 
   function open() {
     if (deps.getPalette().length === 0) return;
@@ -359,6 +373,8 @@ export function createPalettePreview(deps) {
 
   function close() {
     if (!isOpen()) return;
+    backgroundPicker.close();
+    captionPicker.close();
     dialog.hidden = true;
     trigger.setAttribute('aria-expanded', 'false');
     document.documentElement.classList.remove(OPEN_CLASS);
@@ -403,8 +419,6 @@ export function createPalettePreview(deps) {
       close();
     }
   });
-  colorInput.addEventListener('input', () => setBackground(colorInput.value, false));
-  colorInput.addEventListener('change', () => setBackground(colorInput.value));
   window.addEventListener('peiqq:localechange', refresh);
   window.addEventListener('resize', () => {
     if (!isOpen()) return;
@@ -412,7 +426,7 @@ export function createPalettePreview(deps) {
     if (count > 0) applyColumns(finalColumns(count));
   });
 
-  setBackground(readStored(BACKGROUND_KEY), false);
+  setBackground(background, false);
   applyLayout();
   refresh();
 

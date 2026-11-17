@@ -159,6 +159,21 @@ and light-theme variables.
   --peiq-checker-a: #202327;
   --peiq-checker-b: #25282d;
 
+  /* Color picker content: the field and the hue ramp show the color being picked, so
+     these are identical in both themes and are declared once. */
+  --peiq-picker-ink: #000000;
+  --peiq-picker-paper: #ffffff;
+  --peiq-picker-hue-ramp: linear-gradient(
+    to right,
+    hsl(0 100% 50%),
+    hsl(60 100% 50%),
+    hsl(120 100% 50%),
+    hsl(180 100% 50%),
+    hsl(240 100% 50%),
+    hsl(300 100% 50%),
+    hsl(360 100% 50%)
+  );
+
   /* Shadows (site values) */
   --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
   --peiq-shadow-card-lg: rgba(5, 5, 6, 0.20) 0 8px 24px;
@@ -668,7 +683,7 @@ own action.
 
 The preview button between redo and Edit opens the current palette full screen and read-only.
 The header carries no title and no band of its own: it is transparent, so the user-chosen
-`--peiq-preview-bg` (default `#808080`, plus `#767676` and a native color picker) runs behind
+`--peiq-preview-bg` (default `#808080`, plus `#767676` and a custom picker) runs behind
 the controls. The controls sit in two floating `--peiq-surface` chips instead of a full-width
 bar, so their labels stay legible on any field: the left chip holds **Layout**, **Per row**,
 and **Labels**, the right one the Background presets and picker, with the close button last.
@@ -683,7 +698,14 @@ are plain `--peiq-font-mono` text at 11 px with no chip of their own, because th
 them is user-chosen: a small color swatch next to the toggles sets the caption color, black by
 default, and the choice persists with the rest of the layout. A narrow cell lets the RGB triple
 wrap at its spaces, and below about 56 px per color the caption steps aside instead of breaking
-digits, while each swatch keeps both values in its `aria-label`. Row mode keeps
+digits, while each swatch keeps both values in its `aria-label`.
+Both swatch buttons open an in-page picker instead of the browser's color dialog, which cannot
+be styled and reads as a light rectangle from another application: a 232 px `--peiq-surface`
+popover with `--peiq-shadow-popover` holding a square saturation/value field with a two-tone
+ring marker, a hue ramp, and a hex field. It opens under its swatch, clamps to the viewport,
+repositions on resize, and closes on an outside click, `Esc`, or focus leaving; while it is
+open, `Esc` closes the picker only. Arrow keys move the field marker, the hue ramp and hex
+field are native controls, and an invalid hex reverts. Row mode keeps
 `height: clamp(140px, 40vh, 440px)` and equal flex slots; Column and Grid scroll inside the
 stage. Each color block fills 87% of its slot, leaving a gap of about 15% of the block width
 between neighboring colors, with a matching half-inset at the strip ends. In Grid the block is
@@ -1985,8 +2007,9 @@ inspected locally. The following values were extracted, not guessed:
   `--peiq-brand-ink`,
   `--peiq-checker-a`, `--peiq-checker-b`, `--peiq-text-on-accent`.
 - Shared tokens (identical in both themes): accent, accent-hover/pressed/bg, brand,
-  primary button gradient/shadow, focus, radii, spacing, type. They are declared once in
-  `:root` and intentionally not overridden.
+  primary button gradient/shadow, focus, radii, spacing, type, and the color picker's
+  `--peiq-picker-ink`, `--peiq-picker-paper`, `--peiq-picker-hue-ramp`. They are declared
+  once in `:root` and intentionally not overridden.
 - `js/theme-init.js`: a classic `<head>` script (no module, no inline code) that reads
   `peiq.theme`, resolves `auto` via `matchMedia`, and writes `data-theme` before paint.
 - The 3-state toggle persists `peiq.theme`, updates `meta[name="theme-color"]`

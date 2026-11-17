@@ -202,9 +202,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - No `console.log` in shipped code; `js/core/log.js` is debug-gated and off by default.
 - No `innerHTML` with user-controlled strings; no inline event handlers. Avoid inline
   styles; the only exceptions are dynamic palette swatches via
-  `style.setProperty('--swatch', hex)` and the user-chosen full-screen preview background
-  via `style.setProperty('--peiq-preview-bg', hex)`. Style with `css/tokens.css` and
-  `DESIGN.md` components.
+  `style.setProperty('--swatch', hex)`, the user-chosen full-screen preview background
+  via `style.setProperty('--peiq-preview-bg', hex)`, and the color picker's hue stop via
+  `style.setProperty('--picker-hue', …)`. Style with `css/tokens.css` and `DESIGN.md`
+  components.
 - All colors come from `--peiq-*` variables in `DESIGN.md`; no hard-coded hex in CSS or JS.
 - No dead code, speculative abstractions, or TODOs without a plan/backlog entry.
 - Comments explain *why*; cite the plan section or paper for non-obvious math.

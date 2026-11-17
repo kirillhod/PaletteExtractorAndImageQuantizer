@@ -92,6 +92,7 @@ test('every literal message key used by the UI has both translations', () => {
     'js/ui/learn-view.js',
     'js/ui/palette-view.js',
     'js/ui/palette-preview.js',
+    'js/ui/color-picker.js',
     'js/ui/status.js',
     'js/ui/export-view.js',
     'js/ui/dropzone.js',

@@ -78,6 +78,21 @@
   --peiq-info-text: #4c99f0;
   --peiq-focus: var(--peiq-accent);
 
+  /* The color picker shows color as content, not as a theme surface, so these are
+     identical in both themes and are declared once. */
+  --peiq-picker-ink: #000000;
+  --peiq-picker-paper: #ffffff;
+  --peiq-picker-hue-ramp: linear-gradient(
+    to right,
+    hsl(0 100% 50%),
+    hsl(60 100% 50%),
+    hsl(120 100% 50%),
+    hsl(180 100% 50%),
+    hsl(240 100% 50%),
+    hsl(300 100% 50%),
+    hsl(360 100% 50%)
+  );
+
   --peiq-checker-a: #202327;
   --peiq-checker-b: #25282d;
 

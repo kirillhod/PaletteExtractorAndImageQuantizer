@@ -131,7 +131,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   entry is locked. The HEX field is fixed at 7.5 rem so the controls stay grouped on the
   left. The palette bar carries compact undo/redo icon buttons next to Edit. A preview
   icon button sits between redo and Edit: it opens the current palette full screen on a
-  neutral gray background, with two gray presets and a color picker for the background. The
+  neutral gray background, with two gray presets and an in-page color picker for the
+  background and the caption color. The picker is a square saturation/value field, a hue
+  ramp, and a hex field in a popover under its swatch; it replaces the browser's dialog,
+  which cannot follow the theme. The
   header has no title and no band of its own; it is transparent over the chosen background,
   and its controls sit in two surface chips. Layout switches between one row, a column, and
   a wrapping grid; in the grid a "per row" select offers Auto (fits the palette to the view)
@@ -245,7 +248,9 @@ All colors, typography, component styles, depth, motion, and breakpoints are def
 - Dynamic palette swatch colors are the only inline-style exception: set `--swatch` on the
   element, never a hex in JS. The full-screen preview background is the second exception:
   it is user data, so it is set as `--peiq-preview-bg` on the dialog, never as a literal
-  `background` value.
+  `background` value. The color picker's hue stop is the third: `--picker-hue` carries the
+  hue of the saturation/value field, computed from the picker state, and nothing else
+  inline.
 - If a visual value and this plan disagree, `DESIGN.md` wins; if behavior disagrees, this
   plan wins.
 
