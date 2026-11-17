@@ -632,27 +632,31 @@ html.peiq-preview-open body {
   overflow: hidden;
 }
 
+/* The header is transparent: the chosen preview background runs behind the controls.
+   Each group carries its own surface chip so its labels stay legible on any color. */
 .peiq-palette-preview__bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--peiq-space-2);
   padding: var(--peiq-space-2) var(--peiq-space-4);
-  border-bottom: 1px solid var(--peiq-border);
-  background: var(--peiq-surface);
-  color: var(--peiq-text-strong);
 }
 
-.peiq-palette-preview__title {
-  margin: 0 auto 0 0;
-  font-size: 1rem;
-  line-height: 1.25;
+.peiq-palette-preview__options,
+.peiq-palette-preview__background {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2) var(--peiq-space-4);
+  padding: 4px 8px;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-surface);
+  color: var(--peiq-text);
 }
 
 .peiq-palette-preview__background {
-  display: inline-flex;
-  align-items: center;
   gap: var(--peiq-space-2);
+  margin-left: auto;
 }
 
 .peiq-palette-preview__presets {
@@ -691,6 +695,61 @@ html.peiq-preview-open body {
 
 .peiq-palette-preview__close {
   flex: 0 0 auto;
+  background: var(--peiq-surface);
+}
+
+/* Layout and caption controls share the header with the background group and the close
+   button; each group is an inline chip instead of a full-width bar. */
+.peiq-palette-preview__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-2);
+}
+
+.peiq-palette-preview__mode {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-bg-tertiary);
+}
+
+.peiq-palette-preview__mode-btn {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--peiq-radius);
+  background: transparent;
+  color: var(--peiq-text-secondary);
+  font: 500 0.8125rem/1 var(--peiq-font-ui);
+  cursor: pointer;
+  transition: color var(--peiq-dur) var(--peiq-ease),
+    background-color var(--peiq-dur) var(--peiq-ease);
+}
+
+.peiq-palette-preview__mode-btn:hover {
+  color: var(--peiq-text-strong);
+  background: var(--peiq-accent-bg);
+}
+
+.peiq-palette-preview__mode-btn[aria-pressed='true'] {
+  color: var(--peiq-text-on-accent);
+  background: var(--peiq-accent);
+}
+
+.peiq-palette-preview__mode-btn:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
+}
+
+.peiq-palette-preview__columns {
+  min-width: 5.5rem;
+}
+
+.peiq-palette-preview__checks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--peiq-space-3);
 }
 
 .peiq-palette-preview__stage {
@@ -707,19 +766,96 @@ html.peiq-preview-open body {
 }
 
 .peiq-palette-preview__swatch {
-  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   flex: 1 1 0;
   min-width: 0;
+  min-height: 0;
 }
 
 /* The color block fills 87% of its slot, so neighboring colors keep a gap of about
-   15% of the block width regardless of the palette size. */
+   15% of the block width regardless of the palette size. The caption, when shown,
+   takes height from the block instead of overlapping it. */
 .peiq-palette-preview__swatch::before {
   content: '';
-  position: absolute;
-  inset-block: 0;
-  inset-inline: 6.5%;
+  grid-row: 1;
+  margin-inline: 6.5%;
   background: var(--swatch);
+}
+
+/* Captions keep one fixed dark chip in both themes: the field behind them is chosen by
+   the user, so theme text colors cannot guarantee contrast. */
+.peiq-palette-preview__labels {
+  display: grid;
+  grid-row: 2;
+  justify-items: center;
+  justify-self: center;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-preview-label-bg);
+  color: var(--peiq-preview-label-text);
+  font: 400 0.6875rem/1.35 var(--peiq-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.peiq-palette-preview__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peiq-palette-preview__label + .peiq-palette-preview__label {
+  margin-top: 1px;
+}
+
+/* Below roughly 96 px per color the caption cannot hold "#rrggbb" or an RGB triple, so
+   the block wins and the chip steps aside; the aria-label still names both values. */
+.peiq-palette-preview__strip[data-compact='true'] .peiq-palette-preview__labels {
+  display: none;
+}
+
+/* Column mode turns the strip into a scrollable stack of one color per row; the
+   strip export uses the same 1xN order. */
+.peiq-palette-preview[data-mode='column'] .peiq-palette-preview__stage,
+.peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__stage {
+  align-items: flex-start;
+  overflow-y: auto;
+  padding-block: var(--peiq-space-3);
+  overscroll-behavior: contain;
+}
+
+.peiq-palette-preview[data-mode='column'] .peiq-palette-preview__strip {
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 760px);
+  height: auto;
+  margin-inline: auto;
+}
+
+.peiq-palette-preview[data-mode='column'] .peiq-palette-preview__swatch {
+  flex: 0 0 auto;
+  grid-template-rows: 56px auto;
+}
+
+/* Grid mode wraps the palette into rows; Auto picks a square-ish column count. The
+   strip stops growing at 220 px per tile, so a 3-color palette does not turn into
+   three half-screen squares. */
+.peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__strip {
+  display: grid;
+  grid-template-columns: repeat(var(--preview-columns, 4), minmax(0, 1fr));
+  align-content: start;
+  gap: var(--peiq-space-2) 0;
+  width: min(100%, calc(var(--preview-columns, 4) * 220px));
+  height: auto;
+  margin-inline: auto;
+}
+
+.peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__swatch {
+  flex: none;
+  aspect-ratio: 1;
 }
 
 .peiq-confirm {

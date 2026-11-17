@@ -117,19 +117,10 @@
   }
 
   .peiq-palette-preview__bar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
     padding-inline: var(--peiq-space-3);
   }
 
-  .peiq-palette-preview__title {
-    margin: 0;
-    font-size: 0.9375rem;
-  }
-
   .peiq-palette-preview__background {
-    grid-column: 1 / -1;
     justify-content: flex-start;
   }
 
@@ -152,13 +143,21 @@
     height: 44px;
   }
 
-  .peiq-palette-preview__close {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
   .peiq-palette-preview__strip {
     height: clamp(120px, 42vh, 360px);
+  }
+
+  .peiq-palette-preview__options {
+    row-gap: var(--peiq-space-2);
+    column-gap: var(--peiq-space-3);
+  }
+
+  .peiq-palette-preview__columns {
+    min-width: 4.5rem;
+  }
+
+  .peiq-palette-preview__mode-btn {
+    min-height: 40px;
   }
 
   .peiq-stage__toolbar .peiq-icon-btn {

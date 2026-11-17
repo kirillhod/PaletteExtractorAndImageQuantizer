@@ -666,16 +666,27 @@ grouped on the left instead of stretching across the card. Clicking any empty pa
 palette card, not only the strip, clears the selection; controls and swatches keep their
 own action.
 
-The preview button between redo and Edit opens a full-screen, read-only palette strip. The
-bar uses `--peiq-surface` with `--peiq-text-strong` and the page inline padding; the stage
-is the user-chosen `--peiq-preview-bg` (default `#808080`, plus `#767676` and a native color
-picker), so the strip is judged against a neutral field. The strip spans the viewport,
-`height: clamp(140px, 40vh, 440px)`, with equal flex slots. Each color block fills 87% of
-its slot, leaving a gap of about 15% of the block width between neighboring colors at any
-palette size, with a matching half-inset at the strip ends. Desktop controls
-are 28–32 px; below 600 px the bar becomes two rows, the visible Background label becomes
-screen-reader-only, and presets, picker, and close are 44 px. The overlay covers the page,
-locks body scroll, traps Tab, and closes on `Esc`, the close button, or a backdrop click.
+The preview button between redo and Edit opens the current palette full screen and read-only.
+The header carries no title and no band of its own: it is transparent, so the user-chosen
+`--peiq-preview-bg` (default `#808080`, plus `#767676` and a native color picker) runs behind
+the controls. The controls sit in two floating `--peiq-surface` chips instead of a full-width
+bar, so their labels stay legible on any field: the left chip holds **Layout**, **Per row**,
+and **Labels**, the right one the Background presets and picker, with the close button last.
+**Layout** is a three-way segmented control: Row keeps one strip, Column stacks one color per
+row, and Grid wraps the palette. In Grid, **Per row** offers Auto plus 2–32 columns; Auto
+picks `ceil(sqrt(K))` capped at 16, and an explicit count is capped by the palette size. The
+**Labels** checkboxes show the hex and the RGB triple independently under each color. Captions
+use `--peiq-font-mono` at 11 px on a fixed `--peiq-preview-label-bg` chip, because the field
+behind them is user-chosen; below about 96 px per color they step aside instead of clipping,
+and each swatch keeps both values in its `aria-label`. Row mode keeps
+`height: clamp(140px, 40vh, 440px)` and equal flex slots; Column and Grid scroll inside the
+stage. Each color block fills 87% of its slot, leaving a gap of about 15% of the block width
+between neighboring colors, with a matching half-inset at the strip ends; Grid tiles stop
+growing at 220 px so a small palette does not become half-screen squares. Desktop controls
+are 26–32 px; below 600 px the visible Background label becomes screen-reader-only, the
+segmented buttons are 40 px, and presets, picker, and close are 44 px. The overlay covers the
+page, locks body scroll, traps Tab (including the select), and closes on `Esc`, the close
+button, or a backdrop click.
 
 ```css
 .peiq-palette-panel {
@@ -730,9 +741,20 @@ locks body scroll, traps Tab, and closes on `Esc`, the close button, or a backdr
   flex-wrap: wrap;
   gap: var(--peiq-space-2);
   padding: var(--peiq-space-2) var(--peiq-space-4);
-  border-bottom: 1px solid var(--peiq-border);
+}
+.peiq-palette-preview__options,
+.peiq-palette-preview__background {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--peiq-space-2) var(--peiq-space-4);
+  padding: 4px 8px;
+  border-radius: var(--peiq-radius);
   background: var(--peiq-surface);
-  color: var(--peiq-text-strong);
+}
+.peiq-palette-preview__background {
+  gap: var(--peiq-space-2);
+  margin-left: auto;
 }
 .peiq-palette-preview__preset {
   width: 28px;
@@ -764,16 +786,28 @@ locks body scroll, traps Tab, and closes on `Esc`, the close button, or a backdr
   height: clamp(140px, 40vh, 440px);
 }
 .peiq-palette-preview__swatch {
-  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   flex: 1 1 0;
   min-width: 0;
+  min-height: 0;
 }
 .peiq-palette-preview__swatch::before {
   content: '';
-  position: absolute;
-  inset-block: 0;
-  inset-inline: 6.5%;
+  grid-row: 1;
+  margin-inline: 6.5%;
   background: var(--swatch);
+}
+.peiq-palette-preview__labels {
+  grid-row: 2;
+  justify-self: center;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: var(--peiq-radius);
+  background: var(--peiq-preview-label-bg);
+  color: var(--peiq-preview-label-text);
+  font: 400 0.6875rem/1.35 var(--peiq-font-mono);
 }
 .peiq-select--compact {
   width: auto;

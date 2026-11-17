@@ -81,6 +81,11 @@
   --peiq-checker-a: #202327;
   --peiq-checker-b: #25282d;
 
+  /* Preview captions sit on the user-chosen preview background, so they keep one
+     fixed high-contrast pair in both themes instead of the theme text colors. */
+  --peiq-preview-label-bg: rgba(0, 0, 0, 0.72);
+  --peiq-preview-label-text: #ffffff;
+
   --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
   --peiq-shadow-card-lg: rgba(5, 5, 6, 0.20) 0 8px 24px;
   --peiq-shadow-popover: 0 16px 40px rgba(5, 5, 6, 0.32);
@@ -152,6 +157,9 @@
 
   --peiq-checker-a: #e9ecef;
   --peiq-checker-b: #f8f9fa;
+
+  --peiq-preview-label-bg: rgba(0, 0, 0, 0.72);
+  --peiq-preview-label-text: #ffffff;
 
   --peiq-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
   --peiq-shadow-card-lg: rgba(149, 157, 165, 0.20) 0 8px 24px;

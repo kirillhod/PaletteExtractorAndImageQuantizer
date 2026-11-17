@@ -130,11 +130,15 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   and Lock shows an open or closed padlock with the same accent pressed state while the
   entry is locked. The HEX field is fixed at 7.5 rem so the controls stay grouped on the
   left. The palette bar carries compact undo/redo icon buttons next to Edit. A preview
-  icon button sits between redo and Edit: it opens the current palette as one full-screen
-  strip on a neutral gray background, with two gray presets and a color picker for the
-  background. Color blocks keep a gap of roughly 15% of the block width between neighbors
-  at any palette size. The chosen background persists under `peiq.previewBg`; the preview is
-  read-only and never changes the export. `Esc`, the close button, or a click on the
+  icon button sits between redo and Edit: it opens the current palette full screen on a
+  neutral gray background, with two gray presets and a color picker for the background. The
+  header has no title and no band of its own; it is transparent over the chosen background,
+  and its controls sit in two surface chips. Layout switches between one row, a column, and
+  a wrapping grid; in the grid a "per row" select offers Auto (square-ish) or 2–32 columns,
+  and HEX and RGB captions can be shown under each color, persisting with the background
+  under `peiq.previewLayout` and `peiq.previewBg`. Color blocks keep a gap of roughly 15% of
+  the block width between neighbors at any palette size. The preview is read-only and never
+  changes the export. `Esc`, the close button, or a click on the
   backdrop closes it, and focus returns to the trigger. The dialog traps Tab while open,
   and the page behind it does not scroll. Edit is a
   toggle button with a visible pressed state; its label does not change, so the bar never

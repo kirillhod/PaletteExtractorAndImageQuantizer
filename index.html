@@ -526,9 +526,29 @@
     </div>
   </aside>
 
-  <div class="peiq-palette-preview" id="palette-preview" role="dialog" aria-modal="true" aria-labelledby="palette-preview-title" hidden>
+  <div class="peiq-palette-preview" id="palette-preview" role="dialog" aria-modal="true" data-i18n-aria-label="palette.previewTitle" aria-label="Palette preview" hidden>
     <div class="peiq-palette-preview__bar">
-      <h2 class="peiq-palette-preview__title" id="palette-preview-title" data-i18n="palette.previewTitle">Palette preview</h2>
+      <div class="peiq-palette-preview__options">
+        <div class="peiq-palette-preview__option">
+          <span class="peiq-label" id="palette-preview-layout-label" data-i18n="palette.previewLayout">Layout</span>
+          <div class="peiq-palette-preview__mode" id="palette-preview-mode" role="group" aria-labelledby="palette-preview-layout-label">
+            <button class="peiq-palette-preview__mode-btn" type="button" data-mode="row" data-i18n="palette.previewModeRow" aria-pressed="true">Row</button>
+            <button class="peiq-palette-preview__mode-btn" type="button" data-mode="column" data-i18n="palette.previewModeColumn" aria-pressed="false">Column</button>
+            <button class="peiq-palette-preview__mode-btn" type="button" data-mode="grid" data-i18n="palette.previewModeGrid" aria-pressed="false">Grid</button>
+          </div>
+        </div>
+        <div class="peiq-palette-preview__option">
+          <label class="peiq-label" for="palette-preview-columns" data-i18n="palette.previewPerRow">Per row</label>
+          <select class="peiq-select peiq-select--compact peiq-palette-preview__columns" id="palette-preview-columns"></select>
+        </div>
+        <div class="peiq-palette-preview__option">
+          <span class="peiq-label" id="palette-preview-labels-label" data-i18n="palette.previewLabels">Labels</span>
+          <span class="peiq-palette-preview__checks" role="group" aria-labelledby="palette-preview-labels-label">
+            <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-hex" type="checkbox"><span>HEX</span></label>
+            <label class="peiq-check-label"><input class="peiq-check" id="palette-preview-rgb" type="checkbox"><span>RGB</span></label>
+          </span>
+        </div>
+      </div>
       <div class="peiq-palette-preview__background" role="group" data-i18n-aria-label="palette.previewBackground" aria-label="Preview background">
         <span class="peiq-label" data-i18n="palette.previewBackground">Background</span>
         <div class="peiq-palette-preview__presets" id="palette-preview-presets"></div>
@@ -542,7 +562,7 @@
       </button>
     </div>
     <div class="peiq-palette-preview__stage" id="palette-preview-stage">
-      <div class="peiq-palette-preview__strip" id="palette-preview-strip" role="img" aria-label="Palette preview"></div>
+      <div class="peiq-palette-preview__strip" id="palette-preview-strip" role="list" aria-label="Palette preview"></div>
     </div>
   </div>
 

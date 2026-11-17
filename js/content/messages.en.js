@@ -105,6 +105,13 @@ export const EN_MESSAGES = {
   'palette.previewCustom': 'Custom background',
   'palette.previewGrayMid': 'Mid gray background',
   'palette.previewGrayDark': 'Dark gray background',
+  'palette.previewLayout': 'Layout',
+  'palette.previewModeRow': 'Row',
+  'palette.previewModeColumn': 'Column',
+  'palette.previewModeGrid': 'Grid',
+  'palette.previewPerRow': 'Per row',
+  'palette.previewAuto': 'Auto',
+  'palette.previewLabels': 'Labels',
   'palette.pick': 'Pick',
   'palette.apply': 'Apply',
   'palette.add': 'Add',
@@ -319,7 +326,7 @@ export const EN_MESSAGES = {
   'help.orderTitle': 'Palette order and preview',
   'help.orderLead': 'Export order changes, the color set does not.',
   'help.orderP':
-    'Sort changes export indices and the HEX list, not the color set. An indexed PNG keeps its visible colors but rewrites PLTE and the index map; the transparent index follows its color, and exact ties go to the lowest index. Click empty palette space or press Esc to clear the selection; with none, Pick fills HEX for Add. The preview button opens one full-screen strip on a neutral background; two gray presets and a color picker are remembered, and the preview never changes the export.',
+    'Sort changes export indices and the HEX list, not the color set. An indexed PNG keeps its visible colors but rewrites PLTE and the index map; the transparent index follows its color, and exact ties go to the lowest index. Click empty palette space or press Esc to clear the selection; with none, Pick fills HEX for Add. The preview button opens the current palette full screen on a neutral background; two gray presets and a color picker are remembered. Row keeps one strip, Column stacks one color per row, and Grid wraps the palette with a chosen or automatic column count. HEX and RGB captions can be shown under each color. The preview never changes the export.',
   'help.hueLead': 'Hue order',
   'help.hueP':
     'groups similar hues into bands and orders each band by lightness. Hue · grouped keeps a strict ramp. Hue · perceptual may reverse a band so neighboring bands meet at their closest ends. The direction button switches both Hue modes and Lightness between dark → light and light → dark.',
