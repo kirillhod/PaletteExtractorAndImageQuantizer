@@ -1015,7 +1015,7 @@ html.peiq-preview-open body {
   display: grid;
   grid-template-columns: repeat(var(--preview-columns, 4), minmax(0, 1fr));
   align-content: start;
-  gap: var(--peiq-space-2) 0;
+  gap: 0;
   width: min(100%, calc(var(--preview-columns, 4) * 220px));
   height: auto;
   margin-inline: auto;
@@ -1028,8 +1028,12 @@ html.peiq-preview-open body {
   grid-template-rows: auto auto;
 }
 
+/* Both axes use the same 6.5% inset, so the gap between two squares is 13% of the
+   cell width vertically and horizontally. A fixed row gap made the rows visibly
+   tighter than the columns once the captions were off. */
 .peiq-palette-preview[data-mode='grid'] .peiq-palette-preview__swatch::before {
   aspect-ratio: 1;
+  margin-block: 6.5%;
 }
 
 .peiq-confirm {

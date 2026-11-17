@@ -144,7 +144,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   text color, persisting with the background under `peiq.previewLayout` and `peiq.previewBg`.
   On phones the option tray collapses behind one Settings button beside the close button and
   starts collapsed, so the palette gets the screen; the button expands it in place. Color
-  blocks keep a gap of roughly 15% of the block width between neighbors at any palette size.
+  blocks keep a gap of roughly 15% of the block width between neighbors in both axes at any
+  palette size.
   The preview is read-only and never changes the export. `Esc`, the close button, or a click
   on the backdrop closes it, and focus returns to the trigger. The dialog traps Tab while
   open,

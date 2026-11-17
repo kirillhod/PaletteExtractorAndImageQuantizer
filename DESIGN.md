@@ -708,9 +708,9 @@ open, `Esc` closes the picker only. Arrow keys move the field marker, the hue ra
 field are native controls, and an invalid hex reverts. Row mode keeps
 `height: clamp(140px, 40vh, 440px)` and equal flex slots; Column and Grid scroll inside the
 stage. Each color block fills 87% of its slot, leaving a gap of about 15% of the block width
-between neighboring colors, with a matching half-inset at the strip ends. In Grid the block is
-always square and the cell grows downward for the caption; tiles stop growing at 220 px so a
-small palette does not become half-screen squares. Desktop controls
+between neighboring colors in both axes, with a matching half-inset at the strip ends. In
+Grid the block is always square and the cell grows downward for the caption; tiles stop
+growing at 220 px so a small palette does not become half-screen squares. Desktop controls
 are 26–32 px; below 600 px the visible Background label becomes screen-reader-only, the
 segmented buttons are 40 px, and presets, picker, and close are 44 px. Below 600 px the
 option tray also collapses behind a **Settings** button in the same row as the close button:
