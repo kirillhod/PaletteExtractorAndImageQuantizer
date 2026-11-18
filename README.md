@@ -24,8 +24,8 @@ individual swatches, and export a validated indexed PNG.*
 - Full-screen palette preview: one strip with a gap between colors, on a neutral gray
   background that can be switched or replaced with any color; the choice is remembered.
 - Edit colors: change a HEX value, add or remove entries, lock entries so they keep their
-  place when sorting, and move colors left or right in manual order. A move cannot cross a
-  locked entry.
+  place when sorting, and move colors with ← / → or by dragging a swatch in Edit mode. A
+  move cannot cross a locked entry.
 - Pick colors straight from the canvas; each sampled color gets a draggable anchor.
 - Compare the original and the result with a draggable divider.
 - Undo and redo cover palette and settings changes.

@@ -188,7 +188,14 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   view, pulses it once in the brand color, and names its position in the toast; the palette
   count does not change.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
-  the preview. Moving changes export indices, not the set of mapped colors, so the preview
+  the preview. **Dragging a swatch** in Edit mode moves it to the slot under the pointer:
+  a press that travels less than 5 px stays a click (selection), a longer press picks the
+  swatch up, dims it, and draws a 3 px accent bar in the gap where it would land; the drop
+  switches to Manual order, commits one undo step, and names the new position in the toast.
+  A drag cannot start on a locked entry or cross one, and `Esc` cancels. Pointer drag is
+  for mouse and pen: on touch the strip has to stay scrollable, so the arrows remain the
+  touch path, and they stay the keyboard and screen-reader path everywhere. Moving changes
+  export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Adding, removing, or
   editing a color changes the candidate set and therefore the preview and Reduced PNG.
   Locked entries keep their slot, and a move that would cross one is blocked. Locks pin an
@@ -201,7 +208,7 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   while undo restores them. `Ctrl/Cmd+Z` and
   `Ctrl/Cmd+Shift+Z` work outside text fields whether or not Edit is on, and the undo/redo
   icon buttons are always visible in the palette bar.
-  Rename, roles, and drag reordering remain post-1.1.
+  Rename and roles remain post-1.1.
 
 **Dither rail section**
 

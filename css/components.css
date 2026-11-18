@@ -1327,6 +1327,43 @@ html.peiq-preview-open body {
   box-shadow: 0 0 0 2px var(--peiq-accent);
 }
 
+/* Drag reordering in Edit mode: the grabbed swatch dims, and the slot it would land in
+   gets a 3 px accent bar in the 4 px gap, so nothing moves until the drop. */
+.peiq-palette-strip.is-reorderable .peiq-swatch {
+  cursor: grab;
+}
+
+.peiq-palette-strip.is-reorderable .peiq-swatch.is-locked {
+  cursor: pointer;
+}
+
+.peiq-swatch.is-dragging {
+  opacity: 0.45;
+}
+
+.peiq-palette-strip.is-reorderable .peiq-swatch.is-dragging {
+  cursor: grabbing;
+}
+
+.peiq-swatch.is-drop-before::after,
+.peiq-swatch.is-drop-after::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 3px;
+  border-radius: var(--peiq-radius-pill);
+  background: var(--peiq-accent);
+}
+
+.peiq-swatch.is-drop-before::after {
+  left: -3px;
+}
+
+.peiq-swatch.is-drop-after::after {
+  right: -3px;
+}
+
 /* A refused duplicate points at the swatch that already holds the color: the entry is
    selected, and one brand-colored pulse answers "where is it" before settling into the
    selected ring. */

@@ -4,6 +4,7 @@ import {
   addPaletteEntry,
   findPaletteEntryByColor,
   movePaletteEntry,
+  movePaletteEntryTo,
   removePaletteEntry,
   setPaletteLock,
   sortPalette,
@@ -129,6 +130,7 @@ export function createPaletteEditor(deps) {
       editMode: state.editMode,
       selectedId: state.selectedId,
       onActivate: state.editMode ? selectPaletteEntry : null,
+      onReorder: state.editMode ? reorderPaletteEntry : null,
     });
     if (paletteCount) {
       paletteCount.textContent = countLabel('count.colors', app.palette.length);
@@ -579,6 +581,43 @@ export function createPaletteEditor(deps) {
         { hex: selected.hex },
         'success',
       );
+    } catch (error) {
+      toast(localizeError(error), 'error');
+    }
+  }
+
+  /**
+   * Commit one drag as a single manual-order change: one undo step, the transparent index
+   * follows its entry, and the URL and preview update.
+   *
+   * @param {number} id
+   * @param {number} position
+   */
+  function reorderPaletteEntry(id, position) {
+    if (!app.hasResult || app.exportBusy) return;
+    const entry = app.palette.find((candidate) => candidate.id === id);
+    if (!entry) return;
+    const transparentPosition = Number(transparentIndex?.value ?? -1);
+    const transparentId =
+      transparentPosition >= 0 ? app.palette[transparentPosition]?.id ?? null : null;
+    try {
+      const moved = movePaletteEntryTo(app.palette, id, position);
+      if (moved === app.palette) return;
+      const before = paletteSnapshot();
+      deps.setSortOrder('manual');
+      app.palette = moved;
+      state.selectedId = id;
+      markPaletteEdited();
+      renderCurrentPalette();
+      if (transparentId !== null && transparentIndex) {
+        const nextPosition = app.palette.findIndex((candidate) => candidate.id === transparentId);
+        if (nextPosition >= 0) transparentIndex.value = String(nextPosition);
+      }
+      deps.requestPreview();
+      pushPaletteHistory(before);
+      updatePaletteEditor();
+      deps.syncUrlState();
+      toastKey('toast.movedTo', { hex: entry.hex, position: position + 1 }, 'success');
     } catch (error) {
       toast(localizeError(error), 'error');
     }

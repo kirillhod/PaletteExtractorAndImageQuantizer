@@ -445,6 +445,7 @@ export const EN_MESSAGES = {
   'toast.unlocked': 'Unlocked {hex}',
   'toast.movedLeft': 'Moved {hex} left',
   'toast.movedRight': 'Moved {hex} right',
+  'toast.movedTo': 'Moved {hex} to position {position}',
   'toast.copiedHex': 'Copied {hex}',
   'toast.copiedHexValues': 'Copied {countLabel}',
   'toast.copiedFile': 'Copied {name} to the clipboard',

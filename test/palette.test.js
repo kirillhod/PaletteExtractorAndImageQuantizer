@@ -9,6 +9,7 @@ import {
   findPaletteEntryByColor,
   isDirectionalSort,
   movePaletteEntry,
+  movePaletteEntryTo,
   removePaletteEntry,
   setPaletteLock,
   sortDirection,
@@ -398,6 +399,37 @@ test('moving refuses locked entries and moves blocked by a locked neighbor', () 
 test('moving at a palette edge is a no-op', () => {
   assert.deepEqual(movePaletteEntry(palette, 1, 'left'), palette);
   assert.deepEqual(movePaletteEntry(palette, 6, 'right'), palette);
+});
+
+test('moving an entry to an absolute position renumbers the rest', () => {
+  const moved = movePaletteEntryTo(palette, 1, 2);
+  assert.deepEqual(moved.map((entry) => entry.id), [2, 3, 1, 4, 5, 6]);
+  assert.deepEqual(moved.map((entry) => entry.index), [0, 1, 2, 3, 4, 5]);
+  const back = movePaletteEntryTo(moved, 1, 0);
+  assert.deepEqual(back.map((entry) => entry.id), [1, 2, 3, 4, 5, 6]);
+});
+
+test('a drop on the current position changes nothing and keeps the array', () => {
+  assert.equal(movePaletteEntryTo(palette, 3, 2), palette);
+  assert.equal(
+    movePaletteEntryTo(palette, 3, 99).map((entry) => entry.id).join(','),
+    '1,2,4,5,6,3',
+  );
+});
+
+test('drag positions clamp to the palette ends', () => {
+  assert.deepEqual(movePaletteEntryTo(palette, 6, -5).map((entry) => entry.id), [6, 1, 2, 3, 4, 5]);
+  assert.deepEqual(movePaletteEntryTo(palette, 1, 40).map((entry) => entry.id), [2, 3, 4, 5, 6, 1]);
+});
+
+test('a drag cannot move a locked entry or cross a locked neighbor', () => {
+  const locked = setPaletteLock(palette, 1, true);
+  assert.throws(() => movePaletteEntryTo(locked, 1, 3), /locked color cannot be moved/);
+  assert.throws(() => movePaletteEntryTo(locked, 4, 0), /locked color blocks/);
+  const inside = movePaletteEntryTo(locked, 4, 1);
+  assert.deepEqual(inside.map((entry) => entry.id), [1, 4, 2, 3, 5, 6]);
+  assert.equal(inside[0].locked, true);
+  assert.equal(inside[0].index, 0);
 });
 
 test('finding an existing color returns the entry that holds it', () => {

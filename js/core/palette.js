@@ -190,6 +190,36 @@ function assertUniqueColor(palette, color, skipPosition) {
   if (duplicate) throw new Error('color already exists in the palette');
 }
 
+/**
+ * Move an unlocked entry to an export position in one step, for drag reordering. Locked
+ * entries keep their slots, so a move may not cross one; indices are renumbered after a
+ * successful move. `position` is the index the entry ends up at.
+ *
+ * @param {Palette} palette
+ * @param {number} id
+ * @param {number} position
+ * @returns {Palette}
+ */
+export function movePaletteEntryTo(palette, id, position) {
+  const from = palette.findIndex((entry) => entry.id === id);
+  if (from < 0) throw new Error('palette entry not found');
+  if (palette[from].locked) throw new Error('locked color cannot be moved');
+  const target = Math.max(0, Math.min(palette.length - 1, Math.trunc(position)));
+  if (target === from) return palette;
+  const lockedPositions = palette
+    .map((entry, index) => (entry.locked ? index : -1))
+    .filter((index) => index >= 0);
+  const before = lockedPositions.filter((index) => index < from).pop();
+  const after = lockedPositions.find((index) => index > from);
+  const min = before === undefined ? 0 : before + 1;
+  const max = after === undefined ? palette.length - 1 : after - 1;
+  if (target < min || target > max) throw new Error('locked color blocks this move');
+  const next = palette.slice();
+  const [moved] = next.splice(from, 1);
+  next.splice(target, 0, moved);
+  return next.map((entry, index) => ({ ...entry, index }));
+}
+
 const DIRECTIONAL_SORT_FAMILIES = new Set(['hue', 'hue-perceptual', 'lightness']);
 
 /**

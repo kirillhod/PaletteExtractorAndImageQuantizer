@@ -450,6 +450,7 @@ export const RU_MESSAGES = {
   'toast.unlocked': 'Разблокирован {hex}',
   'toast.movedLeft': '{hex} перемещён влево',
   'toast.movedRight': '{hex} перемещён вправо',
+  'toast.movedTo': '{hex} перемещён на позицию {position}',
   'toast.copiedHex': 'Скопирован {hex}',
   'toast.copiedHexValues': 'Скопировано {countLabel}',
   'toast.copiedFile': 'Файл {name} скопирован в буфер обмена',

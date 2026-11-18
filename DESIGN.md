@@ -685,7 +685,11 @@ can, and Lock shows an open or closed padlock. Lock uses the same accent pressed
 the selected entry is locked. The HEX field has a fixed 7.5 rem width so the controls stay
 grouped on the left instead of stretching across the card. Clicking any empty part of the
 palette card, not only the strip, clears the selection; controls and swatches keep their
-own action.
+own action. In Edit mode the swatches take a grab cursor and reorder by drag: the grabbed
+swatch drops to 45% opacity and the target slot shows a 3 px `--peiq-accent` bar in the
+4 px gap, so the strip never reflows mid-gesture; the swatch keeps its normal size and the
+selected ring stays on the entry that was picked up. Touch keeps the arrow buttons, because
+a drag there would fight the strip's own scrolling.
 
 A color that already exists is never duplicated: Add, Apply, or a marker drag that matches
 an existing entry selects that entry, scrolls it into view, and plays one 1.2 s ring pulse
