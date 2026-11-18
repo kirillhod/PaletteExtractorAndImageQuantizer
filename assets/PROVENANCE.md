@@ -23,6 +23,13 @@ asset matches the delivered file pixel for pixel, so its outlines, 8/256 stroke,
 mask stay exactly as supplied. The same file is the browser icon, the 26 px header mark,
 and the mark on the social card.
 
+`favicon.png` is the owner's 256×256 raster of the same mark, kept as delivered and linked
+as the PNG icon and the Apple touch icon. Google Search lists BMP, GIF, ICO, PNG, JPEG,
+PPM, and TIFF as supported favicon formats and does not read SVG, so the raster exists for
+search alone. Google also takes one icon per hostname and reads it from the host home page,
+so `kirillhod.github.io` must reference a raster itself; a link inside this subdirectory
+does not reach search results.
+
 ## Screenshots
 
 `screenshots/workspace-dark.png` and `screenshots/map-dither-dark.png` are captures of

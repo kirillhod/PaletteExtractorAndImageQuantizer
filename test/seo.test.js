@@ -85,6 +85,29 @@ test('JSON-LD describes the free browser application', () => {
   assert.match(data.license, /gpl-3\.0/);
 });
 
+test('favicons are declared in a format search engines can fetch', () => {
+  const icons = linkTags.filter((tag) => /rel="(?:icon|apple-touch-icon)"/.test(tag));
+  assert.ok(
+    icons.some((tag) => tag.includes('favicon.svg') && tag.includes('image/svg+xml')),
+    'missing SVG icon for browsers',
+  );
+  const pngTag = icons.find((tag) => tag.includes('favicon.png'));
+  assert.ok(pngTag, 'missing PNG icon: Google Search does not accept SVG favicons');
+  assert.match(pngTag, /type="image\/png"/);
+  assert.ok(
+    icons.some((tag) => tag.includes('rel="apple-touch-icon"')),
+    'missing apple-touch-icon',
+  );
+
+  const png = fs.readFileSync(new URL('assets/favicon.png', root));
+  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'not a PNG');
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  assert.equal(width, height, 'favicon must be square');
+  assert.ok(width >= 48, `favicon too small: ${width}px`);
+  assert.equal(png[24], 8, 'favicon must be 8-bit');
+});
+
 test('social image and sitemap match the canonical URL', () => {
   const png = fs.readFileSync(new URL('assets/og-image.png', root));
   assert.equal(png.readUInt32BE(16), 1200);
