@@ -858,15 +858,18 @@ async function runViewport(viewportWidth, viewportHeight, full) {
   } finally {
     session?.close();
     if (browser) {
-      if (process.platform === 'win32') {
-        spawnSync('taskkill', ['/pid', String(browser.pid), '/T', '/F'], {
-          stdio: 'ignore',
-          windowsHide: true,
-        });
-      } else {
-        browser.kill('SIGTERM');
+      if (browser.exitCode === null) {
+        const exited = new Promise((resolve) => browser?.once('exit', resolve));
+        if (process.platform === 'win32') {
+          spawnSync('taskkill', ['/pid', String(browser.pid), '/T', '/F'], {
+            stdio: 'ignore',
+            windowsHide: true,
+          });
+        } else {
+          browser.kill('SIGTERM');
+        }
+        await Promise.race([exited, sleep(3000)]);
       }
-      await sleep(300);
     }
     if (server) {
       if (process.platform === 'win32') {
@@ -878,7 +881,7 @@ async function runViewport(viewportWidth, viewportHeight, full) {
         server.kill('SIGTERM');
       }
     }
-    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }).catch(() => {
+    await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 }).catch(() => {
       // Chrome can keep a lock on its profile for a moment after exit; the temp
       // directory is disposable and the OS cleans it on the next sweep.
     });
