@@ -18,10 +18,13 @@ Sections: §10, §12.
 
 ### 10.1 Framework
 
-- `node --test` only. No test dependencies.
+- `node --test` is the only test framework. No test dependencies.
 - Tests import `core/**` directly; no DOM.
-- Canvas-dependent behavior is covered by manual browser checks and by testing the
-  pure PNG encoder/decoder in Node.
+- `npm test` runs the Node suite and then `tools/browser-check.mjs`, a zero-dependency
+  smoke suite in headless Chrome or Edge: canvas painting, worker wiring, theme painting
+  and persistence, keyboard focus order, the stage overlay, layout overflow at 1280 and
+  360 px, and a compressed indexed export. Visual review, Firefox and Safari, touch, and
+  the rest of 10.6 stay manual.
 - Test helpers in `test/helpers.js` generate images programmatically (no binary fixtures).
 
 ### 10.2 Test map
@@ -41,7 +44,7 @@ Sections: §10, §12.
 | `clipboard-image.test.js` | image clipboard feature detection, PNG blob type and bytes |
 | `map.test.js` | exact/LUT modes, tie-break, alpha, compliance |
 | `dither.test.js` | kernels, serpentine, strength, edge stop, Bayer, blue noise, compliance |
-| `png.test.js` | encode/decode, filters 0–4, bit depths, tRNS, packing, round-trip |
+| `png.test.js` | encode/decode, filters 0–4, bit depths, tRNS, packing, round-trip, native compression and stored fallback |
 | `formats.test.js` | .hex/.gpl/.pal/.json round-trips |
 | `palettes.test.js` | built-in counts/values, import parsers |
 | `metrics.test.js` | ΔE stats, p95, worst pixels, compliance |
@@ -58,6 +61,7 @@ Sections: §10, §12.
 | `session-state.test.js` | session clone, validation, picked markers |
 | `url-state.test.js` | versioned URL settings round-trip |
 | `docs.test.js` | plan split integrity: every part exists, relative links resolve, section numbers unique |
+| `tools/browser-check.mjs` | headless smoke: canvas, worker, themes, focus order, stage overlay, overflow, compressed export |
 
 ### 10.3 Required known-answer tests
 
@@ -178,15 +182,16 @@ Sections: §10, §12.
 
 Zlib:
 
-- **Encoder (M2): stored blocks** (`0x78 0x01`, 65535-byte blocks, Adler-32). Valid,
-  portable, and larger than compressed output. It was chosen after `CompressionStream`
-  stalled in headless Chrome during verification.
+- **Encoder:** `CompressionStream('deflate')` where the platform provides it, written
+  through a single zlib stream with a concurrent reader and writer. The stored-block
+  writer (`0x78 0x01`, 65535-byte blocks, Adler-32) is built as the fallback, and the
+  shorter of the two streams is used, so a tiny palette strip never grows. If the
+  platform compressor is missing or fails, the stored stream keeps the export valid.
 - **Decoder (M2): full DEFLATE** — stored, fixed-Huffman, and dynamic-Huffman blocks.
   This enables importing ordinary compressed palette-strip PNGs.
-- Intended optimization: `CompressionStream('deflate')` once it is verified in real
-  browsers; keep stored blocks as the fallback.
 - Compression output is implementation-defined; byte equality is guaranteed only within
-  the same browser/version.
+  the same browser/version. The decode-then-compare validation, not a byte hash, is the
+  output contract.
 
 ### 12.4 Other formats
 

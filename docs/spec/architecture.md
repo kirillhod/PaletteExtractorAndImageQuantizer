@@ -382,7 +382,7 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `js/core/dither/blue-noise.js` | Mask loading/tiling | `dither.test.js` |
 | `js/core/dither/blue-noise-mask.js` | Generated 64×64 mask (base64) | `dither.test.js` |
 | `js/core/png/crc.js` | CRC32/Adler-32 | `png.test.js` |
-| `js/core/png/chunks.js` | Chunk writer/parser, stored zlib | `png.test.js` |
+| `js/core/png/chunks.js` | Chunk writer/parser, zlib (native compression with stored fallback) | `png.test.js` |
 | `js/core/png/inflate.js` | Full DEFLATE decoder (stored/fixed/dynamic) | `png.test.js` |
 | `js/core/png/encode.js` | `encodeIndexedPng`, `encodeRgbaPng`, `encodeStripPng` | `png.test.js` |
 | `js/core/png/decode.js` | `decodePng(bytes)` (non-interlaced, 8-bit + indexed) | `png.test.js` |
@@ -419,5 +419,6 @@ Legend: **S** = signatures/notes, **T** = required tests.
 | `tools/gen-blue-noise.mjs` | Void-and-cluster generator; deterministic seed |
 | `tools/spec.mjs` | Print one plan section or one spec file without loading the whole document; `plan` searches every part |
 | `tools/cdp.mjs` | Minimal Chrome DevTools Protocol client for the manual browser check; dev tooling only |
-| `.github/workflows/ci.yml` | `node --test` on push/PR |
+| `tools/browser-check.mjs` | Zero-dep headless smoke suite: canvas, worker, themes, focus, stage overlay, export; run by `npm test` |
+| `.github/workflows/ci.yml` | `npm test` (Node suite and browser smoke) on push/PR |
 | `.github/workflows/pages.yml` | Stage the static site and deploy it to GitHub Pages on `main` |

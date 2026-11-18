@@ -20,6 +20,9 @@ The version lives in two files and both must match in the tagged commit:
    npm test
    ```
 
+   This runs the Node suite and the headless browser smoke check; Chrome or Edge must be
+   available, or set `CHROME_PATH`.
+
 5. Commit with an imperative subject and a body explaining the release and its scope.
 6. Tag that exact commit, locally:
 

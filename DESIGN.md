@@ -1596,7 +1596,8 @@ default; Forget uses the danger fill. The backdrop is `--peiq-overlay`.
   Help right. No subbar, no nav links, no download button in the header.
 - Stage actions (change image, zoom, fit, original) live in the stage toolbar. On desktop
   the toolbar row is 28 px with 28 px icon buttons; below 600 px the controls return to
-  44 px touch targets. Two stage-view buttons close the row: **Full screen** lifts the
+  44 px touch targets and the row wraps instead of overflowing. Two stage-view buttons
+  close the row: **Full screen** lifts the
   canvas over the viewport with the header, footer, export column, palette, settings, and
   status hidden, and its exit control sits inside the frame at 12 px from the top-right
   corner at 32 px (44 px on touch); **Hide canvas** removes the frame and its zoom and

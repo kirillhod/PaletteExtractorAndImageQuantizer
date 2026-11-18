@@ -82,7 +82,7 @@
 
   .peiq-stage__toolbar {
     gap: 4px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .peiq-sort-control {

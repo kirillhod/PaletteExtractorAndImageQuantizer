@@ -31,6 +31,7 @@ plan X`, which finds the section in whichever file holds it.
 | Palette order, perceptual sort | `js/core/palette-order.js` | plan §6.7, §8.4 | `test/palette-order.test.js` |
 | Indexed image, transparent index | worker + `js/core/map.js` | plan §6.8, §12.3 | `test/pipeline-m2.test.js`, `test/png.test.js` |
 | PNG encode/decode, inflate, chunks | `js/core/png/` | plan §12.2-§12.4 | `test/png.test.js`, `test/golden.test.js` |
+| Browser smoke (canvas, worker, themes, focus, stage) | `tools/browser-check.mjs` | plan §10.1 | `npm run test:browser` |
 | Palette formats and import | `js/core/formats/`, `js/core/palettes/` | plan §13 | `test/formats.test.js`, `test/palettes.test.js` |
 | Pipeline and worker protocol | `js/core/pipeline.js`, `js/workers/pipeline.worker.js` | plan §4.4-§4.6 | `test/pipeline.test.js` |
 | App state, wiring, preview | `js/main.js` | plan §8 | docs/agent/browser-check.md |
@@ -56,7 +57,8 @@ plan X`, which finds the section in whichever file holds it.
 4. For "where/how does this work" questions, send the `explore` subagent and keep the
    parent context for edits.
 5. Verification: targeted `node --test test/x.test.js` while iterating, full `npm test`
-   before claiming done.
+   before claiming done. `npm test` includes the headless browser smoke, so Chrome or
+   Edge must be installed; `npm run test:unit` runs only the Node half.
 
 ## Budget signals
 

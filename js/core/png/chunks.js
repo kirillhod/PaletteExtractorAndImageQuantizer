@@ -91,15 +91,67 @@ function ascii(bytes, start, length) {
 }
 
 /**
- * M1 zlib writer. Uses valid stored blocks (no compression): CompressionStream
- * stalled in headless Chrome during verification, so the portable fallback is the
- * default until the native path is verified in real browsers. The output is a valid
- * PNG; it is simply larger than a compressed stream.
+ * zlib writer for PNG IDAT. The platform `CompressionStream('deflate')` produces a
+ * real DEFLATE stream where it exists; stored blocks remain the fallback, and the
+ * shorter of the two wins so a tiny strip never grows. Compression output is
+ * implementation-defined (plan 12.3), so only same-browser byte equality is promised.
+ *
  * @param {Uint8Array} bytes
  * @returns {Promise<Uint8Array>}
  */
 export async function deflateZlib(bytes) {
-  return storedZlib(bytes);
+  const stored = storedZlib(bytes);
+  if (typeof CompressionStream !== 'function') return stored;
+  try {
+    const native = await compressWithStream(bytes);
+    return native.length < stored.length ? native : stored;
+  } catch {
+    // A compressor that is present but cannot run must not fail the export: the
+    // stored-block stream is valid and already validated by the decoder. The export
+    // result still reports the file size, so the fallback is visible.
+    return stored;
+  }
+}
+
+/**
+ * @param {Uint8Array} bytes
+ * @returns {Promise<Uint8Array>}
+ */
+async function compressWithStream(bytes) {
+  const stream = new CompressionStream('deflate');
+  // Read and write concurrently: a writer that waits for the reader to drain would
+  // deadlock if the whole input were written first.
+  const [compressed] = await Promise.all([
+    readAll(stream.readable),
+    writeAll(stream.writable, bytes),
+  ]);
+  return compressed;
+}
+
+/**
+ * @param {ReadableStream<Uint8Array>} readable
+ * @returns {Promise<Uint8Array>}
+ */
+async function readAll(readable) {
+  const reader = readable.getReader();
+  /** @type {Uint8Array[]} */
+  const parts = [];
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (value) parts.push(value);
+  }
+  return concatBytes(parts);
+}
+
+/**
+ * @param {WritableStream<Uint8Array>} writable
+ * @param {Uint8Array} bytes
+ */
+async function writeAll(writable, bytes) {
+  const writer = writable.getWriter();
+  await writer.write(bytes);
+  await writer.close();
 }
 
 /**

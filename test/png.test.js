@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { constants as zlibConstants, deflateSync } from 'node:zlib';
 
 import { crc32 } from '../js/core/png/crc.js';
-import { PNG_SIGNATURE, concatBytes, makeChunk } from '../js/core/png/chunks.js';
+import { PNG_SIGNATURE, concatBytes, makeChunk, readChunks } from '../js/core/png/chunks.js';
 import { encodeIndexedPng, encodeRgbaPng, encodeStripPng } from '../js/core/png/encode.js';
 import { decodePng } from '../js/core/png/decode.js';
 import { makeImage } from './helpers.js';
@@ -180,4 +180,107 @@ test('indexed PNG uses 8-bit indices for more than 16 colors', async () => {
     120, 135, 128, 255,
     240, 15, 128, 255,
   ]);
+});
+
+test('native compression shrinks a compressible indexed export', async () => {
+  const width = 256;
+  const height = 256;
+  const palette = Array.from({ length: 16 }, (_, index) => ({
+    color: { r: index * 17, g: 255 - index * 17, b: 96, a: 255 },
+  }));
+  // Wide flat bands: the raw scanlines are 33 KiB and compress by more than half.
+  const indices = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) indices[y * width + x] = (x >> 4) & 15;
+  }
+
+  const png = await encodeIndexedPng({ width, height, indices, palette });
+  const rawBytes = (Math.ceil((width * 4) / 8) + 1) * height;
+  const idat = readChunks(png).find((chunk) => chunk.type === 'IDAT');
+  assert.ok(idat, 'the export needs an IDAT chunk');
+  assert.ok(
+    idat.data.length < rawBytes / 2,
+    `expected compression below ${rawBytes / 2} bytes, got ${idat.data.length}`,
+  );
+
+  const decoded = await decodePng(png);
+  assert.equal(decoded.width, width);
+  assert.equal(decoded.height, height);
+  for (const [x, y] of [
+    [0, 0],
+    [15, 0],
+    [16, 0],
+    [width - 1, height - 1],
+  ]) {
+    const source = palette[indices[y * width + x]].color;
+    const offset = (y * width + x) * 4;
+    assert.deepEqual([...decoded.data.subarray(offset, offset + 4)], [
+      source.r,
+      source.g,
+      source.b,
+      source.a,
+    ]);
+  }
+});
+
+test('stored blocks remain the fallback when CompressionStream is missing', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'CompressionStream');
+  Object.defineProperty(globalThis, 'CompressionStream', {
+    value: undefined,
+    configurable: true,
+  });
+  try {
+    const png = await encodeStripPng([
+      { r: 10, g: 20, b: 30 },
+      { r: 40, g: 50, b: 60 },
+    ]);
+    const idat = readChunks(png).find((chunk) => chunk.type === 'IDAT');
+    assert.ok(idat, 'the fallback still writes an IDAT chunk');
+    assert.equal(idat.data[0], 0x78);
+    assert.equal(idat.data[1], 0x01, 'stored zlib uses the no-compression header');
+    const decoded = await decodePng(png);
+    assert.deepEqual([...decoded.data], [
+      10, 20, 30, 255,
+      40, 50, 60, 255,
+    ]);
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'CompressionStream', descriptor);
+    else delete globalThis.CompressionStream;
+  }
+});
+
+test('a failing platform compressor falls back to stored blocks', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'CompressionStream');
+  class BrokenCompressionStream {
+    constructor() {
+      this.readable = new ReadableStream({
+        start(controller) {
+          controller.error(new Error('compressors are unavailable'));
+        },
+      });
+      this.writable = new WritableStream({
+        write() {
+          throw new Error('compressors are unavailable');
+        },
+      });
+    }
+  }
+  Object.defineProperty(globalThis, 'CompressionStream', {
+    value: BrokenCompressionStream,
+    configurable: true,
+  });
+  try {
+    const png = await encodeStripPng([
+      { r: 1, g: 2, b: 3 },
+      { r: 4, g: 5, b: 6 },
+    ]);
+    const idat = readChunks(png).find((chunk) => chunk.type === 'IDAT');
+    assert.ok(idat);
+    assert.equal(idat.data[1], 0x01, 'the stored stream replaces a failed compression');
+    const decoded = await decodePng(png);
+    assert.deepEqual([...decoded.data], [1, 2, 3, 255, 4, 5, 6, 255]);
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'CompressionStream', descriptor);
+    else delete globalThis.CompressionStream;
+  }
 });

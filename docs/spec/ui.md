@@ -42,7 +42,8 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
 - **≥ 1220 px:** export `clamp(180–220 px)` + stage `1fr` + rail **360 px**.
   **980–1219 px:** export **180 px** + stage `1fr` + rail **340 px**.
   **< 980 px:** stacked; export, toolbar, canvas, palette, settings. **< 600 px:** single
-  column, 44 px touch targets, canvas `55svh`.
+  column, 44 px touch targets, canvas `55svh`; the stage toolbar wraps rather than
+  overflowing the viewport.
 - **Stage:** a 28 px desktop toolbar, canvas, palette strip, usage bar, and a compact
   24 px status line. "Change image" lives in the stage toolbar, not the header.
 - **Export column:** a narrow left column with the primary indexed-PNG action, strip,
@@ -99,11 +100,13 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   replacing a loaded image: the confirmation names the palette, edits, and undo history
   that will be lost, defaults to keeping the current image, and returns focus when it
   closes.
-- **Full screen** and **Hide canvas** close the toolbar row. Full screen lifts the canvas
-  over the viewport and hides the header, footer, export column, palette, settings, and
-  status; an exit control inside the frame returns. Hide canvas removes the stage and its
-  zoom and Original controls, and the palette takes the freed row. Both buttons are pressed
-  toggles, `Esc` returns to the normal frame, and neither state is stored.
+- **Full screen** and **Hide canvas** close the toolbar row. Below 600 px the row wraps
+  instead of running past the viewport, so both stay reachable at 44 px. Full screen lifts
+  the canvas over the viewport and hides the header, footer, export column, palette,
+  settings, and status; an exit control inside the frame returns. Hide canvas removes the
+  stage and its zoom and Original controls, and the palette takes the freed row. Both
+  buttons are pressed toggles, `Esc` returns to the normal frame, and neither state is
+  stored.
 - Fit and 100%.
 - Original/result toggle.
 - Image info: filename, dimensions, unique colors (5-bit bins).

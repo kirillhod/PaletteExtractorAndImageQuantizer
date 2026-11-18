@@ -7,7 +7,9 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "dev": "node tools/dev-server.mjs",
-    "test": "node --test",
+    "test": "node --test && node tools/browser-check.mjs",
+    "test:unit": "node --test",
+    "test:browser": "node tools/browser-check.mjs",
     "gen:blue-noise": "node tools/gen-blue-noise.mjs"
   }
 }

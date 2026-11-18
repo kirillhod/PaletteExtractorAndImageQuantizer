@@ -3,6 +3,24 @@
 Do this before claiming a UI change is done. The dev server stays on port 5173; a second
 `npm run dev` fails with `EADDRINUSE`.
 
+## 0. Automated smoke first
+
+`npm test` runs `tools/browser-check.mjs` after the Node suite. It starts its own static
+server on a free port, launches headless Chrome or Edge with a throwaway profile, and
+checks at 1280x900 and 360x800:
+
+- canvas painting, worker result, and the palette;
+- theme painting, persistence, and layout stability;
+- keyboard focus order, focus rings, and the divider keys;
+- full screen and hidden canvas, `Esc`, and no persisted stage state;
+- horizontal overflow and 44 px touch targets;
+- a validated indexed export that decodes and is smaller than its raw scanlines.
+
+`npm run test:browser` runs only that half. It is a smoke suite, not a visual review: it
+does not compare colors against `DESIGN.md`, run Firefox or Safari, exercise touch
+gestures, or replace the checklist below. If Chrome is not in a standard location, set
+`CHROME_PATH`; `PEIQ_CHROME_FLAGS` adds flags such as `--no-sandbox` for a container.
+
 ## 1. Start headless Chrome
 
 ```powershell

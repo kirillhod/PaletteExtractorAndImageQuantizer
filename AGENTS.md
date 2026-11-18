@@ -81,7 +81,7 @@ layout values, motion, and responsive rules.
                      palettes, pipeline
 /assets/             blue-noise-64.bin, Inter (OFL) + license, own artwork
 /test/               node --test suites and fixture helpers
-/tools/              dev-server.mjs, gen-blue-noise.mjs, cdp.mjs
+/tools/              dev-server.mjs, gen-blue-noise.mjs, cdp.mjs, browser-check.mjs
 /docs/agent/         agent procedures: context map, browser check, release
 /docs/spec/          normative plan by topic: product, architecture, algorithms, ui,
                      contracts, appendix
@@ -108,8 +108,10 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
   `.nojekyll` must exist.
 - **Encoding:** UTF-8, LF (enforced by `.gitattributes`). No generated artifacts except
   the documented blue-noise mask.
-- **Tests:** `npm test` runs `node --test`. Canvas behavior is checked manually; the pure
-  PNG encoder/decoder is tested in Node.
+- **Tests:** `npm test` runs `node --test` and then `tools/browser-check.mjs` in headless
+  Chrome or Edge. `npm run test:unit` and `npm run test:browser` run the halves. Browser
+  behavior beyond the smoke suite is checked manually; the pure PNG encoder/decoder is
+  tested in Node.
 
 ## 5. Non-negotiable rules
 
@@ -224,7 +226,11 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 - Golden hashes change only intentionally, with a decision-log entry.
 - UI changes need a manual browser pass at 1280 px and 360 px, keyboard-only, plus the
   relevant items from plan §10.6. Follow [`docs/agent/browser-check.md`](docs/agent/browser-check.md)
-  (skill `peiq-browser-check`) instead of writing a new driver.
+  (skill `peiq-browser-check`) instead of writing a new driver. The automated smoke suite
+  in `npm test` catches regressions in canvas painting, worker wiring, themes, focus,
+  the stage overlay, and layout overflow, but it does not replace the visual pass.
+- Set `CHROME_PATH` when Chrome or Edge is not in a standard location; `PEIQ_CHROME_FLAGS`
+  adds flags such as `--no-sandbox` for a container.
 - Any UI change that alters a README screenshot or the social preview must refresh
   `assets/screenshots/*.png` and `assets/og-image.png` from the current UI in the same
   change, then update [`assets/PROVENANCE.md`](assets/PROVENANCE.md). A stale capture is a
@@ -237,9 +243,9 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
 
 A change is done only when `npm test` passes; new behavior has a test; determinism holds;
 no dependency/build/network was added; output contracts still validate; UI changes pass
-the browser check; README screenshots and the social preview match the current UI;
-warnings/errors are surfaced; docs and the decision log are updated; and the change is
-committed locally with a descriptive body (plan §16).
+the automated smoke suite and the manual browser check; README screenshots and the social
+preview match the current UI; warnings/errors are surfaced; docs and the decision log are
+updated; and the change is committed locally with a descriptive body (plan §16).
 
 ## 9. Documentation
 
@@ -328,6 +334,8 @@ committed locally with a descriptive body (plan §16).
 ```bash
 npm test
 node --test test/color.test.js
+npm run test:unit
+npm run test:browser
 npm run dev                    # http://localhost:5173/ + LAN URLs
 node tools/dev-server.mjs 8080
 node tools/dev-server.mjs 8080 --host=localhost   # loopback only
