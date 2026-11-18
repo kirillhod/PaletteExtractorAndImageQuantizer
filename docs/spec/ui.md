@@ -255,6 +255,8 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 
 - Before/after divider at 50%, draggable; keyboard: `role="slider"`, arrow keys ±1%.
 - Zoom: wheel at cursor, `+`/`−` toolbar buttons, pinch on touch, `F` fit, `1` 100%.
+  The range is 2%–6400%: a 32×32 sprite reaches 2048 px, so small pixel art can be edited
+  pixel by pixel instead of stopping at a stage-sized view.
 - Pan: drag with one finger or the mouse; two-finger pinch also pans by its midpoint.
 - `O` toggles original.
 - Pixelated rendering at ≥100%; smooth below. The error map replaces the mapped preview

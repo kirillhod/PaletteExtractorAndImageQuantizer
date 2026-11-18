@@ -1,5 +1,6 @@
 // @ts-check
 import { recenterOffsets } from '../core/view-offsets.js';
+import { clampCanvasZoom } from '../core/zoom.js';
 
 /**
  * Pixel buffer used for sampling.
@@ -122,7 +123,7 @@ export function createCanvasView(options) {
       (width - padding * 2) / original.width,
       (height - padding * 2) / original.height,
     );
-    scale = Number.isFinite(nextScale) && nextScale > 0 ? Math.min(16, Math.max(0.02, nextScale)) : 1;
+    scale = clampCanvasZoom(nextScale);
     offsetX = (width - original.width * scale) / 2;
     offsetY = (height - original.height * scale) / 2;
     autoFit = true;
@@ -154,7 +155,7 @@ export function createCanvasView(options) {
     const localY = y - rect.top;
     const imageX = (localX - offsetX) / scale;
     const imageY = (localY - offsetY) / scale;
-    scale = Math.min(16, Math.max(0.02, scale * factor));
+    scale = clampCanvasZoom(scale * factor);
     offsetX = localX - imageX * scale;
     offsetY = localY - imageY * scale;
     autoFit = false;
