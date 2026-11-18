@@ -137,4 +137,5 @@ export function initTooltips() {
   window.addEventListener('scroll', reposition, true);
   window.addEventListener('resize', reposition);
   window.addEventListener('peiqq:localechange', hide);
+  window.addEventListener('peiqq:stagechange', hide);
 }

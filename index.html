@@ -157,13 +157,19 @@
             <span class="peiq-toolbar-short" aria-hidden="true" data-i18n="toolbar.changeImageShort">Image</span>
           </button>
           <span class="peiq-stage__spacer"></span>
-          <button class="peiq-icon-btn" id="zoom-out" type="button" data-i18n-aria-label="toolbar.zoomOut" aria-label="Zoom out">−</button>
-          <button class="peiq-icon-btn" id="fit-view" type="button" data-i18n-aria-label="toolbar.fitAria" aria-label="Fit image to view" data-i18n="toolbar.fit">Fit</button>
-          <button class="peiq-icon-btn" id="zoom-100" type="button" data-i18n-aria-label="toolbar.zoom100Aria" aria-label="Zoom to 100%">100%</button>
-          <button class="peiq-icon-btn" id="zoom-in" type="button" data-i18n-aria-label="toolbar.zoomIn" aria-label="Zoom in">+</button>
-          <button class="peiq-btn peiq-btn--ghost peiq-btn--small" id="toggle-original" type="button" data-i18n-aria-label="toolbar.originalAria" aria-label="Toggle original" aria-pressed="false">
+          <button class="peiq-icon-btn peiq-toolbar-camera" id="zoom-out" type="button" data-i18n-aria-label="toolbar.zoomOut" aria-label="Zoom out">−</button>
+          <button class="peiq-icon-btn peiq-toolbar-camera" id="fit-view" type="button" data-i18n-aria-label="toolbar.fitAria" aria-label="Fit image to view" data-i18n="toolbar.fit">Fit</button>
+          <button class="peiq-icon-btn peiq-toolbar-camera" id="zoom-100" type="button" data-i18n-aria-label="toolbar.zoom100Aria" aria-label="Zoom to 100%">100%</button>
+          <button class="peiq-icon-btn peiq-toolbar-camera" id="zoom-in" type="button" data-i18n-aria-label="toolbar.zoomIn" aria-label="Zoom in">+</button>
+          <button class="peiq-btn peiq-btn--ghost peiq-btn--small peiq-toolbar-camera" id="toggle-original" type="button" data-i18n-aria-label="toolbar.originalAria" aria-label="Toggle original" aria-pressed="false">
             <span class="peiq-toolbar-long" id="toggle-original-label" data-i18n="toolbar.original">Original</span>
             <span class="peiq-toolbar-short" aria-hidden="true" id="toggle-original-short" data-i18n="toolbar.originalShort">Original</span>
+          </button>
+          <button class="peiq-icon-btn" id="canvas-maximize" type="button" aria-pressed="false" data-i18n-aria-label="toolbar.maximizeAria" aria-label="Show the canvas full screen" data-i18n-title="toolbar.maximize" title="Full screen">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5"/><path d="M15 20h5v-5"/><path d="M4 4l5 5"/><path d="M20 20l-5-5"/></svg>
+          </button>
+          <button class="peiq-icon-btn" id="canvas-hide" type="button" aria-pressed="false" data-i18n-aria-label="toolbar.hideAria" aria-label="Hide the canvas to work on the palette" data-i18n-title="toolbar.hide" title="Hide canvas">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c5 0 9 5 9 7a11 11 0 0 1-2.6 3.9"/><path d="M6.6 7.6C4.4 9.2 3 11.4 3 12c0 2 4 7 9 7 1.4 0 2.7-.4 3.9-1"/></svg>
           </button>
         </div>
 
@@ -174,6 +180,9 @@
             <span class="peiq-divider__handle"></span>
           </div>
           <div class="peiq-canvas__empty" id="canvas-empty" data-i18n="canvas.processing" hidden>Processing…</div>
+          <button class="peiq-icon-btn peiq-canvas-exit" id="canvas-exit" type="button" data-i18n-aria-label="toolbar.exitMaxAria" aria-label="Exit full screen">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4"/><path d="M15 20v-5h5"/><path d="M4 4l5 5"/><path d="M20 20l-5-5"/></svg>
+          </button>
         </div>
 
         <div class="peiq-palette-panel">

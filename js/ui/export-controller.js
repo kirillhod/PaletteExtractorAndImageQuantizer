@@ -7,6 +7,7 @@ import { copyText } from './dom.js';
 import {
   clearDownloadLinks,
   getStripOrientation,
+  setDownloadPending,
   setExportEnabled,
   showDownloadLinks,
 } from './export-view.js';
@@ -87,7 +88,9 @@ export function createExportController(deps) {
     app.exportBusy = true;
     setExportEnabled(false);
     deps.prepareForExport();
-    clearDownloadLinks();
+    // The previous validated block stays in place and inert: clearing it here made the
+    // panel collapse and reopen on every save.
+    setDownloadPending(true);
     setExportProgress(labelKey);
     return id;
   }
@@ -95,6 +98,7 @@ export function createExportController(deps) {
   function finishExport() {
     app.exportBusy = false;
     clearExportProgress();
+    setDownloadPending(false);
     deps.refreshExportState();
   }
 
@@ -124,7 +128,7 @@ export function createExportController(deps) {
       finishExport();
       return true;
     }
-    showDownloadLinks(files);
+    showDownloadLinks(files, { pulse: true });
     validationDetailRaw = files[0]?.validation?.detail ?? '';
     const detail = localizeDetail(validationDetailRaw);
     toastKey('toast.validatedDownload', {}, 'success');
@@ -266,15 +270,17 @@ export function createExportController(deps) {
     }
 
     const bytes = new TextEncoder().encode(text);
-    clearDownloadLinks();
-    showDownloadLinks([
-      {
-        name: `${base}-palette.${format}`,
-        mime: format === 'json' ? 'application/json' : 'text/plain',
-        data: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
-        validation,
-      },
-    ]);
+    showDownloadLinks(
+      [
+        {
+          name: `${base}-palette.${format}`,
+          mime: format === 'json' ? 'application/json' : 'text/plain',
+          data: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+          validation,
+        },
+      ],
+      { pulse: true },
+    );
     toastKey('toast.paletteFileReady', {}, 'success');
     validationDetailRaw = validation.detail;
     setStatusMessage('status.validatedReady', {

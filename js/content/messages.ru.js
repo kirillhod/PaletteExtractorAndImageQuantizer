@@ -74,6 +74,11 @@ export const RU_MESSAGES = {
   'toolbar.originalShort': 'Ориг.',
   'toolbar.reducedShort': 'Рез.',
   'toolbar.originalAria': 'Переключить оригинал',
+  'toolbar.maximize': 'Во весь экран',
+  'toolbar.maximizeAria': 'Показать холст во весь экран',
+  'toolbar.hide': 'Скрыть холст',
+  'toolbar.hideAria': 'Скрыть холст, чтобы работать с палитрой',
+  'toolbar.exitMaxAria': 'Выйти из полноэкранного режима',
 
   'canvas.aria': 'Предпросмотр изображения. Слева оригинал, справа результат палитры.',
   'canvas.processing': 'Обработка…',

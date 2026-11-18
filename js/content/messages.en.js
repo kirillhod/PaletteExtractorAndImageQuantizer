@@ -73,6 +73,11 @@ export const EN_MESSAGES = {
   'toolbar.originalShort': 'Original',
   'toolbar.reducedShort': 'Reduced',
   'toolbar.originalAria': 'Toggle original',
+  'toolbar.maximize': 'Full screen',
+  'toolbar.maximizeAria': 'Show the canvas full screen',
+  'toolbar.hide': 'Hide canvas',
+  'toolbar.hideAria': 'Hide the canvas to work on the palette',
+  'toolbar.exitMaxAria': 'Exit full screen',
 
   'canvas.aria':
     'Image preview. Left is the original, right is the palette result.',

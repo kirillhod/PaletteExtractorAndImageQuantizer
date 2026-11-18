@@ -616,10 +616,11 @@ classic viewport height instead of the `min-height` clamp.
   align-content: start;
 }
 .peiq-export-panel {
+  position: relative;
   align-self: start;
   display: grid;
   gap: var(--peiq-space-2);
-  padding: var(--peiq-space-3);
+  padding: calc(var(--peiq-space-3) + 6px) var(--peiq-space-4) var(--peiq-space-3);
   border-radius: var(--peiq-radius-lg);
   background: var(--peiq-surface);
   box-shadow: var(--peiq-shadow-card);
@@ -648,13 +649,18 @@ Below 980 px the export column disappears as a box and its children join the one
 flow in this order: export, toolbar, canvas, palette, hint, status, settings. The export
 panel returns to the horizontal wrapping layout.
 
-While an export runs, a 6 px indeterminate bar and a short label appear in the panel.
-All export buttons are disabled, the panel gets `aria-busy="true"`, and the bar becomes a
-static half-opacity line under `prefers-reduced-motion`. Only one export can run at a
-time; a second click is ignored until the first completes or is cancelled by a settings
-or image change. After validation, each result file shows **Save file** and **Copy** in the
-same result block. Copy uses the already validated bytes: PNG exports go to the clipboard
-as `image/png`, palette files are copied as text. Saving remains a real link and is never
+While an export runs, a 4 px indeterminate bar sits pinned to the top edge of the panel and
+the stage name moves to the status bar, so the panel never adds or removes a row; the bar
+becomes a static half-opacity line under `prefers-reduced-motion`. The validated block from
+the previous export stays mounted and inert while the new one runs, so the panel does not
+collapse and reopen on every save. All export buttons are disabled, the panel gets
+`aria-busy="true"`, and only one export can run at a time; a second click is ignored until
+the first completes or is cancelled by a settings or image change. After validation, each
+result file shows **Save file** and **Copy** in the same result block, and the new Save link
+wears one short pulse: a `--peiq-brand` layer fades into the button's normal fill over about
+420 ms after a third of the animation holds at full opacity, so the save is confirmed at the
+button itself. Copy uses the already validated bytes: PNG exports go to the clipboard as
+`image/png`, palette files are copied as text. Saving remains a real link and is never
 replaced by copy; an unavailable or denied clipboard write reports it and points back to
 Save.
 
@@ -1586,7 +1592,13 @@ default; Forget uses the danger fill. The backdrop is `--peiq-overlay`.
   Help right. No subbar, no nav links, no download button in the header.
 - Stage actions (change image, zoom, fit, original) live in the stage toolbar. On desktop
   the toolbar row is 28 px with 28 px icon buttons; below 600 px the controls return to
-  44 px touch targets.
+  44 px touch targets. Two stage-view buttons close the row: **Full screen** lifts the
+  canvas over the viewport with the header, footer, export column, palette, settings, and
+  status hidden, and its exit control sits inside the frame at 12 px from the top-right
+  corner at 32 px (44 px on touch); **Hide canvas** removes the frame and its zoom and
+  Original controls, and the palette takes the freed row. Both are pressed toggles that
+  return on a second press, on the exit control, or on `Esc`, and neither is stored, so a
+  reload starts in the normal frame.
 - The palette strip sits directly under the canvas, and the status line sits under the
   palette in the same stage column; it reports dimensions, unique colors, timings, and
   export validation. The line keeps its content and height while a preview runs.

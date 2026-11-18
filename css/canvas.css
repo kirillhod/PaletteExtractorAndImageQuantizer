@@ -30,6 +30,23 @@
   image-rendering: pixelated;
 }
 
+/* The full-screen stage keeps its own way back: the toolbar sits behind the overlay, so
+   the exit control lives inside the frame. */
+.peiq-canvas-exit {
+  display: none;
+}
+
+html[data-stage="max"] .peiq-canvas-exit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  color: var(--peiq-text-strong);
+  background: var(--peiq-surface);
+  box-shadow: var(--peiq-shadow-card);
+}
+
 .peiq-picked-markers {
   position: absolute;
   inset: 0;

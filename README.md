@@ -105,7 +105,9 @@ original at full resolution.
   undo/redo history are restored from local IndexedDB. **Forget saved session** in the
   footer removes them after a confirmation.
 - Canvas: fit, 100%, zoom buttons, wheel and pinch zoom, pan, an original toggle, and a
-  keyboard-operable divider. Dark, light, and automatic themes.
+  keyboard-operable divider. **Full screen** lifts the canvas over the whole window and
+  **Hide canvas** gives its space to the palette; `Esc` returns. Dark, light, and automatic
+  themes.
 - Help drawer: extraction and mapping guides, keyboard shortcuts, and references. Most
   settings also have a `?` explainer.
 

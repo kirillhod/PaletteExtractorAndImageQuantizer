@@ -315,3 +315,54 @@ html[data-rail="closed"] .peiq-workspace {
     overflow-y: auto;
   }
 }
+
+/* Stage states. `max` lifts the canvas over the whole viewport and hides the frame
+   around it; `hidden` removes the canvas and gives its row to the palette. The state is
+   not persisted, so a reload always starts in the normal frame. */
+html[data-stage="max"],
+html[data-stage="max"] body {
+  overflow: hidden;
+}
+
+html[data-stage="max"] .peiq-header,
+html[data-stage="max"] .peiq-footer,
+html[data-stage="max"] .peiq-export-column,
+html[data-stage="max"] .peiq-palette-panel,
+html[data-stage="max"] .peiq-rail,
+html[data-stage="max"] .peiq-statusbar,
+html[data-stage="max"] .peiq-stage__toolbar {
+  display: none;
+}
+
+html[data-stage="max"] .peiq-workspace {
+  display: block;
+  min-height: 0;
+  padding: 0;
+}
+
+html[data-stage="max"] .peiq-canvas-frame {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+html[data-stage="hidden"] .peiq-canvas-frame,
+html[data-stage="hidden"] .peiq-toolbar-camera {
+  display: none;
+}
+
+/* The palette card keeps its rows at their natural height instead of stretching three
+   auto rows to fill the freed stage. */
+html[data-stage="hidden"] .peiq-palette-panel {
+  align-content: start;
+}
+
+@media (min-width: 980px) {
+  html[data-stage="hidden"] .peiq-workspace {
+    grid-template-rows: auto 0 minmax(0, 1fr) auto;
+  }
+}

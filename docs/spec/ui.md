@@ -99,6 +99,11 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   replacing a loaded image: the confirmation names the palette, edits, and undo history
   that will be lost, defaults to keeping the current image, and returns focus when it
   closes.
+- **Full screen** and **Hide canvas** close the toolbar row. Full screen lifts the canvas
+  over the viewport and hides the header, footer, export column, palette, settings, and
+  status; an exit control inside the frame returns. Hide canvas removes the stage and its
+  zoom and Original controls, and the palette takes the freed row. Both buttons are pressed
+  toggles, `Esc` returns to the normal frame, and neither state is stored.
 - Fit and 100%.
 - Original/result toggle.
 - Image info: filename, dimensions, unique colors (5-bit bins).
@@ -213,8 +218,12 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   Copy uses the already validated bytes: PNG results are written to the clipboard as
   `image/png`; `.hex`, `.gpl`, and `.json` results are copied as text. Copy is never
   offered before validation and never replaces Save.
-- While an export runs, show an indeterminate progress bar and stage label; mark the
-  panel `aria-busy` and disable every export/copy button.
+- While an export runs, show an indeterminate bar pinned to the top edge of the panel and
+  put the stage in the status bar; mark the panel `aria-busy`, keep the previous validated
+  block mounted and inert, and disable every export/copy button.
+- Each new validated file pulses once: a brand layer fades into the Save link's normal fill
+  in about 420 ms; `prefers-reduced-motion` drops the pulse. The result block stays in place
+  between exports, so the panel never collapses and reopens.
 - Only one export may be in flight. A second click, a different export button, or
   `Copy HEX` while busy is ignored. Changing image or settings cancels the stale export.
 - If image clipboard writes are unavailable or denied, say so and point to the matching

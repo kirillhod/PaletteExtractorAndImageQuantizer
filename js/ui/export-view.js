@@ -17,13 +17,36 @@ import { toastKey } from './status.js';
 const activeUrls = [];
 /** @type {ExportFileView[]} */
 let currentFiles = [];
+/** @type {boolean} */
+let pulseNextRender = false;
 
 /**
  * @param {ExportFileView[]} files
+ * @param {{ pulse?: boolean }} [options]
  */
-export function showDownloadLinks(files) {
+export function showDownloadLinks(files, options = {}) {
   currentFiles = files;
+  pulseNextRender = options.pulse === true;
   renderDownloadLinks();
+}
+
+/**
+ * Keep the validated block in place while a new export runs. The block stays visible
+ * with the previous file, so the panel does not collapse and reopen on every save, but
+ * its links cannot be activated until the new result replaces them.
+ *
+ * @param {boolean} pending
+ */
+export function setDownloadPending(pending) {
+  const host = document.getElementById('download-result');
+  if (!host) return;
+  if (pending) {
+    host.setAttribute('aria-busy', 'true');
+    host.setAttribute('inert', '');
+  } else {
+    host.removeAttribute('aria-busy');
+    host.removeAttribute('inert');
+  }
 }
 
 /**
@@ -36,7 +59,10 @@ export function refreshDownloadLinks() {
 function renderDownloadLinks() {
   clearElements();
   const host = document.getElementById('download-result');
-  if (!host || currentFiles.length === 0) return;
+  if (!host || currentFiles.length === 0) {
+    pulseNextRender = false;
+    return;
+  }
 
   const hint = document.createElement('p');
   hint.className = 'peiq-hint';
@@ -60,7 +86,7 @@ function renderDownloadLinks() {
     row.className = 'peiq-download-result__file';
 
     const link = document.createElement('a');
-    link.className = 'peiq-btn peiq-btn--primary';
+    link.className = `peiq-btn peiq-btn--primary${pulseNextRender ? ' is-saved' : ''}`;
     link.href = url;
     link.download = file.name;
     link.rel = 'noopener';
@@ -78,6 +104,7 @@ function renderDownloadLinks() {
   }
 
   host.hidden = false;
+  pulseNextRender = false;
 }
 
 /**
@@ -131,6 +158,12 @@ function clearElements() {
 
 export function clearDownloadLinks() {
   currentFiles = [];
+  pulseNextRender = false;
+  const host = document.getElementById('download-result');
+  if (host) {
+    host.removeAttribute('aria-busy');
+    host.removeAttribute('inert');
+  }
   clearElements();
 }
 

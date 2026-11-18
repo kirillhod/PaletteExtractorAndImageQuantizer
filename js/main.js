@@ -19,6 +19,7 @@ import { createExportController } from './ui/export-controller.js';
 import { createQualityPanel } from './ui/quality-panel.js';
 import { createCanvasView } from './ui/canvas-view.js';
 import { createPalettePicker } from './ui/palette-picker.js';
+import { createStageView } from './ui/stage-view.js';
 import { initControls } from './ui/controls.js';
 import { initDropzone } from './ui/dropzone.js';
 import {
@@ -91,6 +92,14 @@ const canvasView = createCanvasView({
 const theme = initTheme();
 const rail = initRail();
 const learn = initLearn();
+createStageView({
+  root: document.documentElement,
+  maximize: /** @type {HTMLButtonElement|null} */ (
+    document.getElementById('canvas-maximize')
+  ),
+  hide: /** @type {HTMLButtonElement|null} */ (document.getElementById('canvas-hide')),
+  exit: /** @type {HTMLButtonElement|null} */ (document.getElementById('canvas-exit')),
+});
 
 const app = {
   name: 'image',
