@@ -6,7 +6,7 @@
  */
 
 /** @type {string} */
-export const APP_VERSION = '1.6.0';
+export const APP_VERSION = '1.7.0';
 
 /**
  * Bump this when a decision-affecting rule changes (tie-break, ordering, hashing, or

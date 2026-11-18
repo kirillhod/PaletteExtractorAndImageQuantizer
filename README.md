@@ -82,7 +82,8 @@ looks right.*
   allows it, palette files as text.
 
 Every export is decoded or parsed again and compared before the Save link appears; a
-mismatch blocks the download.
+mismatch blocks the download. PNG output is compressed losslessly: file size drops, the
+pixels and palette do not change.
 
 ## How it works
 
@@ -104,10 +105,10 @@ original at full resolution.
 - The last image, palette edits, settings, locks, selection, picked-color markers, and
   undo/redo history are restored from local IndexedDB. **Forget saved session** in the
   footer removes them after a confirmation.
-- Canvas: fit, 100%, zoom buttons, wheel and pinch zoom, pan, an original toggle, and a
-  keyboard-operable divider. **Full screen** lifts the canvas over the whole window and
-  **Hide canvas** gives its space to the palette; `Esc` returns. Dark, light, and automatic
-  themes.
+- Canvas: fit, 100%, zoom buttons, wheel and pinch zoom from 2% to 6400%, pan, an original
+  toggle, and a keyboard-operable divider. **Full screen** lifts the canvas over the whole
+  window and **Hide canvas** gives its space to the palette; `Esc` returns. Dark, light,
+  and automatic themes.
 - Help drawer: extraction and mapping guides, keyboard shortcuts, and references. Most
   settings also have a `?` explainer.
 

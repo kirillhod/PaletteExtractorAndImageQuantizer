@@ -1,7 +1,7 @@
 # PaletteExtractorAndImageQuantizer — Implementation Plan
 
-**Plan version:** 1.6.0
-**Product version at completion:** 1.6.0
+**Plan version:** 1.7.0
+**Product version at completion:** 1.7.0
 **Status:** Approved for implementation
 **Date:** 2026-11-13 (split by topic 2026-11-16)
 **License:** GPL-3.0-only (owner decision, 2026-11-13)
@@ -46,17 +46,17 @@ plan for *what* to build.
   [`docs/history/decisions.md`](docs/history/decisions.md) first, then change the rule in
   its spec file.
 
-### Current state (2026-11-16)
+### Current state (2026-11-18)
 
 | Item | State |
 |---|---|
 | Research report | Evidence, frozen 2026-11-14; see its status header for what shipped differently |
-| Plan | This index plus `docs/spec/`; scope reset 2026-11-14; content current as of `v1.6.0` |
+| Plan | This index plus `docs/spec/`; scope reset 2026-11-14; content current as of `v1.7.0` |
 | Scaffold | `index.html`, CSS, `package.json`, `.gitignore`, dev server, CI |
-| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode, palettes, perceptual ordering, picked-marker serialization |
-| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers, workspace error map with numbered worst-pixel markers |
+| Core | Color, histogram, five extractors, refinement, exact/LUT mapping, dithering, PNG index/encode/decode with compressed IDAT and stored fallback, palettes, perceptual ordering, picked-marker serialization |
+| UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview with layouts and captions, in-page color picker, pointer drag palette reordering, full-screen and hidden canvas, 64x zoom, steady validated export panel, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers, workspace error map with numbered worst-pixel markers |
 | Tests | 240 passing (`node --test`) plus a 16-check headless browser smoke run by `npm test`, including golden hashes, dithering, palettes, duplicate-color lookup, PNG native compression and stored fallback, browser smoke checks, stage states, zoom limits, drag reordering, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, preview sizing, automatic transparent index, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references, plan split integrity |
-| Version | `js/core/version.js`; `v1.6.0` tagged; M6.3–M6.7 complete; `ALGORITHM_VERSION` 4 (banded hue order, hue-perceptual joins, and the normalized Wu grid) |
+| Version | `js/core/version.js`; `v1.7.0` tagged; M6.3–M6.7 complete; `ALGORITHM_VERSION` 4 (banded hue order, hue-perceptual joins, and the normalized Wu grid) |
 | Next | No active milestone; M7 stays parked. Known issues and the proposed order live in [`product.md`](docs/spec/product.md) §20 |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in

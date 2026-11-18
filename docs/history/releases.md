@@ -64,3 +64,37 @@ section numbers below are its original ones.
       existing hue URLs load with the new order. `ALGORITHM_VERSION` is 4.
 - [x] `APP_VERSION` and `package.json` = `1.6.0`.
 - [x] Annotated tag `v1.6.0` on the version-bump commit.
+
+### v1.7.0
+
+**Changelog**
+
+- PNG exports are compressed losslessly with the browser's DEFLATE stream, with the
+  stored-block stream as the fallback; a tiny file never grows, and every export is still
+  decoded and compared before Save.
+- Palette swatches can be dragged in Edit mode, with an insertion bar, one undo step, and
+  `Esc` cancellation. Arrows remain the keyboard, touch, and screen-reader path.
+- Full screen and Hide canvas join the stage toolbar; `Esc` restores the frame, focus
+  returns to the opener, and neither state is persisted.
+- Loading a new image asks before replacing the current one. Adding, applying, or dragging
+  a duplicate color selects the existing swatch, scrolls it into view, and pulses it.
+- Canvas zoom reaches 6400%, so a 32x32 sprite can be worked at 2048 px.
+- The validated export block stays mounted through a job, the progress bar sits on the
+  panel edge, and each new Save link pulses once instead of making the panel jump.
+- The palette preview gains layouts, captions, an auto-fitting grid, a phone Settings
+  tray, and an in-page color picker.
+- `npm test` now runs a zero-dependency headless browser smoke suite for canvas, worker,
+  themes, focus, stage states, layout overflow, and compressed export.
+- Smaller fixes: the header uses the PEIQ mark, the favicon and sitemap are current,
+  letter shortcuts work on non-Latin layouts, the Help shortcut is reachable, and the
+  360 px stage toolbar wraps instead of scrolling sideways.
+
+- [x] `npm test` 240 passing plus 16 browser checks at 1280x900 and 360x800.
+- [x] Manual visual checks during the cycle: palette drag, both stage states, 64x zoom,
+      replace dialog, duplicate reveal, steady export panel, compressed export, both
+      themes, keyboard. Chrome and Edge paths are covered by the smoke suite; Firefox,
+      Safari, and touch gestures remain manual (L-8).
+- [x] URL `v=1`, session record v2, palette JSON v1, export filenames, and
+      `ALGORITHM_VERSION` 4 stay compatible; 1.6.0 URLs and sessions load.
+- [x] `APP_VERSION` and `package.json` = `1.7.0`.
+- [x] Annotated tag `v1.7.0` on the version-bump commit.
