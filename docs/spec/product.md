@@ -256,3 +256,53 @@ scope decision and a matching plan update.
 | Print/CMYK/spot | Not planned | Different color science and file contracts |
 | Neural quantization | Not planned | Model licensing, determinism, palette compliance |
 | Accounts/cloud | Never | Contradicts the local-first product |
+
+---
+
+## 20. Known issues, accepted limitations, and roadmap
+
+Sections 1–19 state what the product is. This section states what is wrong today, what is
+deliberately limited, and what is proposed next, so a defect can be recorded without
+becoming a spec change and the order of future work stays visible without reading the
+append-only history.
+
+- A defect, shortcoming, or unrequested gap gets an ID here **before** work starts. The
+  commit that closes it names the ID and removes the row; if the fix changes a contract,
+  [`docs/history/decisions.md`](../history/decisions.md) keeps the reason.
+- A row is an accepted limitation only when a spec section already declares the behavior;
+  it cites that section. Everything else stays a known issue.
+- Roadmap rows are proposals, not commitments. A row becomes work only when the owner
+  approves it; approval sets the version and the `Next` row in plan §0 points at it.
+- An empty table means nothing is known, not that nothing is wrong.
+
+### 20.1 Known issues
+
+| ID | Symptom | Impact | Workaround | Status |
+|---|---|---|---|---|
+| K-1 | The PNG encoder never attempts compression. `deflateZlib` in [`js/core/png/chunks.js`](../../js/core/png/chunks.js) always calls `storedZlib`, even where `CompressionStream('deflate')` exists. | Every export carries the raw scanlines plus 5 bytes per 64 KiB. A 1024×1024 8-bit indexed export is about 1 MiB of `IDAT` whatever it contains, and indexed art that would compress several times over stays at full size. Correctness is unaffected: the stream is valid and the decode-then-compare check passes. | None needed for valid files; re-compress outside the tool when size matters. | Open. §12.3 records stored blocks as the M2 choice and names the native path as an intended optimization; [`decisions.md`](../history/decisions.md) 2026-11-13 explains the deferral (`CompressionStream` stalled in headless Chrome). No owner-approved version yet; see R-1. |
+| K-2 | Release confidence rests on a manual browser pass. Nothing in `npm test` exercises canvas rendering, worker wiring, theme painting, focus order, or the full-screen overlay. | Those surfaces can regress while the suite stays green, and a stale screenshot or a theme leak is found by a person, not by CI. | Run §10.6 at 1280 px and 360 px before every release, following [`docs/agent/browser-check.md`](../agent/browser-check.md). | Open, accepted for now: the suite is `node --test` with zero dependencies, and a headless harness would add a second toolchain. Revisit if a regression slips past the manual pass. |
+
+### 20.2 Accepted limitations
+
+| ID | Behavior | Why it stays | Reference |
+|---|---|---|---|
+| L-1 | Indexed PNG transparency is binary; semi-transparent pixels become one declared index and raise a warning. | PNG `tRNS` stores one alpha byte per palette entry, so partial alpha cannot round-trip; the contract prefers a validated file over a lossy promise. | §5.4, §12.3 |
+| L-2 | The mapping preview is scaled by area above a 4,194,304-pixel budget; export always re-decodes at full resolution. | The canvas is a preview, not the artifact; keeping the whole image at full size would cost memory without improving the export. | §4.5, §9.2 |
+| L-3 | One image at a time, file ≤ 64 MiB, pixels ≤ 16,777,216. | Caps are enforced before allocation so a decompression bomb or an absurd dimension cannot exhaust the tab. | §3.3, §11 |
+| L-4 | The extractor takes 2–256 colors; an imported or edited palette may hold 1–256 entries. | The lower bound belongs to extraction (one color is not a palette to choose from), while single-color palettes stay valid as data. | §2 F-05, Appendix A |
+| L-5 | The site is available in English and Russian only. | Documentation stays English; each added locale is a full message table that must stay in step with every UI change. | §8.11 |
+| L-6 | Palette roles, presets, palette swap, manifest/QA JSON, batch, and the extra formats remain unbuilt. | Parked scope, not defects; §19 records the reason for each. | §19 |
+| L-7 | Accessibility is verified by hand. | A zero-dependency repository cannot run axe or another checker; the manual items in §10.6 are the contract. | §10.6, §16 |
+
+### 20.3 Roadmap
+
+Proposals only. The owner sets the version; nothing here is release-blocking.
+
+| ID | Item | Proposed for | Why now | Done when |
+|---|---|---|---|---|
+| R-1 | Compress PNG output (closes K-1) | 1.7 | Every export gets smaller with no contract change: the same pixels decode from a smaller `IDAT`. It is the only known issue with a user-visible cost on every save. | Native `CompressionStream` path used where available, stored blocks kept as the fallback; every encode-decode-compare test unchanged; a synthetic 1024×1024 export measurably shrinks. |
+| R-2 | URL-hash state for the whole result | 1.7 | Reproducible share links with no server, and the last cheap item that §19 ranks as candidate 1.1. | A full link reloads the same settings and palette; the palette hash matches; no image data enters the URL. |
+| R-3 | Extra palette formats: `.ase`, `.css`, DTCG | 1.7 | Extends the existing export path with no new model, for designers who do not import `.hex` or `.gpl`. | Each format parses back to the identical color list; the download aborts on a mismatch. |
+| R-4 | Help deep links and the wider 12+ topic guide | 1.8 | The content exists in shorter form; linking a topic is what turns the drawer into documentation people can be sent to. | Every guide topic has its own URL and opens from Help without scrolling; external links still open only on click. |
+| R-5 | Palette roles, presets, palette swap | 1.8 | The remaining workflow features from §19 that need a new palette model rather than a new screen. | Roles survive reorder and export; presets are deterministic and reversible; the swap preview exports validated output. |
+| R-6 | Batch/ZIP, CLI, WASM, print/CMYK, neural quantization, accounts | Not planned | See §19; each conflicts with the local-first, single-image, zero-dependency contract. | — |

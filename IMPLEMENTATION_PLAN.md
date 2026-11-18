@@ -25,7 +25,7 @@ plan for *what* to build.
 
 | File | Contents |
 |---|---|
-| [`docs/spec/product.md`](docs/spec/product.md) | §1 product definition, §2 feature matrix, §3 constraints, §13 built-in palettes, §19 backlog |
+| [`docs/spec/product.md`](docs/spec/product.md) | §1 product definition, §2 feature matrix, §3 constraints, §13 built-in palettes, §19 backlog, §20 known issues and roadmap |
 | [`docs/spec/architecture.md`](docs/spec/architecture.md) | §4 layers and data model, §9 performance, §11 error handling, §14 file map |
 | [`docs/spec/algorithms.md`](docs/spec/algorithms.md) | §5 color science, §6 extraction, mapping, dithering, indexing, QA, §7 determinism |
 | [`docs/spec/ui.md`](docs/spec/ui.md) | §8 layout, controls, canvas, motion, accessibility, URL state, session, i18n, Help |
@@ -57,7 +57,7 @@ plan for *what* to build.
 | UI | Stage + compact collapsible rail with a header toggle, left export column with validated clipboard copy, contextual tooltips, English/Russian localization, themes, extract/map modes, fixed palettes, dithering, indexed PNG, full-screen palette preview, Help with extraction and mapping guides and collapsed references and credits, footer session clearing with confirmation, picked-color markers, workspace error map with numbered worst-pixel markers |
 | Tests | 199 passing (`node --test`), including golden hashes, dithering, palettes, bounded hue bands, hue-perceptual ordering, perceptual ordering, sort-family mapping, preview backgrounds, dithered preview alpha, Wu grid bounds and occupancy, dither tone and gradient spread, preview sizing, automatic transparent index, Help placement, picked markers, clipboard helpers, formats, indexed PNG, alpha, metrics, URL state, session state, controls, i18n, messages, theme parity, rail state, view offsets, SEO, references, plan split integrity |
 | Version | `js/core/version.js`; `v1.6.0` tagged; M6.3–M6.7 complete; `ALGORITHM_VERSION` 4 (banded hue order, hue-perceptual joins, and the normalized Wu grid) |
-| Next | M7 — later / not planned for v1.x |
+| Next | No active milestone; M7 stays parked. Known issues and the proposed order live in [`product.md`](docs/spec/product.md) §20 |
 
 > **v1.0.0 scope reset (2026-11-14).** The refreshed landscape in
 > [RESEARCH_REPORT.md §4.5](RESEARCH_REPORT.md#45-landscape-refresh-14-nov-2026) shows

@@ -208,6 +208,9 @@ Import direction is one-way: `ui → worker → core`. `content` is static data 
   components.
 - All colors come from `--peiq-*` variables in `DESIGN.md`; no hard-coded hex in CSS or JS.
 - No dead code, speculative abstractions, or TODOs without a plan/backlog entry.
+- Every defect, shortcoming, or unrequested gap is recorded in
+  [`docs/spec/product.md`](docs/spec/product.md) §20 before the work starts; the commit that
+  closes it names the ID and removes the row.
 - Comments explain *why*; cite the plan section or paper for non-obvious math.
 - No emoji in code, UI strings, comments, documentation, or commit messages unless the
   user explicitly requests them. Use plain words or ASCII markers instead.
@@ -313,7 +316,9 @@ committed locally with a descriptive body (plan §16).
   [`docs/history/milestones.md`](docs/history/milestones.md). Do not duplicate feature
   lists or counts here.
 - Released `v1.6.0`; M6.3–M6.7 are complete. Status and the test count live in plan §0.
-- Next: M7 — later / not planned for v1.x.
+- Next: no active milestone; M7 stays parked. Known issues, accepted limitations, and the
+  proposed order live in [`docs/spec/product.md`](docs/spec/product.md) §20 — start there
+  when asked what to work on next.
 - Do not assume UI files are missing: `index.html`, `css/`, `js/ui/`, and the worker
   exist.
 - The public name is fixed to the repository name; the short mark is `PEIQ`.
