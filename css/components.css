@@ -1296,6 +1296,30 @@ html.peiq-preview-open body {
   box-shadow: 0 0 0 2px var(--peiq-accent);
 }
 
+/* A refused duplicate points at the swatch that already holds the color: the entry is
+   selected, and one brand-colored pulse answers "where is it" before settling into the
+   selected ring. */
+.peiq-swatch.is-revealed {
+  animation: peiq-swatch-reveal 1.2s var(--peiq-ease);
+}
+
+@keyframes peiq-swatch-reveal {
+  0% {
+    box-shadow: 0 0 0 2px var(--peiq-accent);
+    transform: scale(1);
+  }
+
+  30% {
+    box-shadow: 0 0 0 4px var(--peiq-brand);
+    transform: scale(1.12);
+  }
+
+  100% {
+    box-shadow: 0 0 0 2px var(--peiq-accent);
+    transform: scale(1);
+  }
+}
+
 .peiq-swatch__lock {
   position: absolute;
   top: -3px;
@@ -1507,6 +1531,11 @@ html.peiq-preview-open body {
     opacity: 0.5;
     animation: none;
     transform: none;
+  }
+
+  .peiq-swatch.is-revealed {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--peiq-brand);
   }
 }
 

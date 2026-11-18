@@ -34,6 +34,7 @@ export function renderPalette(palette, host, options = {}) {
         type: 'button',
         title: `${action}${suffix}`,
         'aria-label': `${action}${suffix}`,
+        'data-entry-id': String(entry.id),
         ...(editMode ? { 'aria-pressed': String(selected) } : {}),
       },
     });

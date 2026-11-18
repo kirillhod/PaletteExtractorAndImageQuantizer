@@ -6,6 +6,7 @@ import { deltaE00, oklabToRgb8, parseHex, rgb8ToLab, rgb8ToOklab } from '../js/c
 import {
   addPaletteEntry,
   createPalette,
+  findPaletteEntryByColor,
   isDirectionalSort,
   movePaletteEntry,
   removePaletteEntry,
@@ -397,4 +398,16 @@ test('moving refuses locked entries and moves blocked by a locked neighbor', () 
 test('moving at a palette edge is a no-op', () => {
   assert.deepEqual(movePaletteEntry(palette, 1, 'left'), palette);
   assert.deepEqual(movePaletteEntry(palette, 6, 'right'), palette);
+});
+
+test('finding an existing color returns the entry that holds it', () => {
+  assert.equal(findPaletteEntryByColor(palette, '#008000')?.id, 2);
+  assert.equal(findPaletteEntryByColor(palette, { r: 255, g: 0, b: 0, a: 255 })?.id, 1);
+});
+
+test('finding a color matches alpha exactly and misses absent colors', () => {
+  assert.equal(findPaletteEntryByColor(palette, { r: 255, g: 0, b: 0, a: 128 }), null);
+  assert.equal(findPaletteEntryByColor(palette, '#010203'), null);
+  const translucent = createPalette([{ r: 10, g: 20, b: 30, a: 64 }]);
+  assert.equal(findPaletteEntryByColor(translucent, { r: 10, g: 20, b: 30, a: 64 })?.id, 1);
 });

@@ -2,6 +2,7 @@
 import { formatHex } from '../core/color.js';
 import {
   addPaletteEntry,
+  findPaletteEntryByColor,
   movePaletteEntry,
   removePaletteEntry,
   setPaletteLock,
@@ -66,6 +67,11 @@ import { toast, toastKey } from './status.js';
  */
 export function createPaletteEditor(deps) {
   const { app, state, pickState } = deps;
+  // A refused duplicate keeps its ring long enough to find the swatch, then settles
+  // into the normal selected state.
+  const REVEAL_MS = 1600;
+  /** @type {number} */
+  let revealTimer = 0;
 
   const paletteStrip = document.getElementById('palette-strip');
   const palettePanel = document.querySelector('.peiq-palette-panel');
@@ -171,6 +177,49 @@ export function createPaletteEditor(deps) {
     populateTransparentIndex(app.palette, current);
     deps.renderPickedMarkers();
     if (app.hasResult && deps.getLastFile()) deps.scheduleSessionSave();
+  }
+
+  /**
+   * Point at the entry that already holds a color. The core palette rules refuse a
+   * duplicate, so without this the user only learns that the add failed; with a large
+   * palette the matching swatch cannot be found by eye.
+   *
+   * @param {number} id
+   * @returns {boolean} true when the entry exists and was revealed
+   */
+  function revealPaletteEntry(id) {
+    const entry = app.palette.find((candidate) => candidate.id === id);
+    if (!entry) return false;
+    state.selectedId = id;
+    if (paletteHex) paletteHex.value = entry.hex;
+    renderCurrentPalette();
+    const position = app.palette.findIndex((candidate) => candidate.id === id) + 1;
+    const swatch = paletteStrip?.querySelector(`[data-entry-id="${id}"]`);
+    if (swatch instanceof HTMLElement) {
+      swatch.classList.remove('is-revealed');
+      // Restart the pulse when the same swatch is refused twice in a row.
+      void swatch.offsetWidth;
+      swatch.classList.add('is-revealed');
+      swatch.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      window.clearTimeout(revealTimer);
+      revealTimer = window.setTimeout(() => swatch.classList.remove('is-revealed'), REVEAL_MS);
+    }
+    toastKey('toast.duplicateRevealed', { hex: entry.hex, position }, '');
+    return true;
+  }
+
+  /**
+   * The entry holding `value`, or null when it is not a color or not in the palette.
+   * @param {string} value
+   * @returns {import('../core/types.js').PaletteEntry|null}
+   */
+  function duplicatePaletteEntry(value) {
+    try {
+      return findPaletteEntryByColor(app.palette, value);
+    } catch {
+      // Not a color: let add or update report the parse error itself.
+      return null;
+    }
   }
 
   /** @param {{ id:number, hex:string }} entry */
@@ -406,6 +455,11 @@ export function createPaletteEditor(deps) {
       toastKey('toast.enterHex', {}, 'error');
       return;
     }
+    const duplicate = duplicatePaletteEntry(value);
+    if (duplicate && duplicate.id !== selected.id) {
+      revealPaletteEntry(duplicate.id);
+      return;
+    }
     try {
       const next = updatePaletteEntry(app.palette, selected.id, value);
       const before = paletteSnapshot();
@@ -430,6 +484,11 @@ export function createPaletteEditor(deps) {
     const value = paletteHexValue();
     if (!value) {
       toastKey('toast.enterHex', {}, 'error');
+      return;
+    }
+    const duplicate = duplicatePaletteEntry(value);
+    if (duplicate) {
+      revealPaletteEntry(duplicate.id);
       return;
     }
     try {
@@ -719,6 +778,7 @@ export function createPaletteEditor(deps) {
     renderPaletteStrip,
     resetPaletteEdits,
     restorePaletteSnapshot,
+    revealPaletteEntry,
     redoPaletteEdit,
     selectPaletteEntry,
     selectedPaletteEntry,

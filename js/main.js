@@ -1007,6 +1007,7 @@ initTooltips();
 initDropzone({
   onFile: loadFile,
   onError: (message) => toast(message, 'error'),
+  hasImage: () => app.hasResult,
 });
 
 initShortcuts({

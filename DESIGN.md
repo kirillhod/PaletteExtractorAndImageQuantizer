@@ -681,6 +681,12 @@ grouped on the left instead of stretching across the card. Clicking any empty pa
 palette card, not only the strip, clears the selection; controls and swatches keep their
 own action.
 
+A color that already exists is never duplicated: Add, Apply, or a marker drag that matches
+an existing entry selects that entry, scrolls it into view, and plays one 1.2 s ring pulse
+from the accent ring through a 4 px `--peiq-brand` ring and back, while the toast names the
+position. The pulse ends on the selected ring, so the swatch reads as selected afterwards;
+under `prefers-reduced-motion` it is a static 3 px brand ring with no animation.
+
 The preview button between redo and Edit opens the current palette full screen and read-only.
 The header carries no title and no band of its own: it is transparent, so the user-chosen
 `--peiq-preview-bg` (default `#808080`, plus `#767676` and a custom picker) runs behind

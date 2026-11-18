@@ -289,6 +289,12 @@ export const EN_MESSAGES = {
   'session.cancel': 'Cancel',
   'session.forgetConfirm': 'Forget',
 
+  'replace.title': 'Replace the current image?',
+  'replace.text':
+    'Loading a new image discards the current palette, edits, and undo history. Files you already exported are not affected.',
+  'replace.cancel': 'Keep current',
+  'replace.confirm': 'Replace image',
+
   'footer.local': 'Runs locally. No uploads, no accounts, no tracking.',
   'footer.github': 'GitHub repository',
   'footer.linksAria': 'Project links',
@@ -347,7 +353,7 @@ export const EN_MESSAGES = {
     'keeps neighboring colors as close as possible without pinning the ends.',
   'help.markersLead': 'Picked colors',
   'help.markersP':
-    'keep a marker on the image while Edit is on. Drag a marker or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors get no marker until you pick them. Markers stay in the session and never enter exports.',
+    'keep a marker on the image while Edit is on. Drag a marker or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors get no marker until you pick them. Markers stay in the session and never enter exports. A color that is already in the palette is never added twice: the existing swatch is selected and pulses in the strip.',
   'help.qualityTitle': 'Quality',
   'help.qualityLead': 'Lower ΔE00 means a closer preview.',
   'help.qualityP':
@@ -428,6 +434,7 @@ export const EN_MESSAGES = {
   'toast.enterHex': 'Enter a HEX color first',
   'toast.colorUpdated': 'Palette color updated',
   'toast.colorAdded': 'Added {hex}',
+  'toast.duplicateRevealed': '{hex} is already at position {position}. Selected.',
   'toast.colorRemoved': 'Removed {hex}',
   'toast.locked': 'Locked {hex}',
   'toast.unlocked': 'Unlocked {hex}',

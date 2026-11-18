@@ -238,18 +238,23 @@ export function createPalettePicker(deps) {
   }
 
   /**
+   * The other entry that already holds this color, or null. The caller needs the entry
+   * itself so a refused drag can point at it instead of only reporting the refusal.
+   *
    * @param {number} id
    * @param {{ r:number,g:number,b:number,a:number }} color
-   * @returns {boolean}
+   * @returns {{ id:number }|null}
    */
-  function hasDuplicatePaletteColor(id, color) {
-    return app.palette.some(
-      (entry) =>
-        entry.id !== id &&
-        entry.color.r === color.r &&
-        entry.color.g === color.g &&
-        entry.color.b === color.b &&
-        entry.color.a === color.a,
+  function findDuplicatePaletteEntry(id, color) {
+    return (
+      app.palette.find(
+        (entry) =>
+          entry.id !== id &&
+          entry.color.r === color.r &&
+          entry.color.g === color.g &&
+          entry.color.b === color.b &&
+          entry.color.a === color.a,
+      ) ?? null
     );
   }
 
@@ -341,9 +346,10 @@ export function createPalettePicker(deps) {
       );
       return;
     }
-    if (hasDuplicatePaletteColor(id, sample.color)) {
+    const duplicate = findDuplicatePaletteEntry(id, sample.color);
+    if (duplicate) {
       paletteEditor.restorePaletteSnapshot(transaction.before);
-      toastKey('error.duplicateColor', {}, 'error');
+      paletteEditor.revealPaletteEntry(duplicate.id);
       return;
     }
     pickState.markers.set(id, normalizePickPoint(sample));

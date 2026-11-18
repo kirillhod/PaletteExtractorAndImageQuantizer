@@ -440,6 +440,17 @@
     </form>
   </dialog>
 
+  <dialog class="peiq-confirm" id="replace-image-dialog" aria-labelledby="replace-image-title" aria-describedby="replace-image-text">
+    <form method="dialog" class="peiq-confirm__form">
+      <h2 class="peiq-confirm__title" id="replace-image-title" data-i18n="replace.title">Replace the current image?</h2>
+      <p class="peiq-confirm__text" id="replace-image-text" data-i18n="replace.text">Loading a new image discards the current palette, edits, and undo history. Files you already exported are not affected.</p>
+      <div class="peiq-confirm__actions">
+        <button class="peiq-btn peiq-btn--small" id="replace-image-cancel" type="submit" value="cancel" autofocus data-i18n="replace.cancel">Keep current</button>
+        <button class="peiq-btn peiq-btn--small" id="replace-image-confirm" type="submit" value="replace" data-i18n="replace.confirm">Replace image</button>
+      </div>
+    </form>
+  </dialog>
+
   <aside class="peiq-drawer" id="help-drawer" data-open="false" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="help-title">
     <div class="peiq-drawer__header">
       <h2 class="peiq-drawer__title" id="help-title" data-i18n="help.title">Help</h2>

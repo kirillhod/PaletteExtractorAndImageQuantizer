@@ -80,6 +80,27 @@ export function addPaletteEntry(palette, hex) {
 }
 
 /**
+ * Find the entry that already holds a color. A refused duplicate can then be pointed at
+ * instead of only reported, and the caller keeps the exact-match rule of
+ * `assertUniqueColor` without using an exception as control flow.
+ *
+ * @param {Palette} palette
+ * @param {string|{ r:number,g:number,b:number,a:number }} value
+ * @returns {PaletteEntry|null}
+ */
+export function findPaletteEntryByColor(palette, value) {
+  const color = typeof value === 'string' ? parseHex(value) : value;
+  const match = palette.find(
+    (entry) =>
+      entry.color.r === color.r &&
+      entry.color.g === color.g &&
+      entry.color.b === color.b &&
+      entry.color.a === color.a,
+  );
+  return match ?? null;
+}
+
+/**
  * Replace one entry's color. Identity, index, and lock state stay unchanged.
  *
  * @param {Palette} palette

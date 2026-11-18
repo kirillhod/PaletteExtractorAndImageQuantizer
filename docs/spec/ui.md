@@ -95,7 +95,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
 
 **Stage toolbar** (above the canvas)
 
-- "Change image" button (file picker, drag, paste).
+- "Change image" button (file picker, drag, paste). All three load paths ask before
+  replacing a loaded image: the confirmation names the palette, edits, and undo history
+  that will be lost, defaults to keeping the current image, and returns focus when it
+  closes.
 - Fit and 100%.
 - Original/result toggle.
 - Image info: filename, dimensions, unique colors (5-bit bins).
@@ -175,6 +178,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   gaps, or editor row), or pressing `Esc` while the palette has focus, clears the edited
   entry and HEX field. Controls and swatches keep their own action. With no entry
   selected, Pick fills the HEX field for **Add** instead of overwriting an existing color.
+  **A color that already exists is never added twice.** Add, Apply, or a marker drag that
+  would duplicate an entry selects the entry that already holds the color, scrolls it into
+  view, pulses it once in the brand color, and names its position in the toast; the palette
+  count does not change.
   **← / →** move the selected unlocked color one slot, switch to Manual order, and remap
   the preview. Moving changes export indices, not the set of mapped colors, so the preview
   normally looks identical; the transparent index follows the entry. Adding, removing, or
