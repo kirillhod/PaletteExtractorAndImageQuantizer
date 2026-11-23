@@ -485,9 +485,10 @@ site. Learning is opt-in, contextual, and dismissible.
 ### 8.12 SEO metadata
 
 - `index.html` carries an absolute `canonical`, `index,follow,max-image-preview:large`,
-  a keyword-first `<title>` that ends with the `PEIQ` short mark, and a natural-length
-  `<meta name="description">`. The repository display name remains in JSON-LD and the
-  header; the title avoids truncating a 33-character unbroken word in search results.
+  a keyword-first `<title>` that ends with the `PEIQ` short mark, and a
+  `<meta name="description">` that names the color range, palette sources, and export set.
+  The repository display name remains in JSON-LD and the header; the title avoids
+  truncating a 33-character unbroken word in search results.
 - Open Graph and Twitter Card metadata use absolute URLs and the 1200×630
   `assets/og-image.png` social preview.
 - JSON-LD describes a free `WebApplication` with category, browser requirements, feature

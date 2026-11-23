@@ -60,7 +60,8 @@ test('title and description use searchable, natural-length copy', () => {
   const description = metaContent('description');
   assert.match(description, /palette/i);
   assert.match(description, /indexed PNG/i);
-  assert.ok(description.length >= 120 && description.length <= 170);
+  // The owner chose the full handoff sentence; search engines may truncate its tail.
+  assert.ok(description.length >= 120 && description.length <= 210);
 });
 
 test('JSON-LD describes the free browser application', () => {

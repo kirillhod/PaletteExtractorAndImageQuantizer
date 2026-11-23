@@ -6,7 +6,7 @@
 export const EN_MESSAGES = {
   'app.title': 'Image palette extractor and quantizer - PEIQ',
   'app.description':
-    'Extract a color palette from any image, map it to fixed or custom palettes, dither, and export validated indexed PNGs locally in your browser.',
+    'Extract 2–256 colors from any image, map it to built-in or imported palettes, dither, and export validated indexed PNGs, palette strips, reduced PNGs, and .hex/.gpl/.json files. Runs entirely in browser.',
 
   'header.homeAria': 'PaletteExtractorAndImageQuantizer home',
 

@@ -1,8 +1,8 @@
 # PaletteExtractorAndImageQuantizer
 
-Extract a palette from an image, map an image to a fixed palette, dither the result, and
-export validated indexed PNGs, palette strips, and palette files. Everything runs on your
-device: no uploads, no accounts, no dependencies, no build step.
+Extract 2–256 colors from any image, map it to built-in or imported palettes, dither, and
+export validated indexed PNGs, palette strips, reduced PNGs, and .hex/.gpl/.json files.
+Runs entirely in browser.
 
 ![PEIQ workspace with a hydrangea photo, a 24-color palette, and the open palette editor](assets/screenshots/workspace-dark.png)
 
