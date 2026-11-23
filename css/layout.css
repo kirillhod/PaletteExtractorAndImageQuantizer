@@ -362,7 +362,32 @@ html[data-stage="hidden"] .peiq-palette-panel {
 }
 
 @media (min-width: 980px) {
+  /* Hiding the canvas removes its row entirely: the palette moves up beside the export
+     column, so both cards start on the same edge, and the strip grows into the freed
+     height instead of keeping its fixed 196 px scroll box. */
   html[data-stage="hidden"] .peiq-workspace {
-    grid-template-rows: auto 0 minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "toolbar toolbar rail"
+      "export palette rail"
+      ". status rail";
+  }
+
+  html[data-rail="closed"][data-stage="hidden"] .peiq-workspace {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "toolbar toolbar"
+      "export palette"
+      ". status";
+  }
+
+  html[data-stage="hidden"] .peiq-palette-panel {
+    align-content: stretch;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  html[data-stage="hidden"] .peiq-palette-strip {
+    max-height: none;
+    align-content: flex-start;
   }
 }

@@ -11,6 +11,7 @@ import {
   updatePaletteEntry,
 } from '../core/palette.js';
 import { pickedMarkersFromArray, pickedMarkersToArray } from '../core/picked-markers.js';
+import { copyText } from './dom.js';
 import { countLabel, localizeError, t } from './i18n.js';
 import { renderPalette } from './palette-view.js';
 import { toast, toastKey } from './status.js';
@@ -90,6 +91,9 @@ export function createPaletteEditor(deps) {
   );
   const paletteApply = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('palette-apply')
+  );
+  const paletteCopy = /** @type {HTMLButtonElement|null} */ (
+    document.getElementById('palette-copy-hex')
   );
   const paletteAdd = /** @type {HTMLButtonElement|null} */ (
     document.getElementById('palette-add')
@@ -249,6 +253,11 @@ export function createPaletteEditor(deps) {
     return app.palette.find((entry) => entry.id === state.selectedId) ?? null;
   }
 
+  function updateCopyButton() {
+    if (!paletteCopy) return;
+    paletteCopy.disabled = app.exportBusy || paletteHexValue() === '';
+  }
+
   function updatePaletteEditor() {
     const selected = selectedPaletteEntry();
     const active = state.editMode && app.hasResult && app.palette.length > 0;
@@ -267,6 +276,7 @@ export function createPaletteEditor(deps) {
     }
     if (paletteHintPanel) paletteHintPanel.hidden = !active;
     if (paletteHex) paletteHex.disabled = app.exportBusy;
+    updateCopyButton();
     if (palettePick) palettePick.disabled = !active || app.exportBusy;
     if (paletteApply) paletteApply.disabled = !selected || app.exportBusy;
     if (paletteAdd) {
@@ -444,6 +454,21 @@ export function createPaletteEditor(deps) {
   /** @param {string} value */
   function setHexInput(value) {
     if (paletteHex) paletteHex.value = value;
+  }
+
+  /**
+   * Copy the value shown in the HEX field. The field holds the selected entry, so the
+   * button sits beside the value it copies instead of on the swatch.
+   */
+  function copyPaletteHex() {
+    const value = paletteHexValue() || selectedPaletteEntry()?.hex || '';
+    if (!value) {
+      toastKey('toast.enterHex', {}, 'error');
+      return;
+    }
+    copyText(value)
+      .then(() => toastKey('toast.copiedHex', { hex: value }, 'success'))
+      .catch(() => toastKey('toast.clipboardUnavailable', {}, 'error'));
   }
 
   /**
@@ -746,6 +771,7 @@ export function createPaletteEditor(deps) {
       clearPaletteSelection();
     });
     paletteApply?.addEventListener('click', () => applyPaletteHex());
+    paletteCopy?.addEventListener('click', copyPaletteHex);
     paletteAdd?.addEventListener('click', addPaletteColor);
     paletteMoveLeft?.addEventListener('click', () => moveSelectedPaletteEntry('left'));
     paletteMoveRight?.addEventListener('click', () => moveSelectedPaletteEntry('right'));
@@ -765,6 +791,7 @@ export function createPaletteEditor(deps) {
     });
     paletteHex?.addEventListener('input', () => {
       pickState.pendingPoint = null;
+      updateCopyButton();
     });
     document.addEventListener('keydown', (event) => {
       if (!app.hasResult || app.exportBusy) return;

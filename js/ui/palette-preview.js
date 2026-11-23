@@ -13,6 +13,8 @@ import {
   normalizePreviewBackground,
 } from '../core/preview-bg.js';
 import { countLabel, t } from './i18n.js';
+import { copyText } from './dom.js';
+import { toastKey } from './status.js';
 import { createColorPicker } from './color-picker.js';
 
 const BACKGROUND_KEY = 'peiq.previewBg';
@@ -245,23 +247,31 @@ export function createPalettePreview(deps) {
       if (caption.length > 0) {
         const labels = document.createElement('span');
         labels.className = 'peiq-palette-preview__labels';
-        labels.setAttribute('aria-hidden', 'true');
         for (const row of caption) {
-          const span = document.createElement('span');
-          span.className = 'peiq-palette-preview__label';
+          const label = document.createElement('button');
+          label.type = 'button';
+          label.className = 'peiq-palette-preview__label';
+          label.dataset.copyKind = row.kind;
+          label.dataset.copyValue = row.text;
+          const copyLabel =
+            row.kind === 'hex'
+              ? t('palette.swatchCopy', { hex: row.text })
+              : t('palette.previewCopyRgb', { rgb: row.text });
+          label.setAttribute('aria-label', copyLabel);
+          label.title = copyLabel;
           if (row.kind === 'rgb') {
-            span.classList.add('peiq-palette-preview__label--rgb');
+            label.classList.add('peiq-palette-preview__label--rgb');
             for (const [index, part] of row.parts.entries()) {
-              if (index > 0) span.append(' ');
+              if (index > 0) label.append(' ');
               const channel = document.createElement('span');
               channel.className = 'peiq-palette-preview__channel';
               channel.textContent = part;
-              span.append(channel);
+              label.append(channel);
             }
           } else {
-            span.textContent = row.text;
+            label.textContent = row.text;
           }
-          labels.append(span);
+          labels.append(label);
         }
         swatch.append(labels);
       }
@@ -378,6 +388,18 @@ export function createPalettePreview(deps) {
   });
   hexInput.addEventListener('change', () => setLayout({ hex: hexInput.checked }));
   rgbInput.addEventListener('change', () => setLayout({ rgb: rgbInput.checked }));
+  strip.addEventListener('click', (event) => {
+    const target = /** @type {HTMLElement|null} */ (event.target);
+    const label = target?.closest?.('.peiq-palette-preview__label');
+    if (!(label instanceof HTMLElement)) return;
+    const value = label.dataset.copyValue ?? '';
+    if (!value) return;
+    const hex = label.dataset.copyKind === 'hex';
+    const params = hex ? { hex: value } : { rgb: value };
+    copyText(value)
+      .then(() => toastKey(hex ? 'toast.copiedHex' : 'toast.copiedRgb', params, 'success'))
+      .catch(() => toastKey('toast.clipboardUnavailable', {}, 'error'));
+  });
   settingsButton.addEventListener('click', () => {
     setSettings(dialog.dataset.settings !== 'open');
   });

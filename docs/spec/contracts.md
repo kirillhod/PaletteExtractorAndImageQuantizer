@@ -22,9 +22,10 @@ Sections: §10, §12.
 - Tests import `core/**` directly; no DOM.
 - `npm test` runs the Node suite and then `tools/browser-check.mjs`, a zero-dependency
   smoke suite in headless Chrome or Edge: canvas painting, worker wiring, theme painting
-  and persistence, keyboard focus order, the stage overlay, layout overflow at 1280 and
-  360 px, and a compressed indexed export. Visual review, Firefox and Safari, touch, and
-  the rest of 10.6 stay manual.
+  and persistence, keyboard focus order, the stage overlay and hidden-canvas geometry,
+  editor and preview clipboard copy, layout overflow at 1280 and 360 px, and a compressed
+  indexed export. Visual review, Firefox and Safari, touch, and the rest of 10.6 stay
+  manual.
 - Test helpers in `test/helpers.js` generate images programmatically (no binary fixtures).
 
 ### 10.2 Test map

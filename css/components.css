@@ -1003,8 +1003,25 @@ html.peiq-preview-open body {
 
 .peiq-palette-preview__label {
   max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: inherit;
+  font: inherit;
   overflow-wrap: break-word;
   text-align: center;
+  cursor: pointer;
+}
+
+.peiq-palette-preview__label:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.peiq-palette-preview__label:focus-visible {
+  outline: 2px solid var(--peiq-focus);
+  outline-offset: 2px;
 }
 
 .peiq-palette-preview__label + .peiq-palette-preview__label {
@@ -1168,6 +1185,20 @@ html.peiq-preview-open body {
 }
 
 .peiq-palette-history__icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.peiq-palette-copy {
+  flex: 0 0 auto;
+}
+
+.peiq-palette-copy__icon {
   width: 18px;
   height: 18px;
   fill: none;

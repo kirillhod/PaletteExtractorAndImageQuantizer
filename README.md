@@ -23,9 +23,11 @@ individual swatches, and export a validated indexed PNG.*
   reverses hue grouped, hue perceptual, and lightness.
 - Full-screen palette preview: one strip with a gap between colors, on a neutral gray
   background that can be switched or replaced with any color; the choice is remembered.
-- Edit colors: change a HEX value, add or remove entries, lock entries so they keep their
-  place when sorting, and move colors with ← / → or by dragging a swatch in Edit mode. A
-  move cannot cross a locked entry.
+  Turn on HEX or RGB captions and click one to copy that value.
+- Edit colors: change a HEX value, copy the current value from the button beside the field,
+  add or remove entries, lock entries so they keep their place when sorting, and move
+  colors with ← / → or by dragging a swatch in Edit mode. A move cannot cross a locked
+  entry.
 - Pick colors straight from the canvas; each sampled color gets a draggable anchor.
 - Compare the original and the result with a draggable divider.
 - Undo and redo cover palette and settings changes.

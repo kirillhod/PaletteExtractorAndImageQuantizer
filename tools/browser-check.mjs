@@ -570,6 +570,103 @@ async function runViewport(viewportWidth, viewportHeight, full) {
       return `${state.palette} colors`;
     });
 
+    if (full) {
+      await check('HEX copy button copies the selected entry', async () => {
+        const result = await evaluate(
+          session,
+          `(async () => {
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+            const original = navigator.clipboard;
+            const copied = [];
+            try {
+              Object.defineProperty(navigator, 'clipboard', {
+                configurable: true,
+                value: {
+                  writeText: async (text) => {
+                    copied.push(text);
+                  },
+                },
+              });
+            } catch (error) {
+              return { error: String(error) };
+            }
+            document.getElementById('palette-edit').click();
+            document.querySelector('#palette-strip .peiq-swatch').click();
+            await sleep(80);
+            const hex = document.getElementById('palette-hex').value;
+            const button = document.getElementById('palette-copy-hex');
+            const disabled = button.disabled;
+            button.click();
+            await sleep(120);
+            const toast = [...document.querySelectorAll('.peiq-toast--success')]
+              .map((node) => node.textContent)
+              .pop() ?? '';
+            document.getElementById('palette-edit').click();
+            Object.defineProperty(navigator, 'clipboard', { configurable: true, value: original });
+            return { hex, copied, disabled, toast };
+          })()`,
+        );
+        assert.ok(!result.error, result.error);
+        assert.equal(result.disabled, false, 'the button enables with a selected color');
+        assert.match(result.hex, /^#[0-9a-f]{6}$/);
+        assert.deepEqual(result.copied, [result.hex]);
+        assert.match(result.toast, /Copied #/);
+        return result.hex;
+      });
+
+      await check('preview captions copy HEX and RGB on click', async () => {
+        const result = await evaluate(
+          session,
+          `(async () => {
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+            const original = navigator.clipboard;
+            const copied = [];
+            Object.defineProperty(navigator, 'clipboard', {
+              configurable: true,
+              value: {
+                writeText: async (text) => {
+                  copied.push(text);
+                },
+              },
+            });
+            document.getElementById('palette-preview-open').click();
+            await sleep(180);
+            document.querySelector('[data-mode="column"]').click();
+            for (const id of ['palette-preview-hex', 'palette-preview-rgb']) {
+              const box = document.getElementById(id);
+              box.checked = true;
+              box.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            await sleep(220);
+            const labels = [...document.querySelectorAll('#palette-preview-strip .peiq-palette-preview__label')];
+            const hexLabel = labels.find((node) => node.dataset.copyKind === 'hex');
+            const rgbLabel = labels.find((node) => node.dataset.copyKind === 'rgb');
+            const values = {
+              labelCount: labels.length,
+              hex: hexLabel?.dataset.copyValue ?? '',
+              rgb: rgbLabel?.dataset.copyValue ?? '',
+              hexAria: hexLabel?.getAttribute('aria-label') ?? '',
+              rgbAria: rgbLabel?.getAttribute('aria-label') ?? '',
+            };
+            hexLabel?.click();
+            await sleep(80);
+            rgbLabel?.click();
+            await sleep(120);
+            document.getElementById('palette-preview-close').click();
+            Object.defineProperty(navigator, 'clipboard', { configurable: true, value: original });
+            return { ...values, copied };
+          })()`,
+        );
+        assert.ok(result.labelCount >= 2, 'both captions render as buttons');
+        assert.match(result.hex, /^#[0-9a-f]{6}$/);
+        assert.match(result.rgb, /^\d+ \d+ \d+$/);
+        assert.match(result.hexAria, /^Copy #/);
+        assert.match(result.rgbAria, /^Copy RGB /);
+        assert.deepEqual(result.copied, [result.hex, result.rgb]);
+        return `${result.hex}, ${result.rgb}`;
+      });
+    }
+
     await check(`canvas paints a preview at ${viewportWidth}px`, async () => {
       const canvas = await evaluate(
         session,
@@ -766,7 +863,7 @@ async function runViewport(viewportWidth, viewportHeight, full) {
       });
     }
 
-    await check('full screen and hidden canvas overlay work and restore with Esc', async () => {
+    await check('full screen and hidden canvas work, restore with Esc, and align the freed row', async () => {
         const normal = await evaluate(
           session,
           `(() => {
@@ -820,15 +917,54 @@ async function runViewport(viewportWidth, viewportHeight, full) {
         await sleep(150);
         const hidden = await evaluate(
           session,
-          `(() => ({
-            stage: document.documentElement.dataset.stage,
-            frame: getComputedStyle(document.getElementById('canvas-frame')).display,
-            palette: getComputedStyle(document.querySelector('.peiq-palette-panel')).display,
-          }))()`,
+          `(() => {
+            const palette = document.querySelector('.peiq-palette-panel').getBoundingClientRect();
+            const exportPanel = document.querySelector('.peiq-export-panel').getBoundingClientRect();
+            const strip = document.getElementById('palette-strip');
+            return {
+              stage: document.documentElement.dataset.stage,
+              frame: getComputedStyle(document.getElementById('canvas-frame')).display,
+              palette: getComputedStyle(document.querySelector('.peiq-palette-panel')).display,
+              paletteTop: palette.top,
+              exportTop: exportPanel.top,
+              stripMaxHeight: getComputedStyle(strip).maxHeight,
+              stripClientHeight: strip.clientHeight,
+              stripScrollHeight: strip.scrollHeight,
+            };
+          })()`,
         );
         assert.equal(hidden.stage, 'hidden');
         assert.equal(hidden.frame, 'none', 'hiding removes the canvas');
         assert.notEqual(hidden.palette, 'none', 'the palette keeps the freed row');
+        if (viewportWidth >= 980) {
+          assert.ok(
+            Math.abs(hidden.paletteTop - hidden.exportTop) <= 1,
+            `the palette starts on the export edge, delta ${hidden.paletteTop - hidden.exportTop}px`,
+          );
+          assert.equal(hidden.stripMaxHeight, 'none', 'the strip uses the freed height');
+          assert.ok(
+            hidden.stripClientHeight > 196,
+            `the strip grows past the old 196 px cap, was ${hidden.stripClientHeight}px`,
+          );
+          const closed = await evaluate(
+            session,
+            `(() => {
+              document.getElementById('rail-toggle').click();
+              const palette = document.querySelector('.peiq-palette-panel').getBoundingClientRect();
+              const exportPanel = document.querySelector('.peiq-export-panel').getBoundingClientRect();
+              return {
+                delta: palette.top - exportPanel.top,
+                rail: document.documentElement.dataset.rail,
+              };
+            })()`,
+          );
+          assert.equal(closed.rail, 'closed');
+          assert.ok(
+            Math.abs(closed.delta) <= 1,
+            `the palette stays on the export edge without the rail, delta ${closed.delta}px`,
+          );
+          await evaluate(session, "document.getElementById('rail-toggle').click()");
+        }
         await pressKey(session, 'Escape', 27);
         assert.equal(
           await evaluate(session, 'document.documentElement.dataset.stage'),

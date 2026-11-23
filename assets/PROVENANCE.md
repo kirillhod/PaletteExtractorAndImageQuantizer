@@ -34,12 +34,12 @@ does not reach search results.
 
 `screenshots/workspace-dark.png` and `screenshots/map-dither-dark.png` are captures of
 the running app using a hydrangea photo supplied by the project owner for documentation.
-The workspace capture shows the palette editor open with a selected swatch, the compact
-sort select with its direction button, the full-screen preview button, and the Full screen
-and Hide canvas stage buttons; the map capture shows the Game Boy DMG palette with
-Floyd–Steinberg dithering and the transparent index at None. Both show the footer's
-confirmed session clear. No third-party artwork, screenshots, or stock images are included.
-Refreshed 2026-11-18 at 1440×900 from the current UI.
+The workspace capture shows the palette editor open with a selected swatch and the Copy HEX
+button beside its field, the compact sort select with its direction button, the full-screen
+preview button, and the Full screen and Hide canvas stage buttons; the map capture shows the
+Game Boy DMG palette with Floyd–Steinberg dithering and the transparent index at None. Both
+show the footer's confirmed session clear. No third-party artwork, screenshots, or stock
+images are included. Refreshed 2026-11-23 at 1440×900 from the current UI.
 
 Refresh both captures at 1440×900 in dark theme and English whenever the interface
 changes, keeping the same hydrangea composition. A stale capture is a documentation

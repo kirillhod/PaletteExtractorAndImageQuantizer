@@ -66,7 +66,8 @@ On mobile the order is toolbar, export, canvas, palette, hint, settings.
 - **Export panel:** a separate left column with the primary indexed-PNG action and the
   strip/reduced/HEX actions; above the canvas below 980 px. The column spans the canvas and
   palette rows, the palette aligns with the canvas’s left edge, and the editor hint sits at
-  the bottom of the free left column. After validation, every result offers Save and Copy.
+  the bottom of the free left column. When the canvas is hidden the palette card moves up to
+  the export panel’s top edge. After validation, every result offers Save and Copy.
 - **Quality:** export validation and palette compliance stay in the status line. The
   Quality section measures the current preview with CIEDE2000: mean, p95, max, a toggleable
   error map, and the 20 worst pixels. `E` or the toggle opens the section; with no
@@ -104,7 +105,9 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   instead of running past the viewport, so both stay reachable at 44 px. Full screen lifts
   the canvas over the viewport and hides the header, footer, export column, palette,
   settings, and status; an exit control inside the frame returns. Hide canvas removes the
-  stage and its zoom and Original controls, and the palette takes the freed row. Both
+  stage and its zoom and Original controls, and the palette takes the freed row: it moves up
+  beside the export column so both cards start on one top edge, and its swatch strip grows
+  into the released height instead of keeping the normal fixed-height scroll box. Both
   buttons are pressed toggles, `Esc` returns to the normal frame, and neither state is
   stored.
 - Fit and 100%.
@@ -138,8 +141,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   Perceptual modes are labeled by their result, not by the metric name; Oklab and
   CIEDE2000 belong in Help and technical docs.
 - Palette editor: **Edit** turns swatch clicks into selection, exposes a HEX field, and
-  adds an icon **Pick** button plus text **Apply**, text arrows **← / →**, and icon
-  **Add / Remove / Lock** buttons with action labels. Add is a plus, Remove a trash can,
+  adds an icon **Copy HEX** button, an icon **Pick** button plus text **Apply**, text
+  arrows **← / →**, and icon **Add / Remove / Lock** buttons with action labels. Copy HEX
+  copies the value in the field, or the selected entry when the field is empty, so the
+  value never has to be selected by hand. Add is a plus, Remove a trash can,
   and Lock shows an open or closed padlock with the same accent pressed state while the
   entry is locked. The HEX field is fixed at 7.5 rem so the controls stay grouped on the
   left. The palette bar carries compact undo/redo icon buttons next to Edit. A preview
@@ -153,6 +158,10 @@ hover or focus, uses tap on touch, closes on `Esc` or an outside tap, and is app
   a wrapping grid; in the grid a "per row" select offers Auto (fits the palette to the view)
   or 2–32 columns, and HEX and RGB captions can be shown under each color with a user-chosen
   text color, persisting with the background under `peiq.previewLayout` and `peiq.previewBg`.
+  Each caption is a button: the HEX line copies the hex and the RGB line copies the
+  space-separated triple, with a hover underline and a visible focus ring, so the copy
+  action is available to pointer, keyboard, and screen-reader users. The swatch keeps both
+  values in its `aria-label`.
   On phones the option tray collapses behind one Settings button beside the close button and
   starts collapsed, so the palette gets the screen; the button expands it in place. A grid
   whose colors all fit is centered in the stage both ways and falls back to top alignment

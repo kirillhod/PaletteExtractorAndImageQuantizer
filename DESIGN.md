@@ -683,9 +683,11 @@ the accent background and an inset accent ring instead of relying on the hint al
 Remove, and Lock are icon-only buttons with action labels: Add is a plus, Remove a trash
 can, and Lock shows an open or closed padlock. Lock uses the same accent pressed state while
 the selected entry is locked. The HEX field has a fixed 7.5 rem width so the controls stay
-grouped on the left instead of stretching across the card. Clicking any empty part of the
-palette card, not only the strip, clears the selection; controls and swatches keep their
-own action. In Edit mode the swatches take a grab cursor and reorder by drag: the grabbed
+grouped on the left instead of stretching across the card; an icon copy button next to it
+copies the value shown in the field without a manual selection, and reports the copied
+value in the usual toast. Clicking any empty part of the palette card, not only the strip,
+clears the selection; controls and swatches keep their own action. In Edit mode the swatches
+take a grab cursor and reorder by drag: the grabbed
 swatch drops to 45% opacity and the target slot shows a 3 px `--peiq-accent` bar in the
 4 px gap, so the strip never reflows mid-gesture; the swatch keeps its normal size and the
 selected ring stays on the entry that was picked up. Touch keeps the arrow buttons, because
@@ -712,9 +714,11 @@ them. An explicit count is capped by the palette size. The
 **Labels** checkboxes show the hex and the RGB triple independently under each color. Captions
 are plain `--peiq-font-mono` text at 11 px with no chip of their own, because the field behind
 them is user-chosen: a small color swatch next to the toggles sets the caption color, black by
-default, and the choice persists with the rest of the layout. A narrow cell lets the RGB triple
-wrap at its spaces, and below about 56 px per color the caption steps aside instead of breaking
-digits, while each swatch keeps both values in its `aria-label`.
+default, and the choice persists with the rest of the layout. A caption is a button: clicking
+the HEX line copies the hex, clicking the RGB line copies the space-separated triple, and both
+show a hover underline and a focus ring so the affordance is reachable without a pointer. A
+narrow cell lets the RGB triple wrap at its spaces, and below about 56 px per color the caption
+steps aside instead of breaking digits, while each swatch keeps both values in its `aria-label`.
 Both swatch buttons open an in-page picker instead of the browser's color dialog, which cannot
 be styled and reads as a light rectangle from another application: a 232 px `--peiq-surface`
 popover with `--peiq-shadow-popover` holding a square saturation/value field with a two-tone
@@ -1601,9 +1605,11 @@ default; Forget uses the danger fill. The backdrop is `--peiq-overlay`.
   canvas over the viewport with the header, footer, export column, palette, settings, and
   status hidden, and its exit control sits inside the frame at 12 px from the top-right
   corner at 32 px (44 px on touch); **Hide canvas** removes the frame and its zoom and
-  Original controls, and the palette takes the freed row. Both are pressed toggles that
-  return on a second press, on the exit control, or on `Esc`, and neither is stored, so a
-  reload starts in the normal frame.
+  Original controls, and the palette takes the freed row: the palette card moves up beside
+  the export panel so both cards start on the same top edge, and the swatch strip grows into
+  the freed height instead of keeping its normal fixed-height scroll box. Both are pressed
+  toggles that return on a second press, on the exit control, or on `Esc`, and neither is
+  stored, so a reload starts in the normal frame.
 - The palette strip sits directly under the canvas, and the status line sits under the
   palette in the same stage column; it reports dimensions, unique colors, timings, and
   export validation. The line keeps its content and height while a preview runs.

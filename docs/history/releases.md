@@ -98,3 +98,27 @@ section numbers below are its original ones.
       `ALGORITHM_VERSION` 4 stay compatible; 1.6.0 URLs and sessions load.
 - [x] `APP_VERSION` and `package.json` = `1.7.0`.
 - [x] Annotated tag `v1.7.0` on the version-bump commit.
+
+### v1.7.1
+
+**Changelog**
+
+- Hiding the canvas now moves the palette card up to the export panel's top edge and
+  removes the canvas row instead of leaving an empty gap between them.
+- The hidden-canvas palette strip grows into the freed height instead of keeping its
+  fixed 196 px scroll box, so a large palette no longer scrolls while space remains.
+- The palette editor gains a copy button beside the HEX field; it copies the field value
+  without selecting it first and confirms with the usual toast.
+- Preview captions are buttons: clicking HEX copies the hex, clicking RGB copies the
+  space-separated triple, and keyboard and screen-reader users get the same action.
+- The headless smoke suite gains two checks for the editor copy button, preview caption
+  copy, hidden-canvas strip height, and the aligned palette and export top edge.
+
+- [x] `npm test` 240 passing plus 18 browser checks at 1280x900 and 360x800.
+- [x] Manual visual checks: hidden canvas at 1280 px, the editor copy button at 360 px,
+      preview captions in dark theme, and refreshed README captures. Chrome and Edge paths
+      are covered by the smoke suite; Firefox, Safari, and touch gestures remain manual (L-8).
+- [x] URL `v=1`, session record v2, palette JSON v1, export filenames, and
+      `ALGORITHM_VERSION` 4 stay compatible; 1.7.0 URLs and sessions load.
+- [x] `APP_VERSION` and `package.json` = `1.7.1`.
+- [x] Annotated tag `v1.7.1` on the version-bump commit.

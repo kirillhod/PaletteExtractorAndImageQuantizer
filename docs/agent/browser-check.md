@@ -12,7 +12,9 @@ checks at 1280x900 and 360x800:
 - canvas painting, worker result, and the palette;
 - theme painting, persistence, and layout stability;
 - keyboard focus order, focus rings, and the divider keys;
-- full screen and hidden canvas, `Esc`, and no persisted stage state;
+- editor and preview caption clipboard copy;
+- full screen and hidden canvas, the aligned and growing palette, `Esc`, and no persisted
+  stage state;
 - horizontal overflow and 44 px touch targets;
 - a validated indexed export that decodes and is smaller than its raw scanlines.
 
