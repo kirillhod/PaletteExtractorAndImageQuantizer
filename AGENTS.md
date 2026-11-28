@@ -321,7 +321,7 @@ updated; and the change is committed locally with a descriptive body (plan §16)
   [`docs/history/decisions.md`](docs/history/decisions.md); closed milestones in
   [`docs/history/milestones.md`](docs/history/milestones.md). Do not duplicate feature
   lists or counts here.
-- Released `v1.7.1`; M6.3-M6.7 are complete. Status and the test count live in plan §0.
+- Released `v1.7.2`; M6.3-M6.7 are complete. Status and the test count live in plan §0.
 - Next: no active milestone; M7 stays parked. Known issues, accepted limitations, and the
   proposed order live in [`docs/spec/product.md`](docs/spec/product.md) §20 — start there
   when asked what to work on next.

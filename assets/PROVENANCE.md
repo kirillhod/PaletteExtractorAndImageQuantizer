@@ -39,7 +39,7 @@ button beside its field, the compact sort select with its direction button, the 
 preview button, and the Full screen and Hide canvas stage buttons; the map capture shows the
 Game Boy DMG palette with Floyd–Steinberg dithering and the transparent index at None. Both
 show the footer's confirmed session clear. No third-party artwork, screenshots, or stock
-images are included. Refreshed 2026-11-23 at 1440×900 from the current UI.
+images are included. Refreshed 2026-11-28 at 1440×900 from the current UI.
 
 Refresh both captures at 1440×900 in dark theme and English whenever the interface
 changes, keeping the same hydrangea composition. A stale capture is a documentation
@@ -49,10 +49,10 @@ defect; see `AGENTS.md` §7.
 
 `og-image.png` is the 1200×630 Open Graph and Twitter Card. It is a static HTML card
 using the self-hosted Inter font: the PEIQ mark, the product name, the page URL, a
-workspace capture of the current UI (Wu with 16 colors and source order), and the
-matching palette strip. Regenerate it from the current UI whenever the interface or
+workspace capture of the current UI (K-means with 12 colors and hue grouped order), and
+the matching palette strip. Regenerate it from the current UI whenever the interface or
 palette order changes; a stale card is a documentation defect. No third-party artwork,
-screenshots, or stock images are included. Refreshed 2026-11-18.
+screenshots, or stock images are included. Refreshed 2026-11-28.
 
 ## Blue noise
 

@@ -122,3 +122,32 @@ section numbers below are its original ones.
       `ALGORITHM_VERSION` 4 stay compatible; 1.7.0 URLs and sessions load.
 - [x] `APP_VERSION` and `package.json` = `1.7.1`.
 - [x] Annotated tag `v1.7.1` on the version-bump commit.
+
+### v1.7.2
+
+**Changelog**
+
+- sRGB dithering no longer flattens shadows and highlights: the error clamp now spans
+  the full sRGB channel range, so a black/white palette keeps the gray ramp instead of
+  emitting 0% white at 64 and 100% at 192.
+- Ordered and blue-noise dithering use Euclidean distances for the two-candidate
+  probability, so flat tones no longer lean toward the nearest palette endpoint.
+- 0% dithering now matches None exactly, including the exact map for small unique-color
+  images; selecting a method at 0% no longer changes a few pixels.
+- Octree folds exact RGB duplicates as a contract safety net.
+- Help states that Popularity and Octree always use sRGB, that Oklab dithering preserves
+  perceptual lightness rather than linear-light brightness, and that per-pixel ΔE00 rises
+  by design when dithering is on.
+- `ALGORITHM_VERSION` becomes 5.
+
+- [x] `npm test` 244 passing plus 18 browser checks at 1280x900 and 360x800.
+- [x] Manual browser check at 1280 px and 360 px, English and Russian: the three new Help
+      texts, the space and dither tooltips, and no horizontal overflow. Chrome and Edge
+      paths are covered by the smoke suite; Firefox, Safari, and touch gestures remain
+      manual (L-8).
+- [x] Refreshed `assets/screenshots/workspace-dark.png`, `assets/screenshots/map-dither-dark.png`,
+      and `assets/og-image.png`; `assets/PROVENANCE.md` updated.
+- [x] URL `v=1`, session record v2, palette JSON v1, and export filenames stay compatible;
+      1.7.1 URLs and sessions load. `ALGORITHM_VERSION` is 5 because dither output changed.
+- [x] `APP_VERSION` and `package.json` = `1.7.2`.
+- [x] Annotated tag `v1.7.2` on the version-bump commit.
