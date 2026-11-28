@@ -185,7 +185,7 @@ export const EN_MESSAGES = {
 
   'space.label': 'Working space',
   'space.tooltip':
-    'Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0–255 RGB.',
+    'Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0-255 RGB. Popularity and Octree always use sRGB.',
   'space.oklab': 'Oklab (recommended)',
   'space.srgb': 'sRGB',
 
@@ -204,7 +204,7 @@ export const EN_MESSAGES = {
 
   'dither.method': 'Method',
   'dither.tooltip':
-    'None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern.',
+    'None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern. In Oklab, the pattern preserves perceptual lightness; linear-light brightness can differ.',
   'dither.none': 'None',
   'dither.floydSteinberg': 'Floyd–Steinberg',
   'dither.atkinson': 'Atkinson',
@@ -364,7 +364,7 @@ export const EN_MESSAGES = {
   'help.qualityTitle': 'Quality',
   'help.qualityLead': 'Lower ΔE00 means a closer preview.',
   'help.qualityP':
-    'Mean, p95, and max summarize the CIEDE2000 error between preview and source. Show error map draws the heatmap on the right half of the canvas, from dark blue at 0 to red at 20+, and numbered markers point to the worst pixels listed below. Transparent pixels are skipped; contrast is not checked.',
+    'Mean, p95, and max summarize the CIEDE2000 error between preview and source. Show error map draws the heatmap on the right half of the canvas, from dark blue at 0 to red at 20+, and numbered markers point to the worst pixels listed below. Transparent pixels are skipped; contrast is not checked. Dithering raises per-pixel ΔE00 by design: the pattern trades pixel accuracy for the average tone.',
   'help.urlTitle': 'Shareable settings',
   'help.urlLead': 'The URL hash stores settings only.',
   'help.urlP':

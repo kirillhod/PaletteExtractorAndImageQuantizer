@@ -113,3 +113,23 @@ test('k-means uses the seed deterministically', () => {
   const b = extract(image, { method: 'kmeans', colors: 3, space: 'oklab', seed: 7, maxIters: 10 });
   assert.deepEqual(a, b);
 });
+
+test('octree never emits duplicate exact colors', () => {
+  // The 5-bit bins are eight wide, so leaf ranges are separated by 8-level boundaries
+  // and a collision is not reachable today; this guards the extraction contract if the
+  // bin width or tree depth changes later.
+  for (let seed = 1; seed <= 12; seed++) {
+    let state = (seed * 2654435761) >>> 0;
+    const next = () => {
+      state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+      return state >>> 24;
+    };
+    const image = makeImage(24, 24, () => ({ r: next(), g: next(), b: next() }));
+    const hist = buildHistogram(image);
+    for (const colors of [2, 3, 4, 5, 8, 16]) {
+      const palette = extractPalette(hist, { method: 'octree', colors, space: 'oklab' });
+      const keys = palette.map((color) => (color.r << 16) | (color.g << 8) | color.b);
+      assert.equal(new Set(keys).size, keys.length, `seed ${seed}, colors ${colors}`);
+    }
+  }
+});

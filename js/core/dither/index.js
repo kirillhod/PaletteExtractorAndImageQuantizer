@@ -47,7 +47,9 @@ export function ditherPixels(image, palette, options = {}) {
     mapper,
   };
 
-  if (method === 'none') {
+  if (method === 'none' || common.strength === 0) {
+    // At 0% every method is the plain mapping, including the exact map for small
+    // unique-color images, so selecting a method does not change the result.
     return mapIndices(image, palette, common);
   }
   if (method === 'bayer2' || method === 'bayer4' || method === 'bayer8') {

@@ -97,7 +97,11 @@ function workingDomain(space) {
         max1: 255,
         span0: 255,
         span1: 255,
-        maxError: 64,
+        // sRGB errors are not perceptual distances. The Oklab 0.5 radius would clamp
+        // ordinary grayscale errors and flatten shadows and highlights, so the sRGB
+        // bound is the channel range: a full black-to-white ramp stays intact while
+        // multi-channel runaway is still bounded.
+        maxError: 255,
         cellLevels,
         cellMask: cellLevels - 1,
       };
@@ -138,14 +142,14 @@ export function ditherErrorDiffusion(image, palette, options = {}) {
   if (!kernel) throw new Error(`unsupported error-diffusion kernel: ${method}`);
 
   // Zero strength means "nearest color only": no error ever leaves a pixel, so answer with
-  // the same lookup table the plain mapping uses instead of walking the diffusion loop.
+  // the same mapping the plain preview uses. Omitting `exact: false` keeps the exact map
+  // for small unique-color images, where the 6-bit LUT can answer a few pixels differently.
   if (strength === 0) {
     const mapped = mapIndices(image, palette, {
       space,
       alphaThreshold,
       transparentIndex,
       mapper,
-      exact: false,
     });
     return { indices: mapped.indices, width: image.width, height: image.height, mapper };
   }

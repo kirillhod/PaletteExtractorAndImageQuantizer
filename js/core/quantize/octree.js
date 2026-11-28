@@ -100,14 +100,36 @@ export function extractOctree(hist, params) {
     }
   }
 
-  return collectLeaves(root)
-    .filter((leaf) => leaf.weight > 0)
-    .map((leaf) => ({
-      r: clampByte(leaf.sumR / leaf.weight),
-      g: clampByte(leaf.sumG / leaf.weight),
-      b: clampByte(leaf.sumB / leaf.weight),
-      weight: leaf.weight,
-    }));
+  return dedupeExactColors(
+    collectLeaves(root)
+      .filter((leaf) => leaf.weight > 0)
+      .map((leaf) => ({
+        r: clampByte(leaf.sumR / leaf.weight),
+        g: clampByte(leaf.sumG / leaf.weight),
+        b: clampByte(leaf.sumB / leaf.weight),
+        weight: leaf.weight,
+      })),
+  );
+}
+
+/**
+ * Fold exact RGB duplicates and sum their weights. The 5-bit bins already keep leaf
+ * ranges separated by 8-level boundaries, so a collision is not reachable today; this
+ * keeps the extraction contract true if the bin width or tree depth changes.
+ *
+ * @param {{ r:number, g:number, b:number, weight:number }[]} colors
+ * @returns {{ r:number, g:number, b:number, weight:number }[]}
+ */
+function dedupeExactColors(colors) {
+  /** @type {Map<number, { r:number, g:number, b:number, weight:number }>} */
+  const unique = new Map();
+  for (const color of colors) {
+    const key = (color.r << 16) | (color.g << 8) | color.b;
+    const existing = unique.get(key);
+    if (existing) existing.weight += color.weight;
+    else unique.set(key, { ...color });
+  }
+  return [...unique.values()];
 }
 
 /**

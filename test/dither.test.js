@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createPalette } from '../js/core/palette.js';
+import { rgb8ToOklab } from '../js/core/color.js';
 import { mapIndices } from '../js/core/map.js';
 import {
   DITHER_METHODS,
@@ -24,6 +25,32 @@ const palette = createPalette([
   { r: 255, g: 0, b: 0 },
   { r: 0, g: 128, b: 255 },
 ]);
+
+const blackWhite = createPalette([
+  { r: 0, g: 0, b: 0 },
+  { r: 255, g: 255, b: 255 },
+]);
+
+/**
+ * Share of white pixels after dithering a flat gray field with a black/white palette.
+ * @param {number} value
+ * @param {'srgb'|'oklab'} space
+ * @param {string} method
+ */
+function whiteShare(value, space, method) {
+  const gray = makeImage(64, 64, () => ({ r: value, g: value, b: value }));
+  const result = ditherPixels(gray, blackWhite, {
+    method,
+    space,
+    strength: 1,
+    serpentine: true,
+    edgeStop: 0,
+    transparentIndex: -1,
+  });
+  let white = 0;
+  for (const index of result.indices) white += index;
+  return white / result.indices.length;
+}
 
 const image = makeImage(18, 12, (x, y) => ({
   r: Math.round((x / 17) * 255),
@@ -92,8 +119,14 @@ test('every dither method is deterministic and palette-compliant', () => {
   }
 });
 
-test('strength 0 reduces ordered and error diffusion to the LUT nearest mapping', () => {
-  const nearest = mapIndices(image, palette, { space: 'oklab', exact: false });
+test('strength 0 matches the plain mapping, including the exact map', () => {
+  const nearest = mapIndices(image, palette, { space: 'oklab' });
+  const lut = mapIndices(image, palette, { space: 'oklab', exact: false });
+  assert.notDeepEqual(
+    nearest.indices,
+    lut.indices,
+    'fixture must distinguish the exact map from the LUT',
+  );
   for (const method of /** @type {const} */ (['floyd-steinberg', 'bayer4', 'blue-noise'])) {
     const dithered = ditherPixels(image, palette, {
       method,
@@ -124,25 +157,57 @@ test('transparent pixels use the reserved index', () => {
   }
 });
 
-test('error diffusion keeps the average tone of a flat field', () => {
-  // A working nearest-color table must keep the mean: mid-gray under a black/white palette
-  // becomes about 60% white in Oklab (L(128,128,128) = 0.6), not one flat color.
-  const gray = makeImage(32, 32, () => ({ r: 128, g: 128, b: 128 }));
-  const blackWhite = createPalette([
-    { r: 0, g: 0, b: 0 },
-    { r: 255, g: 255, b: 255 },
-  ]);
-  const result = ditherPixels(gray, blackWhite, {
-    method: 'floyd-steinberg',
-    space: 'oklab',
-    strength: 1,
-    serpentine: true,
-    edgeStop: 0,
-    transparentIndex: -1,
-  });
-  const whitePixels = result.indices.reduce((sum, index) => sum + index, 0);
-  const share = whitePixels / result.indices.length;
-  assert.ok(share > 0.55 && share < 0.7, `white share ${share.toFixed(3)}`);
+test('sRGB error diffusion keeps the tone of flat fields', () => {
+  for (const value of [64, 96, 128, 160, 192]) {
+    const share = whiteShare(value, 'srgb', 'floyd-steinberg');
+    const expected = value / 255;
+    assert.ok(
+      Math.abs(share - expected) < 0.02,
+      `gray ${value}: white share ${share.toFixed(3)}, expected ${expected.toFixed(3)}`,
+    );
+  }
+});
+
+test('Oklab error diffusion keeps the mean working-space lightness', () => {
+  for (const value of [64, 128, 192]) {
+    const share = whiteShare(value, 'oklab', 'floyd-steinberg');
+    const expected = rgb8ToOklab(value, value, value).L;
+    assert.ok(
+      Math.abs(share - expected) < 0.02,
+      `gray ${value}: white share ${share.toFixed(3)}, expected L ${expected.toFixed(3)}`,
+    );
+  }
+});
+
+test('ordered and blue-noise dithering keep the tone of flat fields', () => {
+  for (const space of /** @type {const} */ (['srgb', 'oklab'])) {
+    for (const method of ['bayer4', 'blue-noise']) {
+      for (const value of [64, 128, 192]) {
+        const share = whiteShare(value, space, method);
+        const expected = space === 'srgb' ? value / 255 : rgb8ToOklab(value, value, value).L;
+        assert.ok(
+          Math.abs(share - expected) < 0.03,
+          `${space} ${method} ${value}: ${share.toFixed(3)} vs ${expected.toFixed(3)}`,
+        );
+      }
+    }
+  }
+});
+
+test('edge stop responds to a saturated color edge but not to a flat field', () => {
+  const edge = makeImage(16, 16, (x) => ({ r: 255, g: 0, b: x < 8 ? 0 : 255 }));
+  const flat = makeImage(16, 16, () => ({ r: 255, g: 0, b: 0 }));
+  const run = (source, edgeStop) =>
+    ditherPixels(source, blackWhite, {
+      method: 'floyd-steinberg',
+      space: 'oklab',
+      strength: 1,
+      serpentine: true,
+      edgeStop,
+      transparentIndex: -1,
+    }).indices;
+  assert.notDeepEqual(run(edge, 0), run(edge, 1), 'a red/magenta edge must trip edge stop');
+  assert.deepEqual(run(flat, 0), run(flat, 1), 'a flat field has no gradient');
 });
 
 test('error diffusion follows a gradient instead of collapsing to one entry', () => {

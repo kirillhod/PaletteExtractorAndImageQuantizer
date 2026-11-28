@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { runPreview, exportStrip, exportReduced, exportIndexed } from '../js/core/pipeline.js';
 import { createPalette } from '../js/core/palette.js';
 import { decodePng } from '../js/core/png/decode.js';
-import { DITHER_METHODS } from '../js/core/dither/index.js';
+import { DITHER_METHODS, ditherPixels } from '../js/core/dither/index.js';
 import { makeImage, quadrantsImage } from './helpers.js';
 
 const params = /** @type {const} */ ({
@@ -138,11 +138,24 @@ test('every dither method keeps the source alpha in the preview', async () => {
 });
 
 test('the reserved transparent index stays transparent in every dithered preview', async () => {
+  const palette = createPalette(alphaParams.paletteOverride);
   for (const method of DITHER_METHODS) {
     const result = await runPreview({
       image: alphaImage,
       params: { ...alphaParams, dither: { method }, transparentIndex: 0 },
     });
-    assert.deepEqual(alphaRow(result.preview), [0, 128, 0, 255], method);
+    // Rebuild the index map instead of assuming a fixed Bayer position: the reserved
+    // entry is transparent wherever the dither lands on it, and every other pixel keeps
+    // its source alpha.
+    const indices = ditherPixels(alphaImage, palette, {
+      method,
+      space: alphaParams.space,
+      alphaThreshold: alphaParams.alphaThreshold,
+      transparentIndex: 0,
+    }).indices;
+    for (let p = 0; p < indices.length; p++) {
+      const expected = indices[p] === 0 ? 0 : alphaImage.data[p * 4 + 3];
+      assert.equal(result.preview.data[p * 4 + 3], expected, `${method} at ${p}`);
+    }
   }
 });

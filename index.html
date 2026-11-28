@@ -294,7 +294,7 @@
               <div class="peiq-field">
                 <div class="peiq-label-row">
                   <label class="peiq-label" for="space" data-i18n="space.label">Working space</label>
-                  <button class="peiq-help" type="button" data-i18n-tooltip="space.tooltip" data-tooltip="Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0–255 RGB.">?</button>
+                  <button class="peiq-help" type="button" data-i18n-tooltip="space.tooltip" data-tooltip="Oklab is perceptual and recommended. sRGB matches legacy tooling and keeps distances in 0–255 RGB. Popularity and Octree always use sRGB.">?</button>
                 </div>
                 <select class="peiq-select" id="space">
                   <option value="oklab" data-i18n="space.oklab">Oklab (recommended)</option>
@@ -345,7 +345,7 @@
             <div class="peiq-field">
               <div class="peiq-label-row">
                 <label class="peiq-label" for="dither-method" data-i18n="dither.method">Method</label>
-                <button class="peiq-help" type="button" data-i18n-tooltip="dither.tooltip" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern.">?</button>
+                <button class="peiq-help" type="button" data-i18n-tooltip="dither.tooltip" data-tooltip="None maps each pixel to its nearest color. Error diffusion spreads the error; Bayer and blue noise choose between the two nearest colors with a pattern. In Oklab, the pattern preserves perceptual lightness; linear-light brightness can differ.">?</button>
               </div>
               <select class="peiq-select" id="dither-method">
                 <option value="none" data-i18n="dither.none">None</option>
@@ -513,7 +513,7 @@
       </dl>
       <p><strong data-i18n="help.markersLead">Picked colors</strong> <span data-i18n="help.markersP">keep a marker on the image while Edit is on. Drag a marker or focus it and use arrow keys; Esc cancels a drag. Extracted and imported colors get no marker until you pick them. Markers stay in the session and never enter exports.</span></p>
       <h2 data-i18n="help.qualityTitle">Quality</h2>
-      <p><strong data-i18n="help.qualityLead">Lower ΔE00 means a closer preview.</strong> <span data-i18n="help.qualityP">Mean, p95, and max summarize the CIEDE2000 error between preview and source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Transparent pixels are skipped; contrast is not checked.</span></p>
+      <p><strong data-i18n="help.qualityLead">Lower ΔE00 means a closer preview.</strong> <span data-i18n="help.qualityP">Mean, p95, and max summarize the CIEDE2000 error between preview and source; the map runs from dark blue at 0 to red at 20+, and the worst-pixel list gives coordinates. Transparent pixels are skipped; contrast is not checked. Dithering raises per-pixel ΔE00 by design: the pattern trades pixel accuracy for the average tone.</span></p>
       <h2 data-i18n="help.urlTitle">Shareable settings</h2>
       <p><strong data-i18n="help.urlLead">The URL hash stores settings only.</strong> <span data-i18n="help.urlP">It stores mode, extractor, colors, working space, fixed palette, dither method, strength, serpentine, edge stop, alpha threshold, sort, and transparent index. The image, palette edits, locks, and quality results never enter it.</span></p>
       <h2 data-i18n="help.sessionTitle">Saved session</h2>

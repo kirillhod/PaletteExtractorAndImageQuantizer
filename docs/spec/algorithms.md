@@ -221,6 +221,8 @@ extract(hist, params) -> { colors: RGBA8[], weights: number[], stats }
 - Reduce by merging the least-weight leaf into its parent until ≤K leaves.
 - Merge order: lowest weight, then lowest node id. Internal nodes keep accumulated sums.
 - Representative = weighted mean.
+- Exact RGB duplicates are folded with summed weights. With 5-bit bins the leaf ranges
+  are separated by 8-level boundaries, so this is a safety net for a future bin width.
 - Label: “Fast — streaming-style, lower quality”.
 - Complexity O(M·depth + merges). Deterministic.
 
@@ -235,8 +237,8 @@ extract(hist, params) -> { colors: RGBA8[], weights: number[], stats }
   - assign each bin to the nearest centroid in the working space;
   - recompute weighted means; empty cluster → reassign the centroid to the bin with the
     largest `weight · D²`, then continue;
-  - stop when max centroid movement < `1e-4` or `maxIters` reached (default 10 preview,
-    30 final).
+  - stop when max centroid movement < `1e-5` (squared `1e-10`) or `maxIters` reached
+    (default 20, capped by the work budget).
 - Representative = centroid converted to 8-bit sRGB; dedupe exact duplicates.
 - Complexity O(M·K·iters). For K=256 and M=32768, cap iterations by a work budget
   (`M·K·iters ≤ 60,000,000`), but never stop based on wall-clock time.
@@ -261,7 +263,8 @@ buildMapper(palette, { space, bits: 6 }) -> {
 - LUT mode: 6 bits/channel → `64³ = 262,144` entries.
   - `nearest: Uint8Array` (palette index).
   - `second: Uint8Array` (second-nearest index, for ordered dithering).
-  - `probSecond: Uint8Array` (0..255, `d1/(d1+d2)` scaled).
+  - `probSecond: Uint8Array` (0..255, `sqrt(d1)/(sqrt(d1)+sqrt(d2))` scaled, where `d1`
+    and `d2` are the squared distances stored by the mapper).
   - Cell representative = `(v << 2) | 2` (cell center); compute Oklab once per cell.
   - Build in chunks with progress; memory ≈ 0.75 MB.
 - Distance in the selected space; tie-break lowest index.
@@ -289,12 +292,20 @@ buildMapper(palette, { space, bits: 6 }) -> {
 - `strength` scales the deviation from the nearest color: 0 = nearest only, 1 = full.
 - Strength defaults: Photo 0.8; Pixel Art 0 (none); Retro 16 1.0 (ordered); UI 0.
 - Serpentine reverses the x direction on odd rows; mirror kernel x offsets.
-- Edge stop reduces diffusion where the local lightness gradient is high:
-  `g = max(|L(x+1)−L(x)|, |L(x,y+1)−L(x,y)|)`;
-  `factor = 1 − edgeStop · clamp01(g / 0.10)`. Default `edgeStop = 0.5` for photos,
-  0 otherwise.
-- Error clamp: if `|error| > 0.5` in Oklab, scale the vector to 0.5. This prevents
-  runaway artifacts at hard edges.
+- Edge stop reduces diffusion where the local edge strength is high:
+  `g = max(|ΔR|, |ΔG|, |ΔB|)` over the right and down neighbors, divided by 255;
+  `factor = 1 − edgeStop · clamp01(g / 0.08)`. Default `edgeStop = 0.5` for photos,
+  0 otherwise. The max sRGB-channel gradient is a cheap proxy for Oklab L that also
+  catches saturated color boundaries; it is intentionally not an Oklab-lightness test.
+- Error clamp: if the error vector exceeds the working-space bound, scale it to that
+  bound. In Oklab the bound is `0.5`. In sRGB it is `255`: the 0.5 Oklab radius is not
+  `0.5 × 255` because Oklab is not linear in sRGB, and a smaller bound cannot reach the
+  midpoint of a flat gray field. This prevents runaway artifacts at hard edges without
+  flattening shadows or highlights.
+- Dithering preserves the mean of the working-space coordinates, not linear-light
+  luminance. Oklab therefore keeps perceptual lightness; a space-averaged pattern can
+  look brighter in linear light. This is intentional, and per-pixel QA is expected to
+  rise when dithering is on.
 
 #### 6.6.2 Error diffusion (`floyd-steinberg`, `atkinson`, `stucki`, `jarvis`, `burkes`, `sierra`)
 
@@ -322,7 +333,8 @@ for each tap: accumulatedError[next] += error · weight / denominator
 ```
 
 - Atkinson intentionally diffuses only 6/8 of the error (higher contrast).
-- Two error rows are kept (`Float32Array(width·3)` each); rotate per row.
+- Three error rows are kept (`Float32Array(width·3)` each) for `dy=0`, `+1`, and `+2`;
+  Stucki, Jarvis, Sierra, and Atkinson use the second row.
 - Default: serpentine on, strength 0.8, edgeStop 0.5 for photos.
 - Implementation notes, all of which preserve the algorithm above:
   - `mapper.nearestOklab(corrected)` is a nearest-color cell grid over the working space,
@@ -334,7 +346,8 @@ for each tap: accumulatedError[next] += error · weight / denominator
     histogram and 6-bit lookup cells already in use.
   - The error clamp compares squared magnitude and takes one `sqrt` only when it clamps;
     `Math.hypot` costs the same work on every pixel.
-  - `strength = 0` returns the plain mapping directly, because no error can leave a pixel.
+  - `strength = 0` returns the same plain mapping as `method = none`, including the exact
+    map for small unique-color images.
 
 #### 6.6.3 Ordered (Bayer 2/4/8)
 
@@ -473,7 +486,7 @@ Implemented in v1.1 on the preview.
 - Float comparisons use `f64`; stored palette values are exact 8-bit.
 - Canonical JSON: object keys sorted recursively; no insignificant whitespace.
 - Hash: SHA-256 via `crypto.subtle`; fallback FNV-1a 64-bit with a flag.
-- `ALGORITHM_VERSION = 4`; bump it when a decision-affecting rule changes.
+- `ALGORITHM_VERSION = 5`; bump it when a decision-affecting rule changes.
 
 ### 7.2 Guarantee levels
 

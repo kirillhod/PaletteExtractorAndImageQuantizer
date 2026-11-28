@@ -8,7 +8,7 @@ import { oklabDistanceSq, rgb8ToOklab } from './color.js';
  * @typedef {Object} Mapper
  * @property {Uint8Array} nearest
  * @property {Uint8Array} second
- * @property {Uint8Array} probSecond 0..255 (d1/(d1+d2))
+ * @property {Uint8Array} probSecond 0..255 (sqrt(d1)/(sqrt(d1)+sqrt(d2)))
  * @property {number} bits
  * @property {'oklab'|'srgb'} space
  * @property {number} size
@@ -74,8 +74,13 @@ export function buildMapper(palette, options = {}) {
 
         nearest[index] = best;
         second[index] = secondBest;
-        probSecond[index] = Number.isFinite(d2) && d1 + d2 > 0
-          ? Math.round((d1 / (d1 + d2)) * 255)
+        // d1 and d2 are squared distances. The second color's share is linear in the
+        // Euclidean distances; dividing squared distances over-weights the nearest color
+        // and pulls flat tones toward the palette endpoints.
+        const dist1 = Math.sqrt(d1);
+        const dist2 = Math.sqrt(d2);
+        probSecond[index] = Number.isFinite(d2) && dist1 + dist2 > 0
+          ? Math.round((dist1 / (dist1 + dist2)) * 255)
           : 0;
         index++;
       }
